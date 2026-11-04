@@ -1,0 +1,1 @@
+UPDATE public.periods SET started_at = '2026-10-01T00:00:00-03:00' WHERE name = 'Hacka 26.2' AND started_at = '2026-10-01T00:00:00+00:00';

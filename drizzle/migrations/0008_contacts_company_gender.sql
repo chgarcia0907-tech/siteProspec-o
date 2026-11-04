@@ -1,0 +1,2 @@
+ALTER TABLE public.contacts ADD COLUMN IF NOT EXISTS company_gender text NOT NULL DEFAULT 'feminino';
+ALTER TABLE public.contacts ADD CONSTRAINT contacts_company_gender_check CHECK (company_gender IN ('masculino','feminino','sem_artigo'));
