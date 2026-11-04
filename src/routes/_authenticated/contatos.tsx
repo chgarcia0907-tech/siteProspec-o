@@ -218,7 +218,7 @@ function Contatos() {
           </Select>
           <div className="flex flex-col items-end leading-tight">
             <a
-              href="https://docs.google.com/spreadsheets/d/1RaKbcqtcnjfDw-3d3-ZcvNdtn885nW7Efh1Go_LT3Fo/edit"
+              href="https://docs.google.com/spreadsheets/d/1M25CO9Y4NqPjGdCi3P1hNWNglWZ3Jf7EDVIl_k9JLj0/edit"
               target="_blank"
               rel="noreferrer"
               className="text-sm font-medium text-primary underline-offset-4 hover:underline"
