@@ -110,3 +110,38 @@ export async function rankingCsv(): Promise<string> {
     ]),
   ]);
 }
+
+const RANK_HEADER = ["Posição", "Hunter", "ATs", "Leads", "Propostas", "Aprovações verbais", "Vendidos", "LinkedIn 1 enviadas", "Pontos do funil", "Bônus", "Total de pontos", "Taxa de conversão (%)", "Pontuação final", "Grupo", "Subgrupo"];
+type RankRow = Awaited<ReturnType<typeof import("./competition.server").loadCompetition>>["rows"][number];
+const rankCells = (r: RankRow, i: number) => [
+  i + 1, r.hunter, r.ats, r.leads, r.propostas, r.aprovacoes, r.vendidos, r.linkedin1, r.pontos_funil,
+  r.bonus_primeiro_at + r.bonus_semanas, r.total_pontos, dec(r.taxa_conversao), dec(r.pontuacao_final), r.grupo, r.subgrupo,
+];
+
+/** Ranking geral do ciclo da equipe (ativo, senão o mais recente). */
+export async function cicloCsv(): Promise<string> {
+  const { loadCurrentCycle } = await import("./competition.server");
+  const comp = await loadCurrentCycle();
+  if (!comp) return toCsv([["Nenhum ciclo cadastrado"]]);
+  return toCsv([
+    ["Ciclo", comp.periodName ?? "", "Período", `${br(comp.start)} a ${comp.end ? br(comp.end) : "hoje"}`, "Atualizado em", brDateTime(new Date())],
+    [],
+    RANK_HEADER,
+    ...comp.rows.map(rankCells),
+  ]);
+}
+
+/** Ranking de cada semana do ciclo (mais recente primeiro), uma linha por hunter e semana. */
+export async function cicloSemanasCsv(): Promise<string> {
+  const { loadCurrentCycle } = await import("./competition.server");
+  const comp = await loadCurrentCycle();
+  if (!comp) return toCsv([["Nenhum ciclo cadastrado"]]);
+  return toCsv([
+    ["Ciclo", comp.periodName ?? "", "Atualizado em", brDateTime(new Date())],
+    [],
+    ["Semana", "Início", "Fim", "Parcial", ...RANK_HEADER],
+    ...(comp.semanas ?? []).flatMap((w) =>
+      w.rows.map((r, i) => [`${br(w.inicio)} a ${br(w.fim)}`, br(w.inicio), br(w.fim), w.parcial ? "sim" : "não", ...rankCells(r, i)]),
+    ),
+  ]);
+}

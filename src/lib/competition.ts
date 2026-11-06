@@ -76,6 +76,7 @@ export function computeCompetition(
   hunters: { id: string; name: string }[],
   period: { start: string; end: string | null },
   todaySP: string,
+  opts: { firstAtBonus?: boolean } = {},
 ): CompResult {
   const inP = (d: string | null) => !!d && d.slice(0, 10) >= period.start && (!period.end || d.slice(0, 10) <= period.end);
   const name = new Map(hunters.map((h) => [h.id, h.name]));
@@ -115,7 +116,7 @@ export function computeCompetition(
     }
   }
 
-  if (first) rows.get(first.c.user_id)!.bonus_primeiro_at = 5;
+  if (first && opts.firstAtBonus !== false) rows.get(first.c.user_id)!.bonus_primeiro_at = 5;
 
   const currentWeek = mondayOf(todaySP);
   const weeks: CompWeek[] = [...weekCounts.entries()]
@@ -147,3 +148,30 @@ export function computeCompetition(
   };
 }
 
+
+export type WeekBoard = { inicio: string; fim: string; parcial: boolean; rows: CompRow[] };
+
+/**
+ * Ranking de cada semana (segunda a domingo, SP) dentro do período, com a mesma regra da
+ * competição: pontos do funil + 6 para quem fez mais ATs na semana + conversão.
+ * O bônus de 1º AT é só do período inteiro, então não entra na semana.
+ * Semanas mais recentes primeiro; a semana atual vem marcada como parcial.
+ */
+export function computeWeekly(
+  contacts: CompContact[],
+  hunters: { id: string; name: string }[],
+  period: { start: string; end: string | null },
+  todaySP: string,
+): WeekBoard[] {
+  const last = period.end && period.end < todaySP ? period.end : todaySP;
+  if (last < period.start) return [];
+  const out: WeekBoard[] = [];
+  for (let wk = mondayOf(period.start); wk <= last; wk = addDaysISO(wk, 7)) {
+    const sun = addDaysISO(wk, 6);
+    const start = wk < period.start ? period.start : wk;
+    const end = sun > last ? last : sun;
+    const res = computeCompetition(contacts, hunters, { start, end }, todaySP, { firstAtBonus: false });
+    out.push({ inicio: wk, fim: sun, parcial: sun > last, rows: res.rows });
+  }
+  return out.reverse();
+}

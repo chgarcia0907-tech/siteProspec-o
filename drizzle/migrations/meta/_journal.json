@@ -64,6 +64,13 @@
       "when": 1793734180457,
       "tag": "0008_contacts_company_gender",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793980000000,
+      "tag": "0009_period_kind",
+      "breakpoints": true
     }
   ]
 }

@@ -46,3 +46,36 @@ describe("competição", () => {
     expect(a.pontuacao_final).toBe(39.8);
   });
 });
+
+describe("ranking semanal", () => {
+  it("separa por semana, sem bônus de 1º AT e com +6 para quem fez mais ATs", async () => {
+    const { computeWeekly } = await import("./competition");
+    const weeks = computeWeekly(
+      [
+        c("a", "2026-10-27", "2026-10-27T15:00:00Z"),
+        c("a", "2026-10-28", "2026-10-28T15:00:00Z"),
+        c("b", "2026-11-03", "2026-11-03T15:00:00Z"),
+      ],
+      hunters,
+      { start: "2026-10-26", end: null },
+      "2026-11-06",
+    );
+    expect(weeks.map((w) => w.inicio)).toEqual(["2026-11-02", "2026-10-26"]);
+    expect(weeks[0]!.parcial).toBe(true);
+    expect(weeks[1]!.parcial).toBe(false);
+    const a1 = weeks[1]!.rows.find((x) => x.hunter_id === "a")!;
+    expect(a1.ats).toBe(2);
+    expect(a1.bonus_primeiro_at).toBe(0);
+    expect(a1.bonus_semanas).toBe(6);
+    expect(weeks[0]!.rows.find((x) => x.hunter_id === "a")!.ats).toBe(0);
+    expect(weeks[0]!.rows[0]!.hunter_id).toBe("b");
+  });
+
+  it("corta a semana no fim do período", async () => {
+    const { computeWeekly } = await import("./competition");
+    const weeks = computeWeekly([c("a", "2026-10-24", "2026-10-24T15:00:00Z")], hunters, { start: "2026-10-05", end: "2026-10-23" }, "2026-11-06");
+    expect(weeks[0]!.inicio).toBe("2026-10-19");
+    expect(weeks[0]!.rows.find((x) => x.hunter_id === "a")!.ats).toBe(0);
+    expect(weeks).toHaveLength(3);
+  });
+});

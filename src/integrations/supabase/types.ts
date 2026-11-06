@@ -373,6 +373,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          kind: string
           started_at: string
           status: string
         }
@@ -380,6 +381,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           id?: string
+          kind?: string
           name: string
           started_at?: string
           status?: string
@@ -388,6 +390,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           id?: string
+          kind?: string
           name?: string
           started_at?: string
           status?: string

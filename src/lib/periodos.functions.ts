@@ -59,7 +59,7 @@ export const periodsOverview = createServerFn({ method: "GET" })
 
 export const createPeriod = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ name, start: isoDate }).parse(d))
+  .inputValidator((d) => z.object({ name, start: isoDate, kind: z.enum(["competicao", "ciclo"]).default("competicao") }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const db = await admin();
@@ -67,7 +67,7 @@ export const createPeriod = createServerFn({ method: "POST" })
     if (active) fail(`Encerre o período "${active.name}" antes de criar outro.`);
     const { data: row, error } = await db
       .from("periods")
-      .insert({ name: data.name, status: "active", started_at: `${data.start}T00:00:00-03:00` })
+      .insert({ name: data.name, kind: data.kind, status: "active", started_at: `${data.start}T00:00:00-03:00` })
       .select("id")
       .single();
     if (error) fail(error.code === "23505" ? "Já existe um período com esse nome ou outro período ativo." : "Falha ao criar período");
@@ -89,10 +89,11 @@ export const renamePeriod = createServerFn({ method: "POST" })
  * Encerra o período e grava o placar oficial congelado.
  * Exige digitar o nome exato do período. A troca active→closed é condicional (só uma chamada vence)
  * e a constraint única de period_snapshots impede placar duplicado.
+ * `end` (opcional) é o último dia que conta no placar, para encerrar depois do fim real; padrão hoje.
  */
 export const closePeriod = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: uuid, confirmName: z.string() }).parse(d))
+  .inputValidator((d) => z.object({ id: uuid, confirmName: z.string(), end: isoDate.optional() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const db = await admin();
@@ -107,11 +108,17 @@ export const closePeriod = createServerFn({ method: "POST" })
 
     const today = spParts().iso;
     const start = new Date(p.started_at).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+    const end = data.end ?? today;
+    if (end > today) fail("A data de fim não pode ser no futuro.");
+    if (end < start) fail("A data de fim é anterior ao início do período.");
+    const ciclo = p.kind === "ciclo";
     const [contacts, members, profiles, groups, subgroups] = await Promise.all([
-      fetchAll((a, b) =>
-        db.from("contacts")
-          .select("user_id, sent1_at, sent2_at, sent3_at, sent4_at, sent5_at, at_marcada_em, lead_em, proposta_em, aprovacao_em, vendido_em, at_registrado_em, lead_registrado_em, proposta_registrado_em, aprovacao_registrado_em, vendido_registrado_em, created_at")
-          .eq("period_id", p.id).order("id").range(a, b)),
+      fetchAll((a, b) => {
+        let q = db.from("contacts")
+          .select("user_id, sent1_at, sent2_at, sent3_at, sent4_at, sent5_at, at_marcada_em, lead_em, proposta_em, aprovacao_em, vendido_em, at_registrado_em, lead_registrado_em, proposta_registrado_em, aprovacao_registrado_em, vendido_registrado_em, created_at");
+        if (!ciclo) q = q.eq("period_id", p.id);
+        return q.order("id").range(a, b);
+      }),
       fetchAll((a, b) => db.from("period_members").select("*").eq("period_id", p.id).order("id").range(a, b)),
       fetchAll((a, b) => db.from("profiles").select("id, display_name, email").order("id").range(a, b)),
       db.from("groups").select("id, name").eq("period_id", p.id),
@@ -122,15 +129,21 @@ export const closePeriod = createServerFn({ method: "POST" })
     const sname = new Map((subgroups.data ?? []).map((s) => [s.id, s.name]));
     const mem = new Map(members.map((m) => [m.user_id, m]));
     // Participantes = membros do período + quem tem contatos nele (nenhum resultado fica de fora).
-    const ids = new Set<string>([...members.map((m) => m.user_id), ...contacts.map((c) => c.user_id)]);
+    // No ciclo, só os membros participam (os contatos são de toda a base deles).
+    const ids = new Set<string>(members.map((m) => m.user_id));
+    if (!ciclo) for (const c of contacts) ids.add(c.user_id);
     const hunters = [...ids].map((id) => ({ id, name: pname.get(id) ?? "Hunter" }));
-    const result = computeCompetition(contacts as any, hunters, { start, end: today }, today);
+    const result = computeCompetition(contacts as any, hunters, { start, end }, today);
 
     const frozen = new Date().toISOString();
+    // Contagens do placar só dentro do período (data em SP), como os pontos.
+    const spDay = (v: string | null | undefined) =>
+      v ? (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : new Date(v).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" })) : null;
+    const inRange = (v: string | null | undefined) => { const d = spDay(v); return !!d && d <= end && (!ciclo || d >= start); };
     const rows = result.rows.map((r) => {
       const m = mem.get(r.hunter_id);
-      const mine = contacts.filter((c) => c.user_id === r.hunter_id);
-      const n = (f: string) => mine.filter((c: any) => !!c[f]).length;
+      const mine = contacts.filter((c) => c.user_id === r.hunter_id && (ciclo || inRange(c.created_at)));
+      const n = (f: string) => mine.filter((c: any) => inRange(c[f])).length;
       return {
         period_id: p.id, hunter_id: r.hunter_id, hunter_name: r.hunter,
         group_name: (m?.group_id && gname.get(m.group_id)) || "",
@@ -139,13 +152,15 @@ export const closePeriod = createServerFn({ method: "POST" })
         sent1: n("sent1_at"), sent2: n("sent2_at"), sent3: n("sent3_at"), sent4: n("sent4_at"), sent5: n("sent5_at"),
         ats_count: r.ats, leads_count: r.leads, propostas_count: r.propostas, aprovacoes_count: r.aprovacoes, vendas_count: r.vendidos,
         weekly_wins: r.semanas_vencidas, first_at_bonus: r.bonus_primeiro_at > 0,
-        extra: { total_pontos: r.total_pontos, pontos_funil: r.pontos_funil, bonus_semanas: r.bonus_semanas, taxa_conversao: r.taxa_conversao, linkedin1: r.linkedin1, inicio: start, fim: today, semanas: result.weeks, primeiro_at: result.primeiroAt },
+        extra: { total_pontos: r.total_pontos, pontos_funil: r.pontos_funil, bonus_semanas: r.bonus_semanas, taxa_conversao: r.taxa_conversao, linkedin1: r.linkedin1, inicio: start, fim: end, semanas: result.weeks, primeiro_at: result.primeiroAt },
         frozen_at: frozen,
       };
     });
 
     // Trava atômica: só uma chamada consegue mudar active → closed.
-    const { data: claimed } = await db.from("periods").update({ status: "closed", closed_at: frozen })
+    // closed_at = último dia que conta (fim do dia em SP); a "maturação atual" usa essa data.
+    const closedAt = data.end ? `${end}T23:59:59-03:00` : frozen;
+    const { data: claimed } = await db.from("periods").update({ status: "closed", closed_at: closedAt })
       .eq("id", p.id).eq("status", "active").select("id");
     if (!claimed?.length) fail("Este período já foi encerrado.");
     if (rows.length) {

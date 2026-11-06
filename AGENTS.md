@@ -25,3 +25,4 @@
 - Feriados: leitura pública para logados; escrita só por `adminAddHoliday`/`adminRemoveHoliday` (senha de administrador), para manter o mesmo controle das outras ações sensíveis.
 - Funil: cada etapa tem coluna `*_registrado_em` (momento do clique); a pontuação usa `stageScoreDate` em `competition.ts`, e a data agendada (`*_em`) fica só para consolidado — assim agendamentos futuros não represam pontos.
 - Model text changes are staged in pendente-pos-publicacao/modelos.sql and run only after publishing, because the published app may not understand new template tags yet.
+- Tipos de período (periods.kind): 'competicao' (Hacka: contatos do próprio período) e 'ciclo' (equipe: só membros, todos os contatos deles contados pela data de cada etapa, com ranking por semana via computeWeekly). closePeriod aceita `end` para congelar o placar numa data passada. A planilha lê o ciclo em ranking.csv?visao=ciclo e ?visao=semanas.

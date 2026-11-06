@@ -180,40 +180,57 @@ const PODIUM = ["bg-warning-soft", "bg-accent", "bg-linkedin-soft"];
 
 function CompetitionBoard() {
   const fetchComp = useServerFn(getCompetition);
-  const [periodId, setPeriodId] = useState<string>("geral");
+  const [picked, setPicked] = useState<string | null>(null);
+  const [view, setView] = useState("geral");
   const [oficial, setOficial] = useState(true);
   const [grupo, setGrupo] = useState("todos");
   const [subgrupo, setSubgrupo] = useState("todos");
   const { data: periods } = useQuery({
     queryKey: ["periods-list"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("periods").select("id, name, status, started_at").order("started_at", { ascending: false });
+      const { data, error } = await supabase.from("periods").select("id, name, status, started_at, kind").order("started_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
   });
+  // Abre no período ativo (o ciclo da equipe); "Competição geral" continua disponível no seletor.
+  const periodId = picked ?? periods?.find((p) => p.status === "active")?.id ?? (periods ? "geral" : null);
   const sel = periods?.find((p) => p.id === periodId);
   const closed = sel?.status === "closed";
   const useOficial = closed && oficial;
   const { data, isLoading } = useQuery({
     queryKey: ["competition", periodId, useOficial],
-    queryFn: () => fetchComp({ data: periodId === "geral" ? undefined : { periodId, oficial: useOficial } }),
+    enabled: periodId !== null,
+    queryFn: () => fetchComp({ data: periodId === "geral" || !periodId ? undefined : { periodId, oficial: useOficial } }),
   });
-  const grupos = [...new Set((data?.rows ?? []).map((r) => r.grupo).filter(Boolean))].sort();
-  const subgrupos = [...new Set((data?.rows ?? []).filter((r) => grupo === "todos" || r.grupo === grupo).map((r) => r.subgrupo).filter(Boolean))].sort();
-  const shown = (data?.rows ?? []).filter(
+  const semanas = !useOficial ? data?.semanas ?? [] : [];
+  const semana = view === "geral" ? undefined : semanas.find((w) => w.inicio === view);
+  const baseRows = semana ? semana.rows : data?.rows ?? [];
+  const grupos = [...new Set(baseRows.map((r) => r.grupo).filter(Boolean))].sort();
+  const subgrupos = [...new Set(baseRows.filter((r) => grupo === "todos" || r.grupo === grupo).map((r) => r.subgrupo).filter(Boolean))].sort();
+  const shown = baseRows.filter(
     (r) => (grupo === "todos" || (grupo === "sem" ? !r.grupo : r.grupo === grupo)) && (subgrupo === "todos" || r.subgrupo === subgrupo),
   );
   const selectCls = "h-9 rounded-md border bg-background px-2 text-sm";
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <select className={selectCls} value={periodId} onChange={(e) => { setPeriodId(e.target.value); setGrupo("todos"); setSubgrupo("todos"); }}>
+        <select className={selectCls} value={periodId ?? ""} onChange={(e) => { setPicked(e.target.value); setView("geral"); setGrupo("todos"); setSubgrupo("todos"); }}>
           <option value="geral">Competição geral</option>
           {periods?.map((p) => (
             <option key={p.id} value={p.id}>{p.name}{p.status === "active" ? " (ativo)" : " (encerrado)"}</option>
           ))}
         </select>
+        {semanas.length > 0 && (
+          <select className={selectCls} aria-label="Visão do ranking" value={semana ? view : "geral"} onChange={(e) => setView(e.target.value)}>
+            <option value="geral">Geral do ciclo</option>
+            {semanas.map((w) => (
+              <option key={w.inicio} value={w.inicio}>
+                Semana {formatBR(w.inicio)} a {formatBR(w.fim)}{w.parcial ? " (parcial)" : ""}
+              </option>
+            ))}
+          </select>
+        )}
         {closed && (
           <Tabs value={oficial ? "oficial" : "vivo"} onValueChange={(v) => setOficial(v === "oficial")}>
             <TabsList>
@@ -237,10 +254,12 @@ function CompetitionBoard() {
       <p className="text-sm text-muted-foreground">
         {useOficial && "Placar oficial congelado no encerramento · "}
         {closed && !oficial && "Resultados atualizados após o encerramento (não alteram o placar oficial) · "}
-        {data
-          ? `Período: ${formatBR(data.start)} ${data.end ? `a ${formatBR(data.end)}` : "em diante"}`
-          : "Carregando período..."}
-        {data?.primeiroAt && ` · 1º AT: ${data.primeiroAt.hunter} em ${formatBR(data.primeiroAt.data)}`}
+        {semana
+          ? `Semana: ${formatBR(semana.inicio)} a ${formatBR(semana.fim)}${semana.parcial ? " (parcial)" : ""}`
+          : data
+            ? `Período: ${formatBR(data.start)} ${data.end ? `a ${formatBR(data.end)}` : "em diante"}`
+            : "Carregando período..."}
+        {!semana && data?.primeiroAt && ` · 1º AT: ${data.primeiroAt.hunter} em ${formatBR(data.primeiroAt.data)}`}
       </p>
       {grupo !== "todos" && shown.length > 0 && (
         <Card>
@@ -305,7 +324,7 @@ function CompetitionBoard() {
           </div>
         </CardContent>
       </Card>
-      {data && data.weeks.length > 0 && (
+      {data && !semana && data.weeks.length > 0 && (
         <Card>
           <CardHeader><CardTitle className="text-base">Semanas com mais ATs</CardTitle></CardHeader>
           <CardContent className="space-y-1 text-sm">
@@ -324,7 +343,8 @@ function CompetitionBoard() {
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p><b>Etapas do funil (cumulativas):</b> AT marcada +3 · Lead +5 · Proposta marcada +10 · Aprovação verbal +25 · Projeto vendido +50. Um projeto vendido soma 93 pontos.</p>
           <p><b>Data que conta para a AT:</b> o dia em que o hunter registrou a AT na plataforma (não o dia da reunião, que continua salvo para consulta).</p>
-          <p><b>1º AT do Hacka:</b> +5 pontos, uma única vez, para quem registrou a primeira AT do período.</p>
+          <p><b>1º AT do período:</b> +5 pontos, uma única vez, para quem registrou a primeira AT do período (não entra no ranking semanal).</p>
+          <p><b>Ciclo da equipe:</b> contam todos os contatos dos membros, pela data em que cada etapa foi registrada. O ranking de cada semana usa as mesmas regras, só com o que aconteceu naquela semana.</p>
           <p><b>Mais ATs da semana:</b> +6 pontos para quem registrou mais ATs em cada semana (segunda a domingo, horário de São Paulo). Empatados ganham todos; semanas sem AT não dão bônus. A semana atual é parcial.</p>
           <p><b>Taxa de conversão:</b> ATs ÷ contatos com LinkedIn 1 enviada (0 se não houver envios).</p>
           <p><b>Pontuação final:</b> 0,7 × total de pontos + 0,3 × o número da taxa de conversão (7% conta como 7), com 1 casa decimal.</p>

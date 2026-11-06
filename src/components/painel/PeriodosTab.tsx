@@ -55,6 +55,7 @@ function NewPeriod({ disabledReason, onCreated }: { disabledReason: string | nul
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [start, setStart] = useState(spParts().iso);
+  const [kind, setKind] = useState<"competicao" | "ciclo">("ciclo");
   const [busy, setBusy] = useState(false);
   return (
     <>
@@ -66,13 +67,25 @@ function NewPeriod({ disabledReason, onCreated }: { disabledReason: string | nul
           <div className="space-y-3">
             <div className="space-y-1"><Label htmlFor="np-name">Nome</Label><Input id="np-name" placeholder="Ex.: Hunters 26.2" value={name} onChange={(e) => setName(e.target.value)} /></div>
             <div className="space-y-1"><Label htmlFor="np-start">Início</Label><Input id="np-start" type="date" value={start} onChange={(e) => setStart(e.target.value)} /></div>
+            <div className="space-y-1">
+              <Label htmlFor="np-kind">Tipo</Label>
+              <select id="np-kind" className={`${selectCls} w-full`} value={kind} onChange={(e) => setKind(e.target.value as "competicao" | "ciclo")}>
+                <option value="ciclo">Ciclo da equipe (ranking semanal e geral)</option>
+                <option value="competicao">Competição (estilo Hacka)</option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                {kind === "ciclo"
+                  ? "Só os membros entram no ranking, e contam todos os contatos deles pela data de cada etapa (leads antigos que avançam também pontuam)."
+                  : "Contam só os contatos importados durante o período."}
+              </p>
+            </div>
             <p className="text-xs text-muted-foreground">Novos cadastros entram automaticamente neste período, sem grupo. Membros já existentes você adiciona depois.</p>
           </div>
           <DialogFooter>
             <Button disabled={busy || !name.trim() || !start} onClick={async () => {
               setBusy(true);
               try {
-                const r = await fn({ data: { name: name.trim(), start } });
+                const r = await fn({ data: { name: name.trim(), start, kind } });
                 toast.success("Período criado");
                 await qc.invalidateQueries();
                 onCreated(r.id); setOpen(false); setName("");
@@ -109,6 +122,7 @@ function PeriodDetail({ data, period, ask }: { data: Overview; period: Overview[
   const [g, setG] = useState("");
   const [s, setS] = useState("");
   const [adding, setAdding] = useState(false);
+  const [endDate, setEndDate] = useState(spParts().iso);
   useEffect(() => setS(""), [g]);
 
   const shown = onlyUnalloc ? unallocated : members;
@@ -123,17 +137,24 @@ function PeriodDetail({ data, period, ask }: { data: Overview; period: Overview[
         <CardContent className="flex flex-wrap items-center gap-3 pt-6 text-sm">
           <span className="font-semibold">{period.name}</span>
           <Badge variant={closed ? "secondary" : "default"}>{closed ? "Encerrado" : "Ativo"}</Badge>
+          <Badge variant="outline">{period.kind === "ciclo" ? "Ciclo" : "Competição"}</Badge>
           <span className="text-muted-foreground">
             Início {fmtDate(period.started_at)}{period.closed_at ? ` · Encerrado em ${new Date(period.closed_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}` : ""} · {members.length} membros
           </span>
           {!closed && (
-            <Button className="ml-auto" size="sm" variant="destructive" onClick={() => ask({
+            <span className="ml-auto flex items-center gap-2">
+              <Label htmlFor="end-date" className="text-xs text-muted-foreground">Conta até</Label>
+              <Input id="end-date" type="date" className="h-8 w-[150px]" value={endDate} max={spParts().iso} onChange={(e) => setEndDate(e.target.value)} />
+            </span>
+          )}
+          {!closed && (
+            <Button size="sm" variant="destructive" disabled={!endDate} onClick={() => ask({
               title: `Encerrar e consolidar "${period.name}"`,
-              desc: "O placar oficial será congelado agora com os resultados deste período. Os contatos continuam rodando a cadência normalmente, e os avanços posteriores seguem contando para a maturação desta safra, mas não alteram o placar oficial.",
+              desc: `O placar oficial será congelado com os resultados até ${endDate.split("-").reverse().join("/")}. Os contatos continuam rodando a cadência normalmente, e os avanços posteriores seguem contando para a maturação desta safra, mas não alteram o placar oficial.`,
               word: period.name,
               action: "Encerrar período",
               run: async () => {
-                const r = await close({ data: { id: period.id, confirmName: period.name } });
+                const r = await close({ data: { id: period.id, confirmName: period.name, end: endDate } });
                 toast.success(`Período encerrado · placar congelado para ${r.hunters} hunters`);
                 await refresh();
               },
