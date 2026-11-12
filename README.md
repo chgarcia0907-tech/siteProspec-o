@@ -3,13 +3,13 @@
 Plataforma de prospecção outbound dos hunters: cadência de 5 toques (LinkedIn e WhatsApp),
 fila do dia, funil (AT → venda), ranking/competição por período e exportação para Google Sheets.
 
-O projeto está conectado ao [Lovable](https://lovable.dev): commits no branch conectado
-sincronizam com o editor. Leia o `AGENTS.md` antes de mudar a arquitetura — ele registra as
-decisões de projeto (onde fica cada regra e por quê).
+Desenvolvido com o Claude Code e publicado na Vercel. Leia o `AGENTS.md` (carregado pelo
+`CLAUDE.md`) antes de mudar a arquitetura: ele registra as decisões de projeto e o fluxo de
+trabalho.
 
 ## Stack
 
-- TanStack Start (React 19, roteamento por arquivos em `src/routes`) + Vite
+- TanStack Start (React 19, roteamento por arquivos em `src/routes`) + Vite + nitro (deploy na Vercel)
 - Supabase (Postgres, Auth, RLS) — cliente em `src/integrations/supabase`
 - React Query, Tailwind CSS 4, shadcn/ui (`src/components/ui`)
 - Vitest para testes das regras de negócio
@@ -28,44 +28,62 @@ decisões de projeto (onde fica cada regra e por quê).
 
 ## Rodando localmente
 
-Requer Node 22 (ou Bun). As variáveis públicas do Supabase já estão no `.env` versionado; segredos de servidor (service role, `ADMIN_PASSWORD`, `SHEET_EXPORT_TOKEN`) ficam no Lovable.
+Requer [Bun](https://bun.sh). As variáveis públicas do Supabase já estão no `.env`
+versionado. As rotas de servidor (admin, planilha) precisam também de
+`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD` e `SHEET_EXPORT_TOKEN`: coloque-os num
+`.env.local` (ignorado pelo git) e carregue no terminal antes de subir o servidor.
 
 ```sh
-npm install
-npm run dev
+bun install
+set -a; source .env.local; set +a   # opcional: só para testar admin e planilha
+bun run dev                          # http://localhost:8080
 ```
 
 ## Verificações
 
-Rode antes de enviar mudanças (o CI em `.github/workflows/ci.yml` roda as mesmas):
+Rode antes de cada push (o CI em `.github/workflows/ci.yml` roda as mesmas):
 
 ```sh
-npm run typecheck   # TypeScript
-npm run lint:ci     # ESLint (sem regra de formatação)
-npm test            # Vitest
-npm run build       # build de produção
+bun run typecheck   # TypeScript
+bun run lint        # ESLint + Prettier (bun run format corrige a formatação)
+bun run test        # Vitest
+bun run build       # build de produção
 ```
 
-`npm run lint` inclui o prettier e hoje acusa muitos avisos de formatação no código gerado.
-`npm run format` corrige, mas gera um diff grande — faça isso num commit separado, se quiser.
+## Deploy
+
+A Vercel faz o build (`bun run build`) a cada push. O nitro detecta a Vercel e gera
+`.vercel/output`; fora dela, gera um servidor Node em `.output`
+(`node .output/server/index.mjs`). Segredos de servidor ficam nas variáveis de ambiente
+do projeto na Vercel.
 
 ## Banco de dados e migrações
 
-O esquema está espalhado em três lugares, em ordem cronológica:
+Todas as migrações ficam em `supabase/migrations/`, aplicadas pelo
+[Supabase CLI](https://supabase.com/docs/guides/cli):
 
-1. **`supabase/migrations/`** — esquema inicial criado pelo Lovable Cloud (perfis, contatos,
-   configurações, modelos, competição, função `ranking`, `sync_settings`). Não editar.
-2. **`drizzle/migrations/`** — migrações posteriores, aplicadas em ordem pelo `drizzle-kit`
-   (controle em `meta/_journal.json`): papéis de admin, períodos/grupos/snapshots, feriados,
-   funil com `*_registrado_em`, tipo de período etc. **Migrações novas entram aqui**, com o
-   próximo número da sequência. O `drizzle/schema.ts` fica vazio de propósito: as migrações
-   são SQL escritas à mão.
-3. **`pendente-pos-publicacao/`** — SQL que só pode rodar depois de publicar a versão do app
-   que o entende (ex.: texto dos modelos com tags novas). Rodar manualmente e depois limpar.
+```sh
+npx supabase login
+npx supabase link --project-ref djxfcjgrjntfdgvgyaoe
+bun run db:new nome_da_mudanca   # cria supabase/migrations/<timestamp>_nome_da_mudanca.sql
+bun run db:push                  # aplica as pendentes no banco
+bun run db:types                 # regenera src/integrations/supabase/types.ts
+```
 
-Atenção: a tabela `admin_attempts` (bloqueio de tentativas de senha de admin) é usada pelo
-código mas não aparece em nenhuma migração deste repositório. Recriar o banco do zero a partir
-daqui exige criá-la à mão.
+SQL que só pode rodar depois de publicar a versão do app que o entende fica em
+`pendente-pos-publicacao/` e é executado manualmente após o deploy.
 
-Depois de mudar o esquema, atualize `src/integrations/supabase/types.ts` (o Lovable
-regenera esse arquivo) para o TypeScript acusar o que precisa mudar no código.
+### Primeira vez com o CLI (uma vez só)
+
+As migrações de `20261010200102` a `20261106154640` foram aplicadas em produção pelo
+drizzle, não pelo Supabase CLI, então o CLI ainda não sabe que elas já rodaram. Antes do
+primeiro `db:push`, confira com `npx supabase migration list` e marque como aplicadas as que
+aparecerem só no lado local:
+
+```sh
+npx supabase migration repair --status applied 20261010200102 20261010200850 20261010222519 20261010223448 20261011171543 20261012200246 20261023173127 20261023181702 20261103192940 20261106154640
+```
+
+Faça o mesmo com qualquer uma das 7 migrações iniciais (`20260928…` a `20261001…`) que
+apareça como pendente. Depois disso, `db:push` aplica só o que é novo (hoje,
+`20261112150000_unschedule_lovable_sheet_sync`).

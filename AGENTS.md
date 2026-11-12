@@ -1,13 +1,29 @@
-<!-- LOVABLE:BEGIN -->
-> [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-<!-- LOVABLE:END -->
+# Cadência Outbound — guia para agentes
+
+Objetivo do produto: hunters conseguem reuniões com as empresas que prospectam.
+Métrica-guia: reuniões (ATs) marcadas a cada semana.
+
+## Fluxo de trabalho
+
+- Desenvolvimento só pelo Claude Code; o projeto não usa mais o Lovable.
+- Deploy: a Vercel publica a cada push no branch de produção. Mantenha o branch sempre
+  funcionando e rode as verificações antes de cada push:
+  `bun run typecheck && bun run lint && bun run test && bun run build`.
+- Gerenciador de pacotes: bun (`bun.lock` versionado). Instale com `bun install`.
+- Não reescreva histórico já enviado (force push, rebase ou amend de commits publicados).
+
+## Banco de dados (Supabase, projeto próprio)
+
+- Migrações ficam só em `supabase/migrations/` (formato do Supabase CLI). Crie com
+  `bun run db:new <nome>` e aplique com `bun run db:push` (exige `supabase link`).
+- Nunca edite uma migração já aplicada; crie outra.
+- Depois de mudar o esquema, rode `bun run db:types` para regenerar
+  `src/integrations/supabase/types.ts`. Não edite esse arquivo à mão: o tipo `Contact`
+  e as server functions derivam dele.
+- SQL que depende de uma versão do app já publicada (ex.: texto de modelos com tags novas)
+  vai para `pendente-pos-publicacao/` e só roda depois do deploy.
+- Segredos de servidor (`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `SHEET_EXPORT_TOKEN`)
+  ficam nas variáveis de ambiente da Vercel, nunca no repositório.
 
 ## Arquitetura (Cadência Outbound)
 
@@ -24,5 +40,4 @@
 - Ranking por período: período encerrado lê o placar oficial de period_snapshots (loadSnapshot); "maturação atual" recalcula ao vivo só com contatos do período; sem período mantém o cálculo original para não quebrar a planilha.
 - Feriados: leitura pública para logados; escrita só por `adminAddHoliday`/`adminRemoveHoliday` (senha de administrador), para manter o mesmo controle das outras ações sensíveis.
 - Funil: cada etapa tem coluna `*_registrado_em` (momento do clique); a pontuação usa `stageScoreDate` em `competition.ts`, e a data agendada (`*_em`) fica só para consolidado — assim agendamentos futuros não represam pontos.
-- Model text changes are staged in pendente-pos-publicacao/modelos.sql and run only after publishing, because the published app may not understand new template tags yet.
 - Tipos de período (periods.kind): 'competicao' (Hacka: contatos do próprio período) e 'ciclo' (equipe: só membros, todos os contatos deles contados pela data de cada etapa, com ranking por semana via computeWeekly). closePeriod aceita `end` para congelar o placar numa data passada. A planilha lê o ciclo em ranking.csv?visao=ciclo e ?visao=semanas.
