@@ -2,9 +2,13 @@
 // Toda função valida has_role(admin) pelo cliente do próprio usuário ANTES de usar o service role.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
+import type { CompContact } from "./competition";
 
-type Ctx = { supabase: any; userId: string };
+type Db = SupabaseClient<Database>;
+type Ctx = { supabase: Db; userId: string };
 const uuid = z.string().uuid();
 const name = z.string().trim().min(1).max(80);
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -133,7 +137,7 @@ export const closePeriod = createServerFn({ method: "POST" })
     const ids = new Set<string>(members.map((m) => m.user_id));
     if (!ciclo) for (const c of contacts) ids.add(c.user_id);
     const hunters = [...ids].map((id) => ({ id, name: pname.get(id) ?? "Hunter" }));
-    const result = computeCompetition(contacts as any, hunters, { start, end }, today);
+    const result = computeCompetition(contacts as CompContact[], hunters, { start, end }, today);
 
     const frozen = new Date().toISOString();
     // Contagens do placar só dentro do período (data em SP), como os pontos.
@@ -143,7 +147,7 @@ export const closePeriod = createServerFn({ method: "POST" })
     const rows = result.rows.map((r) => {
       const m = mem.get(r.hunter_id);
       const mine = contacts.filter((c) => c.user_id === r.hunter_id && (ciclo || inRange(c.created_at)));
-      const n = (f: string) => mine.filter((c: any) => inRange(c[f])).length;
+      const n = (f: "sent1_at" | "sent2_at" | "sent3_at" | "sent4_at" | "sent5_at") => mine.filter((c) => inRange(c[f])).length;
       return {
         period_id: p.id, hunter_id: r.hunter_id, hunter_name: r.hunter,
         group_name: (m?.group_id && gname.get(m.group_id)) || "",
@@ -225,13 +229,13 @@ export const deleteGroupOrSub = createServerFn({ method: "POST" })
 
 // ---------- Membros ----------
 
-async function validAllocation(db: any, periodId: string, groupId: string | null, subgroupId: string | null) {
+async function validAllocation(db: Db, periodId: string, groupId: string | null, subgroupId: string | null) {
   if (subgroupId && !groupId) fail("Escolha o grupo antes do subgrupo.");
   if (groupId) {
     const { data: g } = await db.from("groups").select("id").eq("id", groupId).eq("period_id", periodId).maybeSingle();
     if (!g) fail("Grupo não pertence a este período.");
   }
-  if (subgroupId) {
+  if (subgroupId && groupId) {
     const { data: s } = await db.from("subgroups").select("id").eq("id", subgroupId).eq("group_id", groupId).maybeSingle();
     if (!s) fail("Subgrupo não pertence a este grupo.");
   }

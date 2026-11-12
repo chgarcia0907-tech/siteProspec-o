@@ -122,7 +122,7 @@ function ContactTable({ rows, names, ask, onDeleted }: { rows: Row[]; names?: Ma
   useEffect(() => setSel(new Set()), [rows]);
   const all = rows.length > 0 && sel.size === rows.length;
   const hasAct = rows.some((r) => r.atividades?.length);
-  const toggle = (id: string) => setSel((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const toggle = (id: string) => setSel((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
   if (!rows.length) return <p className="py-4 text-sm text-muted-foreground">Nenhum contato.</p>;
   return (

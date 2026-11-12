@@ -1,33 +1,17 @@
 import { fetchAll } from "@/lib/fetch-all";
 import { createFileRoute } from "@tanstack/react-router";
 import { timingSafeEqual } from "crypto";
-import { plannedDates } from "@/lib/cadencia";
+import {
+  DEFAULT_OFFSETS,
+  STATUS_LABEL,
+  STEPS,
+  computedStatus,
+  plannedDates,
+  type Contact,
+  type Offsets,
+} from "@/lib/cadencia";
 
-// Datas previstas vêm de src/lib/cadencia.ts (mesma regra do app).
-type Offsets = { offset1: number; offset2: number; offset3: number; offset4: number; offset5: number };
-const DEFAULT_OFFSETS: Offsets = { offset1: 0, offset2: 1, offset3: 2, offset4: 3, offset5: 4 };
-const STEPS = [
-  { n: 1, label: "LinkedIn 1", field: "sent1_at" },
-  { n: 2, label: "WhatsApp 1", field: "sent2_at" },
-  { n: 3, label: "LinkedIn 2", field: "sent3_at" },
-  { n: 4, label: "WhatsApp 2", field: "sent4_at" },
-  { n: 5, label: "LinkedIn 3", field: "sent5_at" },
-] as const;
-const STATUS_LABEL: Record<string, string> = {
-  aguardando: "Aguardando início",
-  em_cadencia: "Em cadência",
-  respondeu: "Respondeu",
-  concluido: "Concluído",
-  descartado: "Descartado",
-};
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function computedStatus(c: any): string {
-  if (c.status === "respondeu" || c.status === "descartado") return c.status;
-  if (STEPS.every((s) => c[s.field])) return "concluido";
-  if (c.step1_date || c.sent1_at) return "em_cadencia";
-  return "aguardando";
-}
+// Etapas, status e datas previstas vêm de src/lib/cadencia.ts (mesma regra do app).
 const d10 = (v: string | null | undefined) => (v ? String(v).slice(0, 10) : "");
 
 function safeEq(a: string, b: string) {
@@ -63,9 +47,9 @@ export const Route = createFileRoute("/api/public/export-sheet")({
         const rows = contactsRes.data
           .map((c) => {
             const planned = plannedDates(c, offs.get(c.user_id) ?? DEFAULT_OFFSETS, holidays);
-            const status = computedStatus(c);
+            const status = computedStatus(c as Contact);
             const active = status === "aguardando" || status === "em_cadencia";
-            const next = active ? STEPS.find((s) => !c[s.field]) : undefined;
+            const next = active ? STEPS.find((s) => !c[s.sentField]) : undefined;
             return {
               hunter: names.get(c.user_id) ?? "",
               nome: c.name ?? "",
@@ -80,7 +64,7 @@ export const Route = createFileRoute("/api/public/export-sheet")({
               linkedin3_prevista: d10(planned[5]), linkedin3_enviada: d10(c.sent5_at),
               proxima_etapa: next?.label ?? "",
               proxima_data: next ? d10(planned[next.n]) : "",
-              status: STATUS_LABEL[status] ?? status,
+              status: STATUS_LABEL[status],
               importado_em: d10(c.created_at),
             };
           })

@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # O bun.lock é mantido pelo Lovable e aponta para um registry espelho,
+      # então o CI instala direto do npm público, sem gravar lockfile.
+      - name: Instalar dependências
+        run: npm install --no-package-lock --no-audit --no-fund --registry=https://registry.npmjs.org
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Formatação (prettier) fica fora do CI: o código gerado pelo Lovable não segue o prettier.
+      - name: Lint
+        run: npm run lint:ci
+
+      - name: Testes
+        run: npm test
+
+      - name: Build
+        run: npm run build

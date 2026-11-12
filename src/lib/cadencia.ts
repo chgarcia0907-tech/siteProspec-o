@@ -1,3 +1,5 @@
+import type { Tables } from "@/integrations/supabase/types";
+
 export type Channel = "linkedin" | "whatsapp";
 
 export type StepDef = {
@@ -15,36 +17,14 @@ export const STEPS: StepDef[] = [
   { n: 5, label: "LinkedIn 3", channel: "linkedin", sentField: "sent5_at" },
 ];
 
-export type Contact = {
-  id: string;
-  user_id: string;
-  name: string;
-  headline: string;
-  company: string;
-  company_gender: CompanyGender;
-  phone: string;
-  connected_at: string | null;
-  step1_date: string | null;
-  sent1_at: string | null;
-  sent2_at: string | null;
-  sent3_at: string | null;
-  sent4_at: string | null;
-  sent5_at: string | null;
+/**
+ * Linha de `contacts` vinda dos tipos gerados do Supabase (fonte única do esquema).
+ * Só `status` e `company_gender` são estreitados para as uniões usadas no app
+ * (no banco são texto com CHECK).
+ */
+export type Contact = Omit<Tables<"contacts">, "status" | "company_gender"> & {
   status: ContactStatus;
-  sector: string;
-  job_title: string;
-  at_marcada_em: string | null;
-  lead_em: string | null;
-  proposta_em: string | null;
-  aprovacao_em: string | null;
-  vendido_em: string | null;
-  at_registrado_em: string | null;
-  lead_registrado_em: string | null;
-  proposta_registrado_em: string | null;
-  aprovacao_registrado_em: string | null;
-  vendido_registrado_em: string | null;
-  created_at: string;
-  updated_at: string;
+  company_gender: CompanyGender;
 };
 
 export type ContactStatus =

@@ -263,7 +263,7 @@ function PeriodDetail({ data, period, ask }: { data: Overview; period: Overview[
                 <tbody>
                   {shown.map((m) => (
                     <tr key={m.id} className="border-t">
-                      <td className="p-2"><Checkbox checked={sel.has(m.user_id)} onCheckedChange={() => setSel((x) => { const n = new Set(x); n.has(m.user_id) ? n.delete(m.user_id) : n.add(m.user_id); return n; })} aria-label={`Selecionar ${m.name}`} /></td>
+                      <td className="p-2"><Checkbox checked={sel.has(m.user_id)} onCheckedChange={() => setSel((x) => { const n = new Set(x); if (n.has(m.user_id)) n.delete(m.user_id); else n.add(m.user_id); return n; })} aria-label={`Selecionar ${m.name}`} /></td>
                       <td className="p-2 font-medium">{m.name}</td>
                       <td className="p-2">{m.group_id ? gName.get(m.group_id) : <Badge variant="outline" className="text-muted-foreground">Sem grupo</Badge>}</td>
                       <td className="p-2 text-muted-foreground">{m.subgroup_id ? sName.get(m.subgroup_id) : "—"}</td>
@@ -334,7 +334,7 @@ function AddMembersDialog({ open, onOpenChange, data, periodId, groups, subsOf }
             <div className="max-h-64 space-y-1 overflow-y-auto rounded-md border p-2">
               {list.map((x) => (
                 <label key={x.id} className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={sel.has(x.id)} onCheckedChange={() => setSel((c) => { const n = new Set(c); n.has(x.id) ? n.delete(x.id) : n.add(x.id); return n; })} />
+                  <Checkbox checked={sel.has(x.id)} onCheckedChange={() => setSel((c) => { const n = new Set(c); if (n.has(x.id)) n.delete(x.id); else n.add(x.id); return n; })} />
                   <span>{x.name}</span><span className="text-xs text-muted-foreground">{x.info}</span>
                 </label>
               ))}

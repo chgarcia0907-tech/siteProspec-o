@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { computeCompetition, computeWeekly, type CompContact, type CompResult, type CompRow } from "./competition";
 import { spParts } from "./cadencia";
 import { fetchAll } from "./fetch-all";
@@ -8,9 +10,9 @@ export type CompResultG = Omit<CompResult, "rows"> & {
   rows: CompRowG[];
   periodId: string | null;
   periodName: string | null;
-  periodKind?: "competicao" | "ciclo";
+  periodKind?: "competicao" | "ciclo" | undefined;
   /** Só para ciclos: ranking de cada semana, mais recente primeiro. */
-  semanas?: WeekBoardG[];
+  semanas?: WeekBoardG[] | undefined;
 };
 
 const spDate = (ts: string) => new Date(ts).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
@@ -126,8 +128,7 @@ export async function loadSnapshot(periodId: string): Promise<CompResultG> {
 }
 
 /** Contas com papel admin não participam do ranking. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function adminIds(db: any): Promise<Set<string>> {
+async function adminIds(db: SupabaseClient<Database>): Promise<Set<string>> {
   const { data } = await db.from("user_roles").select("user_id").eq("role", "admin");
-  return new Set((data ?? []).map((r: { user_id: string }) => r.user_id));
+  return new Set((data ?? []).map((r) => r.user_id));
 }

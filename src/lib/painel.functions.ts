@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database, Tables } from "@/integrations/supabase/types";
 
-type Ctx = { supabase: any; userId: string };
+type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
 async function assertAdmin(ctx: Ctx) {
   const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
@@ -87,7 +89,12 @@ export const painelContacts = createServerFn({ method: "POST" })
     });
     const spDay = (ts: string) => new Date(ts).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
     const inR = (d: string | null) => !!range && !!d && d >= range.from && d <= range.to;
-    const out = (rows as any[]).map((r) => ({
+    type Row = Pick<
+      Tables<"contacts">,
+      "id" | "user_id" | "name" | "headline" | "company" | "phone" | "status" | "connected_at" | "created_at" | (typeof ACTIVITY)[number][0]
+    >;
+    // O select é montado a partir de ACTIVITY (string dinâmica), então o tipo é declarado aqui.
+    const out = (rows as unknown as Row[]).map((r) => ({
       ...r,
       atividades: range
         ? [...(inR(spDay(r.created_at)) ? [`Importado em ${spDay(r.created_at)}`] : []),
