@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { DEFAULT_OFFSETS, type Contact, type Offsets, computedStatus } from "@/lib/cadencia";
+import { DEFAULT_OFFSETS, type Contact, type Offsets } from "@/lib/cadencia";
 import { fetchAll } from "@/lib/fetch-all";
 
 export function useContacts() {
@@ -155,12 +155,6 @@ export function useImportContacts() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["contacts"] }),
   });
-}
-
-/** Mantém a coluna de situação coerente com as etapas já enviadas. */
-export function syncedStatusPatch(contact: Contact): Partial<Contact> {
-  const next = computedStatus(contact);
-  return next === contact.status ? {} : { status: next };
 }
 
 export function useSaveGender() {
