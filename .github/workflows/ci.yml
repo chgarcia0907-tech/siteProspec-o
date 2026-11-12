@@ -10,24 +10,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
+      - uses: oven-sh/setup-bun@v2
 
-      # O bun.lock é mantido pelo Lovable e aponta para um registry espelho,
-      # então o CI instala direto do npm público, sem gravar lockfile.
       - name: Instalar dependências
-        run: npm install --no-package-lock --no-audit --no-fund --registry=https://registry.npmjs.org
+        run: bun install --frozen-lockfile
 
       - name: Typecheck
-        run: npm run typecheck
+        run: bun run typecheck
 
       # Formatação (prettier) fica fora do CI: o código gerado pelo Lovable não segue o prettier.
       - name: Lint
-        run: npm run lint:ci
+        run: bun run lint:ci
 
       - name: Testes
-        run: npm test
+        run: bun run test
 
       - name: Build
-        run: npm run build
+        run: bun run build
