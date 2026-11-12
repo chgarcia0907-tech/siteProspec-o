@@ -51,14 +51,12 @@ export const Route = createFileRoute("/_authenticated/contatos")({
       { title: "Contatos — Cadência Outbound" },
       {
         name: "description",
-        content:
-          "Tabela de contatos com datas previstas, envios marcados e situação da cadência.",
+        content: "Tabela de contatos com datas previstas, envios marcados e situação da cadência.",
       },
       { property: "og:title", content: "Contatos — Cadência Outbound" },
       {
         property: "og:description",
-        content:
-          "Tabela de contatos com datas previstas, envios marcados e situação da cadência.",
+        content: "Tabela de contatos com datas previstas, envios marcados e situação da cadência.",
       },
     ],
   }),
@@ -82,9 +80,7 @@ function Contatos() {
   const updateMany = useUpdateContacts();
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"todos" | ContactStatus>(
-    "todos",
-  );
+  const [statusFilter, setStatusFilter] = useState<"todos" | ContactStatus>("todos");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const rows = useMemo(() => {
@@ -109,10 +105,7 @@ function Contatos() {
     const next: Partial<Contact> = { ...changes };
     const status = computedStatus(merged);
     if (status !== contact.status) next.status = status;
-    update.mutate(
-      { id: contact.id, patch: next },
-      { onError: (e) => toast.error(e.message) },
-    );
+    update.mutate({ id: contact.id, patch: next }, { onError: (e) => toast.error(e.message) });
   }
 
   function toggleSelected(id: string) {
@@ -165,10 +158,7 @@ function Contatos() {
         c.company,
         c.phone,
         formatBR(c.connected_at),
-        ...STEPS.flatMap((s) => [
-          formatBR(planned[s.n]),
-          formatBR(c[s.sentField]),
-        ]),
+        ...STEPS.flatMap((s) => [formatBR(planned[s.n]), formatBR(c[s.sentField])]),
         STATUS_LABEL[computedStatus(c)],
       ];
     });
@@ -189,8 +179,7 @@ function Contatos() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Contatos</h1>
           <p className="text-sm text-muted-foreground">
-            {rows.length} contatos · edite empresa, telefone e datas direto na
-            tabela.
+            {rows.length} contatos · edite empresa, telefone e datas direto na tabela.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -256,11 +245,7 @@ function Contatos() {
           >
             Marcar como descartado
           </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setSelected(new Set())}
-          >
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
             Limpar seleção
           </Button>
         </div>
@@ -336,16 +321,16 @@ function Contatos() {
                       onCommit={(v) => patch(c, { job_title: v })}
                     />
                     {c.headline && (
-                      <p className="mt-0.5 max-w-[240px] truncate text-[11px] text-muted-foreground" title={c.headline}>
+                      <p
+                        className="mt-0.5 max-w-[240px] truncate text-[11px] text-muted-foreground"
+                        title={c.headline}
+                      >
                         {c.headline}
                       </p>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Select
-                      value={c.sector}
-                      onValueChange={(v) => patch(c, { sector: v })}
-                    >
+                    <Select value={c.sector} onValueChange={(v) => patch(c, { sector: v })}>
                       <SelectTrigger className="h-7 w-40 text-xs" aria-label="Setor">
                         <SelectValue placeholder="Setor" />
                       </SelectTrigger>
@@ -387,9 +372,7 @@ function Contatos() {
                         type="date"
                         className="h-7 w-32 text-xs"
                         value={c.step1_date ?? ""}
-                        onChange={(e) =>
-                          patch(c, { step1_date: e.target.value || null })
-                        }
+                        onChange={(e) => patch(c, { step1_date: e.target.value || null })}
                       />
                       <Button
                         size="sm"
@@ -409,9 +392,7 @@ function Contatos() {
                         onToggle={(v) =>
                           patch(c, {
                             sent1_at: v ? todayISO() : null,
-                            ...(v && !c.step1_date
-                              ? { step1_date: todayISO() }
-                              : {}),
+                            ...(v && !c.step1_date ? { step1_date: todayISO() } : {}),
                           })
                         }
                       />
@@ -423,9 +404,7 @@ function Contatos() {
                         <span
                           className={cn(
                             "text-xs",
-                            c[s.sentField]
-                              ? "text-muted-foreground line-through"
-                              : "",
+                            c[s.sentField] ? "text-muted-foreground line-through" : "",
                           )}
                         >
                           {formatBR(planned[s.n])}
@@ -445,30 +424,30 @@ function Contatos() {
                     {funnelIndex(c) >= 0 ? (
                       <FunnelBadge contact={c} />
                     ) : (
-                    <Select
-                      value={status}
-                      onValueChange={(v) =>
-                        update.mutate(
-                          { id: c.id, patch: { status: v as ContactStatus } },
-                          { onError: (e) => toast.error(e.message) },
-                        )
-                      }
-                    >
-                      <SelectTrigger className="h-7 w-[150px] text-xs">
-                        <SelectValue asChild>
-                          <span>
-                            <StatusBadge status={status} />
-                          </span>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUS_OPTIONS.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {STATUS_LABEL[s]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <Select
+                        value={status}
+                        onValueChange={(v) =>
+                          update.mutate(
+                            { id: c.id, patch: { status: v as ContactStatus } },
+                            { onError: (e) => toast.error(e.message) },
+                          )
+                        }
+                      >
+                        <SelectTrigger className="h-7 w-[150px] text-xs">
+                          <SelectValue asChild>
+                            <span>
+                              <StatusBadge status={status} />
+                            </span>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {STATUS_LABEL[s]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     )}
                   </TableCell>
                   <TableCell>
@@ -480,25 +459,12 @@ function Contatos() {
           </TableBody>
         </Table>
       </div>
-
     </div>
   );
 }
 
-function StepCheck({
-  checked,
-  onToggle,
-}: {
-  checked: boolean;
-  onToggle: (v: boolean) => void;
-}) {
-  return (
-    <Checkbox
-      checked={checked}
-      onCheckedChange={(v) => onToggle(!!v)}
-      title="Enviado"
-    />
-  );
+function StepCheck({ checked, onToggle }: { checked: boolean; onToggle: (v: boolean) => void }) {
+  return <Checkbox checked={checked} onCheckedChange={(v) => onToggle(!!v)} title="Enviado" />;
 }
 
 function InlineInput({

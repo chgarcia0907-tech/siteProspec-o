@@ -27,12 +27,7 @@ export type Contact = Omit<Tables<"contacts">, "status" | "company_gender"> & {
   company_gender: CompanyGender;
 };
 
-export type ContactStatus =
-  | "aguardando"
-  | "em_cadencia"
-  | "respondeu"
-  | "concluido"
-  | "descartado";
+export type ContactStatus = "aguardando" | "em_cadencia" | "respondeu" | "concluido" | "descartado";
 
 export const STATUS_LABEL: Record<ContactStatus, string> = {
   aguardando: "Aguardando início",
@@ -110,7 +105,11 @@ export function isBusinessDay(iso: string, holidays: Holidays = NO_HOLIDAYS): bo
 }
 
 /** Soma N dias úteis (seg–sex, fora feriados). Com N = 0, dia não útil avança para o próximo útil. */
-export function addBusinessDaysISO(iso: string, days: number, holidays: Holidays = NO_HOLIDAYS): string {
+export function addBusinessDaysISO(
+  iso: string,
+  days: number,
+  holidays: Holidays = NO_HOLIDAYS,
+): string {
   let cur = iso.slice(0, 10);
   if (days <= 0) {
     while (!isBusinessDay(cur, holidays)) cur = addDaysISO(cur, 1);
@@ -140,7 +139,13 @@ export function plannedDates(
 ): Record<number, string | null> {
   const out: Record<number, string | null> = { 1: null, 2: null, 3: null, 4: null, 5: null };
   if (!c.step1_date) return out;
-  const offs = [offsets.offset1, offsets.offset2, offsets.offset3, offsets.offset4, offsets.offset5];
+  const offs = [
+    offsets.offset1,
+    offsets.offset2,
+    offsets.offset3,
+    offsets.offset4,
+    offsets.offset5,
+  ];
   out[1] = addBusinessDaysISO(c.step1_date, 0, holidays);
   for (let i = 1; i < STEPS.length; i++) {
     const prev = STEPS[i - 1]!;
@@ -207,7 +212,10 @@ export function renderTemplate(
     .replace(/\bna \[EMPRESA\]/g, "[NA_EMPRESA]")
     .replace(/\bda \[EMPRESA\]/g, "[DA_EMPRESA]")
     .replace(/Entrei em contato/g, "Entramos em contato")
-    .replace(/Podemos agendar uma conversa rápida na \[DIA_SUGERIDO\]\?/g, "Podemos agendar uma conversa rápida [JANELA]?")
+    .replace(
+      /Podemos agendar uma conversa rápida na \[DIA_SUGERIDO\]\?/g,
+      "Podemos agendar uma conversa rápida [JANELA]?",
+    )
     .replace(/Que tal marcarmos na \[DIA_SUGERIDO\]\?/g, "Que tal marcarmos uma conversa [JANELA]?")
     .replace(/nesta ou na próxima semana/g, "[JANELA]")
     .replace(/(?:\bna )?\[DIA_SUGERIDO\]/g, "[JANELA]");
@@ -240,12 +248,13 @@ export const SECTORS = [
 export const SECTOR_PAIN: Record<string, string> = {
   "Tecnologia / TI":
     "superalocação de equipes de desenvolvedores, impedindo que alguns projetos internos venham a ser priorizados",
-  "Operações":
+  Operações:
     "sistemas segregados que diminuem produtividade e aumentam retrabalho, dificultando um proveito de 100% do tempo da equipe",
-  "Marketing":
+  Marketing:
     "estruturar plataformas digitais e integrações que suportem iniciativas de marketing, ajudando na geração de mais leads e agregando mais valor à empresa",
-  "RH": "organizar fluxos internos, folhas de pagamento, comunicação e gestão de informações entre equipes",
-  "Produto / Inovação": "tirar novas iniciativas digitais do papel e estruturar plataformas escaláveis",
+  RH: "organizar fluxos internos, folhas de pagamento, comunicação e gestão de informações entre equipes",
+  "Produto / Inovação":
+    "tirar novas iniciativas digitais do papel e estruturar plataformas escaláveis",
   "Comercial / Vendas":
     "organizar informações comerciais e conseguir insights com base nos dados de venda, garantindo visibilidade e eficiência na condução de leads no funil",
 };
@@ -255,7 +264,12 @@ const SP = "America/Sao_Paulo";
 /** Data/hora atual no fuso de São Paulo. */
 export function spParts(now = new Date()) {
   const f = new Intl.DateTimeFormat("en-CA", {
-    timeZone: SP, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23",
+    timeZone: SP,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
   }).formatToParts(now);
   const g = (t: string) => f.find((p) => p.type === t)?.value ?? "";
   return { iso: `${g("year")}-${g("month")}-${g("day")}`, hour: Number(g("hour")) };
@@ -302,7 +316,8 @@ export function cargoSemEmpresa(cargo: string, empresa: string): string {
 
 /* --------------------------------- Funil --------------------------------- */
 
-export type FunnelField = "at_marcada_em" | "lead_em" | "proposta_em" | "aprovacao_em" | "vendido_em";
+export type FunnelField =
+  "at_marcada_em" | "lead_em" | "proposta_em" | "aprovacao_em" | "vendido_em";
 export const FUNNEL: { field: FunnelField; label: string; short: string; points: number }[] = [
   { field: "at_marcada_em", label: "AT marcada", short: "AT", points: 3 },
   { field: "lead_em", label: "Lead", short: "Lead", points: 5 },
@@ -314,7 +329,9 @@ export const FUNNEL: { field: FunnelField; label: string; short: string; points:
 /** Índice da última etapa marcada (-1 se nenhuma). */
 export function funnelIndex(c: Partial<Record<FunnelField, string | null>>): number {
   let idx = -1;
-  FUNNEL.forEach((f, i) => { if (c[f.field]) idx = i; });
+  FUNNEL.forEach((f, i) => {
+    if (c[f.field]) idx = i;
+  });
   return idx;
 }
 
@@ -353,7 +370,20 @@ function shiftISO(iso: string, days: number, months = 0): string {
   return dt.toISOString().slice(0, 10);
 }
 
-const MONTHS_EN = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+const MONTHS_EN = [
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "may",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "oct",
+  "nov",
+  "dec",
+];
 
 function monthIndex(raw: string): number {
   const s = raw
@@ -362,7 +392,12 @@ function monthIndex(raw: string): number {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\./g, "")
     .slice(0, 3);
-  const pt = MONTHS_PT.map((m) => m.normalize("NFD").replace(/[\u0300-\u036f]/g, "").slice(0, 3));
+  const pt = MONTHS_PT.map((m) =>
+    m
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .slice(0, 3),
+  );
   let i = pt.indexOf(s);
   if (i < 0) i = MONTHS_EN.indexOf(s);
   return i;
@@ -400,7 +435,9 @@ export function parseConnectionDate(line: string, now: Date = new Date()): strin
   if (/\b(hoje|today|agora|now)\b/.test(l)) return today;
   if (/\b(ontem|yesterday)\b/.test(l)) return shiftISO(today, 1);
   // Relativa: há 2 dias / 2 days ago / há uma semana
-  m = l.match(/(\d+|um|uma|a|an)\s+(minuto|minute|hora|hour|dia|day|semana|week|m[eê]s|meses|month|ano|year)/);
+  m = l.match(
+    /(\d+|um|uma|a|an)\s+(minuto|minute|hora|hour|dia|day|semana|week|m[eê]s|meses|month|ano|year)/,
+  );
   if (m) {
     const n = /^\d+$/.test(m[1]!) ? Number(m[1]) : 1;
     const unit = m[2]!;
@@ -424,8 +461,20 @@ export function cleanName(raw: string): string {
 }
 
 const PARTICULAS = new Set([
-  "de", "da", "do", "das", "dos", "e",
-  "van", "von", "der", "den", "du", "del", "della", "y",
+  "de",
+  "da",
+  "do",
+  "das",
+  "dos",
+  "e",
+  "van",
+  "von",
+  "der",
+  "den",
+  "du",
+  "del",
+  "della",
+  "y",
 ]);
 
 const lowerBR = (s: string) => s.toLocaleLowerCase("pt-BR");
@@ -446,7 +495,8 @@ function normalizarParte(p: string): string {
   for (let i = 1; i < segs.length; i += 2) {
     const before = (segs[i - 1] ?? "").replace(/[^\p{L}]/gu, "");
     const next = segs[i + 1] ?? "";
-    out += segs[i]! + (before.length >= 1 && before.length <= 2 ? capitalizar(next) : lowerBR(next));
+    out +=
+      segs[i]! + (before.length >= 1 && before.length <= 2 ? capitalizar(next) : lowerBR(next));
   }
   return out;
 }
@@ -461,7 +511,13 @@ export function normalizarNome(nome: string): string {
     .map((w, i) => {
       if (i > 0 && PARTICULAS.has(lowerBR(w))) return lowerBR(w);
       const letras = w.replace(/[^\p{L}]/gu, "");
-      if (!nomeTodoMaiusculo && letras.length >= 2 && letras.length <= 4 && letras === upperBR(letras) && letras !== lowerBR(letras))
+      if (
+        !nomeTodoMaiusculo &&
+        letras.length >= 2 &&
+        letras.length <= 4 &&
+        letras === upperBR(letras) &&
+        letras !== lowerBR(letras)
+      )
         return w; // sigla (MBA, PCD)
       return w
         .split(/(-)/)
@@ -471,7 +527,8 @@ export function normalizarNome(nome: string): string {
     .join(" ");
 }
 
-const PHOTO_RE = /^(foto do perfil de|foto de perfil de|profile picture of|profile photo of|foto de)\s+/i;
+const PHOTO_RE =
+  /^(foto do perfil de|foto de perfil de|profile picture of|profile photo of|foto de)\s+/i;
 const PHOTO_SUFFIX_RE = /['’]s? profile (picture|photo)$/i;
 
 /** Extrai X de "Foto de perfil de X", "Profile picture of X" ou "X's profile picture". */
@@ -481,7 +538,11 @@ function photoNameOf(line: string): string | null {
   const suf = line.match(PHOTO_SUFFIX_RE);
   if (suf) return line.slice(0, suf.index).trim();
   const acc = line.match(/^acessar perfil de\s+/i);
-  if (acc) return line.slice(acc[0].length).replace(/\s*a [úu]ltima atividade.*$/i, "").trim();
+  if (acc)
+    return line
+      .slice(acc[0].length)
+      .replace(/\s*a [úu]ltima atividade.*$/i, "")
+      .trim();
   return null;
 }
 
@@ -615,8 +676,6 @@ export function normalizeKey(name: string, headline: string): string {
 
 export function toCSV(rows: string[][]): string {
   return rows
-    .map((r) =>
-      r.map((cell) => `"${(cell ?? "").replace(/"/g, '""')}"`).join(";"),
-    )
+    .map((r) => r.map((cell) => `"${(cell ?? "").replace(/"/g, '""')}"`).join(";"))
     .join("\n");
 }

@@ -46,7 +46,13 @@ export type CompRow = {
   pontuacao_final: number;
 };
 
-export type CompWeek = { inicio: string; fim: string; parcial: boolean; max: number; vencedores: string[] };
+export type CompWeek = {
+  inicio: string;
+  fim: string;
+  parcial: boolean;
+  max: number;
+  vencedores: string[];
+};
 
 export type CompResult = {
   start: string;
@@ -59,10 +65,14 @@ export type CompResult = {
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
 /** Data (SP) em que a AT foi registrada na plataforma; sem registro, usa a data informada. */
-export function atScoreDate(c: Pick<CompContact, "at_marcada_em" | "at_registrado_em">): string | null {
+export function atScoreDate(
+  c: Pick<CompContact, "at_marcada_em" | "at_registrado_em">,
+): string | null {
   if (!c.at_marcada_em) return null;
   if (!c.at_registrado_em) return c.at_marcada_em;
-  return new Date(c.at_registrado_em).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+  return new Date(c.at_registrado_em).toLocaleDateString("sv-SE", {
+    timeZone: "America/Sao_Paulo",
+  });
 }
 
 export function mondayOf(iso: string): string {
@@ -78,14 +88,27 @@ export function computeCompetition(
   todaySP: string,
   opts: { firstAtBonus?: boolean } = {},
 ): CompResult {
-  const inP = (d: string | null) => !!d && d.slice(0, 10) >= period.start && (!period.end || d.slice(0, 10) <= period.end);
+  const inP = (d: string | null) =>
+    !!d && d.slice(0, 10) >= period.start && (!period.end || d.slice(0, 10) <= period.end);
   const name = new Map(hunters.map((h) => [h.id, h.name]));
   const rows = new Map<string, CompRow>();
   for (const h of hunters) {
     rows.set(h.id, {
-      hunter_id: h.id, hunter: h.name, ats: 0, leads: 0, propostas: 0, aprovacoes: 0, vendidos: 0,
-      pontos_funil: 0, bonus_primeiro_at: 0, semanas_vencidas: 0, bonus_semanas: 0, total_pontos: 0,
-      linkedin1: 0, taxa_conversao: 0, pontuacao_final: 0,
+      hunter_id: h.id,
+      hunter: h.name,
+      ats: 0,
+      leads: 0,
+      propostas: 0,
+      aprovacoes: 0,
+      vendidos: 0,
+      pontos_funil: 0,
+      bonus_primeiro_at: 0,
+      semanas_vencidas: 0,
+      bonus_semanas: 0,
+      total_pontos: 0,
+      linkedin1: 0,
+      taxa_conversao: 0,
+      pontuacao_final: 0,
     });
   }
   const keys = ["ats", "leads", "propostas", "aprovacoes", "vendidos"] as const;
@@ -129,7 +152,13 @@ export function computeCompetition(
         r.semanas_vencidas++;
         r.bonus_semanas += 6;
       }
-      return { inicio: wk, fim: addDaysISO(wk, 6), parcial: wk === currentWeek, max, vencedores: winners.map((id) => name.get(id) ?? "") };
+      return {
+        inicio: wk,
+        fim: addDaysISO(wk, 6),
+        parcial: wk === currentWeek,
+        max,
+        vencedores: winners.map((id) => name.get(id) ?? ""),
+      };
     });
 
   for (const r of rows.values()) {
@@ -142,12 +171,18 @@ export function computeCompetition(
   return {
     start: period.start,
     end: period.end,
-    rows: [...rows.values()].sort((a, b) => b.pontuacao_final - a.pontuacao_final || b.total_pontos - a.total_pontos || a.hunter.localeCompare(b.hunter, "pt-BR")),
+    rows: [...rows.values()].sort(
+      (a, b) =>
+        b.pontuacao_final - a.pontuacao_final ||
+        b.total_pontos - a.total_pontos ||
+        a.hunter.localeCompare(b.hunter, "pt-BR"),
+    ),
     weeks,
-    primeiroAt: first ? { hunter: name.get(first.c.user_id) ?? "", data: atScoreDate(first.c)! } : null,
+    primeiroAt: first
+      ? { hunter: name.get(first.c.user_id) ?? "", data: atScoreDate(first.c)! }
+      : null,
   };
 }
-
 
 export type WeekBoard = { inicio: string; fim: string; parcial: boolean; rows: CompRow[] };
 
@@ -170,7 +205,9 @@ export function computeWeekly(
     const sun = addDaysISO(wk, 6);
     const start = wk < period.start ? period.start : wk;
     const end = sun > last ? last : sun;
-    const res = computeCompetition(contacts, hunters, { start, end }, todaySP, { firstAtBonus: false });
+    const res = computeCompetition(contacts, hunters, { start, end }, todaySP, {
+      firstAtBonus: false,
+    });
     out.push({ inicio: wk, fim: sun, parcial: sun > last, rows: res.rows });
   }
   return out.reverse();

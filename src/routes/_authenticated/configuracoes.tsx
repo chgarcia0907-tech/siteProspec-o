@@ -13,13 +13,7 @@ import { DEFAULT_OFFSETS, STEPS, type Offsets } from "@/lib/cadencia";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChannelBadge } from "@/components/StatusBadge";
 import { AdminArea } from "@/components/AdminArea";
 import {
@@ -48,13 +42,7 @@ export const Route = createFileRoute("/_authenticated/configuracoes")({
   component: Configuracoes,
 });
 
-const KEYS: (keyof Offsets)[] = [
-  "offset1",
-  "offset2",
-  "offset3",
-  "offset4",
-  "offset5",
-];
+const KEYS: (keyof Offsets)[] = ["offset1", "offset2", "offset3", "offset4", "offset5"];
 
 function Configuracoes() {
   const { data: settings } = useSettings();
@@ -81,9 +69,7 @@ function Configuracoes() {
     <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
-        <p className="text-sm text-muted-foreground">
-          Seus nomes e intervalos da cadência.
-        </p>
+        <p className="text-sm text-muted-foreground">Seus nomes e intervalos da cadência.</p>
       </div>
       <Card>
         <CardHeader>
@@ -114,7 +100,8 @@ function Configuracoes() {
         <CardHeader>
           <CardTitle className="text-base">Nome nas mensagens</CardTitle>
           <CardDescription>
-            Assinatura nas mensagens ([NOME] ou [NOME + SOBRENOME]). Se vazio, usa o nome da plataforma.
+            Assinatura nas mensagens ([NOME] ou [NOME + SOBRENOME]). Se vazio, usa o nome da
+            plataforma.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex gap-2">
@@ -168,7 +155,8 @@ function Configuracoes() {
         <CardHeader>
           <CardTitle className="text-base">Intervalos da cadência (dias úteis)</CardTitle>
           <CardDescription>
-            Padrão: 0, 1, 2, 3 e 4 dias úteis. Fins de semana não contam, e cada etapa é contada a partir do envio da anterior.
+            Padrão: 0, 1, 2, 3 e 4 dias úteis. Fins de semana não contam, e cada etapa é contada a
+            partir do envio da anterior.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -186,9 +174,7 @@ function Configuracoes() {
                 min={0}
                 className="w-24"
                 value={form[KEYS[i]!]}
-                onChange={(e) =>
-                  setForm({ ...form, [KEYS[i]!]: Number(e.target.value) })
-                }
+                onChange={(e) => setForm({ ...form, [KEYS[i]!]: Number(e.target.value) })}
               />
               <span className="text-sm text-muted-foreground">dias úteis</span>
             </div>

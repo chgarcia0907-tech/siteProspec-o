@@ -1,10 +1,4 @@
-import {
-  createFileRoute,
-  Link,
-  Outlet,
-  redirect,
-  useNavigate,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { painelIsAdmin } from "@/lib/painel.functions";
@@ -35,7 +29,11 @@ function AppLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isAdminFn = useServerFn(painelIsAdmin);
-  const { data: adm } = useQuery({ queryKey: ["painel_admin"], queryFn: () => isAdminFn(), staleTime: Infinity });
+  const { data: adm } = useQuery({
+    queryKey: ["painel_admin"],
+    queryFn: () => isAdminFn(),
+    staleTime: Infinity,
+  });
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -70,9 +68,7 @@ function AppLayout() {
               </Link>
             )}
           </nav>
-          <span className="hidden text-xs text-muted-foreground md:inline">
-            {user.email}
-          </span>
+          <span className="hidden text-xs text-muted-foreground md:inline">{user.email}</span>
           <Button variant="outline" size="sm" onClick={signOut}>
             Sair
           </Button>

@@ -1,12 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  DEFAULT_OFFSETS,
-  type Contact,
-  type Offsets,
-  computedStatus,
-} from "@/lib/cadencia";
+import { DEFAULT_OFFSETS, type Contact, type Offsets, computedStatus } from "@/lib/cadencia";
 import { fetchAll } from "@/lib/fetch-all";
 
 export function useContacts() {
@@ -60,9 +55,7 @@ export function useTemplates() {
   return useQuery({
     queryKey: ["message_templates"],
     queryFn: async (): Promise<Record<number, { code: string; body: string }>> => {
-      const { data, error } = await supabase
-        .from("message_templates")
-        .select("step, code, body");
+      const { data, error } = await supabase.from("message_templates").select("step, code, body");
       if (error) throw error;
       const map: Record<number, { code: string; body: string }> = {};
       for (const row of data ?? []) map[row.step] = { code: row.code, body: row.body };
@@ -125,17 +118,8 @@ export function useSaveMessageName() {
 export function useUpdateContact() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      patch,
-    }: {
-      id: string;
-      patch: Partial<Contact>;
-    }) => {
-      const { error } = await supabase
-        .from("contacts")
-        .update(patch)
-        .eq("id", id);
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Contact> }) => {
+      const { error } = await supabase.from("contacts").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["contacts"] }),
@@ -145,18 +129,9 @@ export function useUpdateContact() {
 export function useUpdateContacts() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      ids,
-      patch,
-    }: {
-      ids: string[];
-      patch: Partial<Contact>;
-    }) => {
+    mutationFn: async ({ ids, patch }: { ids: string[]; patch: Partial<Contact> }) => {
       if (ids.length === 0) return;
-      const { error } = await supabase
-        .from("contacts")
-        .update(patch)
-        .in("id", ids);
+      const { error } = await supabase.from("contacts").update(patch).in("id", ids);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["contacts"] }),

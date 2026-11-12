@@ -45,14 +45,12 @@ export const Route = createFileRoute("/_authenticated/hoje")({
       { title: "Envios de hoje — Cadência Outbound" },
       {
         name: "description",
-        content:
-          "Veja quem precisa receber cada mensagem hoje e quem está atrasado.",
+        content: "Veja quem precisa receber cada mensagem hoje e quem está atrasado.",
       },
       { property: "og:title", content: "Envios de hoje" },
       {
         property: "og:description",
-        content:
-          "Veja quem precisa receber cada mensagem hoje e quem está atrasado.",
+        content: "Veja quem precisa receber cada mensagem hoje e quem está atrasado.",
       },
     ],
   }),
@@ -160,7 +158,11 @@ function Hoje() {
     if (link) window.open(link, "_blank", "noopener");
   }
 
-  function saveCompany(contact: Contact, company: string, company_gender: Contact["company_gender"]) {
+  function saveCompany(
+    contact: Contact,
+    company: string,
+    company_gender: Contact["company_gender"],
+  ) {
     update.mutate(
       { id: contact.id, patch: { company: company.trim(), company_gender } },
       {
@@ -170,7 +172,7 @@ function Hoje() {
         },
         onError: (e) => toast.error(e.message),
       },
-    )
+    );
   }
 
   function patchContact(contact: Contact, patch: Partial<Contact>, msg?: string) {
@@ -416,38 +418,43 @@ function LeadFields({
         />
       </span>
       {showStep1 && (
-      <>
-      <Select value={contact.sector} onValueChange={(v) => onPatch({ sector: v })}>
-        <SelectTrigger
-          aria-label="Setor"
-          className={cn("h-7 w-48 text-xs", !contact.sector && "border-warning")}
-        >
-          <SelectValue placeholder="Setor" />
-        </SelectTrigger>
-        <SelectContent>
-          {SECTORS.map((s) => (
-            <SelectItem key={s} value={s}>
-              {s}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <div className="flex flex-col">
-      <Input
-        aria-label="Cargo na empresa"
-        placeholder="Cargo na empresa"
-        className={cn("h-7 w-52 text-xs", !contact.job_title.trim() && "border-warning")}
-        value={cargo}
-        onChange={(e) => setCargo(e.target.value)}
-        onBlur={() => cargo.trim() !== contact.job_title && onPatch({ job_title: cargo.trim() })}
-      />
-      {contact.headline && (
-        <p className="mt-0.5 w-52 truncate text-[11px] text-muted-foreground" title={contact.headline}>
-          {contact.headline}
-        </p>
-      )}
-      </div>
-      </>
+        <>
+          <Select value={contact.sector} onValueChange={(v) => onPatch({ sector: v })}>
+            <SelectTrigger
+              aria-label="Setor"
+              className={cn("h-7 w-48 text-xs", !contact.sector && "border-warning")}
+            >
+              <SelectValue placeholder="Setor" />
+            </SelectTrigger>
+            <SelectContent>
+              {SECTORS.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex flex-col">
+            <Input
+              aria-label="Cargo na empresa"
+              placeholder="Cargo na empresa"
+              className={cn("h-7 w-52 text-xs", !contact.job_title.trim() && "border-warning")}
+              value={cargo}
+              onChange={(e) => setCargo(e.target.value)}
+              onBlur={() =>
+                cargo.trim() !== contact.job_title && onPatch({ job_title: cargo.trim() })
+              }
+            />
+            {contact.headline && (
+              <p
+                className="mt-0.5 w-52 truncate text-[11px] text-muted-foreground"
+                title={contact.headline}
+              >
+                {contact.headline}
+              </p>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

@@ -18,9 +18,8 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      # Formatação (prettier) fica fora do CI: o código gerado pelo Lovable não segue o prettier.
-      - name: Lint
-        run: bun run lint:ci
+      - name: Lint e formatação
+        run: bun run lint
 
       - name: Testes
         run: bun run test

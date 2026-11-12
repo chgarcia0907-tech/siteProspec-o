@@ -17,7 +17,12 @@ export function FunnelBadge({ contact }: { contact: Contact }) {
   const i = funnelIndex(contact);
   if (i < 0) return null;
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap", COLORS[i])}>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap",
+        COLORS[i],
+      )}
+    >
       {FUNNEL[i]!.label}
     </span>
   );
@@ -53,25 +58,58 @@ export function undoPatch(contact: Contact): Partial<Contact> | null {
   return { [f]: null, [REG_FIELD[f]]: null };
 }
 
-export function FunnelControl({ contact, onPatch }: { contact: Contact; onPatch: (p: Partial<Contact>) => void }) {
+export function FunnelControl({
+  contact,
+  onPatch,
+}: {
+  contact: Contact;
+  onPatch: (p: Partial<Contact>) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(todayISO());
   const idx = funnelIndex(contact);
   const next = FUNNEL[idx + 1];
   return (
-    <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setDate(todayISO()); }}>
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (o) setDate(todayISO());
+      }}
+    >
       <PopoverTrigger asChild>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs">Avançar no funil</Button>
+        <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
+          Avançar no funil
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 space-y-3" align="end">
         <div className="text-xs text-muted-foreground">
-          Etapa atual: {idx >= 0 ? `${FUNNEL[idx]!.label} (${formatBR(contact[FUNNEL[idx]!.field])})` : "nenhuma"}
+          Etapa atual:{" "}
+          {idx >= 0
+            ? `${FUNNEL[idx]!.label} (${formatBR(contact[FUNNEL[idx]!.field])})`
+            : "nenhuma"}
         </div>
         {next ? (
           <div className="space-y-2">
-            <p className="text-sm font-medium">Próxima: {next.label} (+{next.points} pts)</p>
-            <Input type="date" aria-label="Data da etapa" value={date} onChange={(e) => setDate(e.target.value)} className="h-8" />
-            <Button size="sm" className="w-full" disabled={!date} onClick={() => { onPatch(advancePatch(contact, idx + 1, date)); setOpen(false); }}>
+            <p className="text-sm font-medium">
+              Próxima: {next.label} (+{next.points} pts)
+            </p>
+            <Input
+              type="date"
+              aria-label="Data da etapa"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="h-8"
+            />
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={!date}
+              onClick={() => {
+                onPatch(advancePatch(contact, idx + 1, date));
+                setOpen(false);
+              }}
+            >
               Marcar {next.label}
             </Button>
           </div>

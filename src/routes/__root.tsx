@@ -18,9 +18,7 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">
-          Página não encontrada
-        </h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           A página que você procura não existe ou foi movida.
         </p>
@@ -80,14 +78,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Cadência Outbound" },
       {
         name: "description",
-        content:
-          "Controle a cadência de mensagens de prospecção no LinkedIn e WhatsApp.",
+        content: "Controle a cadência de mensagens de prospecção no LinkedIn e WhatsApp.",
       },
       { property: "og:title", content: "Cadência Outbound" },
       {
         property: "og:description",
-        content:
-          "Controle a cadência de mensagens de prospecção no LinkedIn e WhatsApp.",
+        content: "Controle a cadência de mensagens de prospecção no LinkedIn e WhatsApp.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -128,12 +124,7 @@ function RootComponent() {
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (
-        event !== "SIGNED_IN" &&
-        event !== "SIGNED_OUT" &&
-        event !== "USER_UPDATED"
-      )
-        return;
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
     });

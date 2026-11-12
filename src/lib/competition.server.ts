@@ -1,6 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { computeCompetition, computeWeekly, type CompContact, type CompResult, type CompRow } from "./competition";
+import {
+  computeCompetition,
+  computeWeekly,
+  type CompContact,
+  type CompResult,
+  type CompRow,
+} from "./competition";
 import { spParts } from "./cadencia";
 import { fetchAll } from "./fetch-all";
 
@@ -15,7 +21,8 @@ export type CompResultG = Omit<CompResult, "rows"> & {
   semanas?: WeekBoardG[] | undefined;
 };
 
-const spDate = (ts: string) => new Date(ts).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+const spDate = (ts: string) =>
+  new Date(ts).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
 
 /**
  * Carrega dados com service role e calcula (somente servidor).
@@ -32,18 +39,30 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
   if (periodId && !period) throw new Error("Período não encontrado");
   const ciclo = !!periodId && period?.kind === "ciclo";
 
-  const cols = "user_id, sent1_at, at_marcada_em, lead_em, proposta_em, aprovacao_em, vendido_em, at_registrado_em, lead_registrado_em, proposta_registrado_em, aprovacao_registrado_em, vendido_registrado_em, created_at";
+  const cols =
+    "user_id, sent1_at, at_marcada_em, lead_em, proposta_em, aprovacao_em, vendido_em, at_registrado_em, lead_registrado_em, proposta_registrado_em, aprovacao_registrado_em, vendido_registrado_em, created_at";
   const [contacts, profiles, s, members, groups, subgroups] = await Promise.all([
     fetchAll((a, b) => {
       let q = db.from("contacts").select(cols);
       if (periodId && !ciclo) q = q.eq("period_id", periodId);
       return q.order("id").range(a, b);
     }),
-    fetchAll((a, b) => db.from("profiles").select("id, display_name, email").order("id").range(a, b)),
+    fetchAll((a, b) =>
+      db.from("profiles").select("id, display_name, email").order("id").range(a, b),
+    ),
     db.from("competition_settings").select("start_date, end_date").eq("id", 1).maybeSingle(),
     period
-      ? fetchAll((a, b) => db.from("period_members").select("user_id, group_id, subgroup_id").eq("period_id", period.id).order("id").range(a, b))
-      : Promise.resolve([] as { user_id: string; group_id: string | null; subgroup_id: string | null }[]),
+      ? fetchAll((a, b) =>
+          db
+            .from("period_members")
+            .select("user_id, group_id, subgroup_id")
+            .eq("period_id", period.id)
+            .order("id")
+            .range(a, b),
+        )
+      : Promise.resolve(
+          [] as { user_id: string; group_id: string | null; subgroup_id: string | null }[],
+        ),
     db.from("groups").select("id, name"),
     db.from("subgroups").select("id, name"),
   ]);
@@ -55,7 +74,10 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
     const ids = new Set<string>(members.map((m) => m.user_id));
     if (!ciclo) for (const c of contacts) ids.add(c.user_id);
     hunters = [...ids].map((id) => ({ id, name: pname.get(id) ?? "Hunter" }));
-    range = { start: spDate(period.started_at), end: period.closed_at ? spDate(period.closed_at) : null };
+    range = {
+      start: spDate(period.started_at),
+      end: period.closed_at ? spDate(period.closed_at) : null,
+    };
   } else {
     hunters = profiles.map((h) => ({ id: h.id, name: pname.get(h.id)! }));
     range = { start: s.data?.start_date ?? "2026-10-01", end: s.data?.end_date ?? null };
@@ -67,10 +89,16 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
   const mem = new Map(members.map((m) => [m.user_id, m]));
   const admins = await adminIds(db);
   const withGroup = (rows: CompRow[]): CompRowG[] =>
-    rows.filter((r) => !admins.has(r.hunter_id)).map((r) => {
-      const m = mem.get(r.hunter_id);
-      return { ...r, grupo: (m?.group_id && gname.get(m.group_id)) || "", subgrupo: (m?.subgroup_id && sname.get(m.subgroup_id)) || "" };
-    });
+    rows
+      .filter((r) => !admins.has(r.hunter_id))
+      .map((r) => {
+        const m = mem.get(r.hunter_id);
+        return {
+          ...r,
+          grupo: (m?.group_id && gname.get(m.group_id)) || "",
+          subgrupo: (m?.subgroup_id && sname.get(m.subgroup_id)) || "",
+        };
+      });
   return {
     ...res,
     periodId: period?.id ?? null,
@@ -78,7 +106,10 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
     periodKind: periodId ? (ciclo ? "ciclo" : "competicao") : undefined,
     rows: withGroup(res.rows),
     semanas: ciclo
-      ? computeWeekly(contacts as CompContact[], hunters, range, today).map((w) => ({ ...w, rows: withGroup(w.rows) }))
+      ? computeWeekly(contacts as CompContact[], hunters, range, today).map((w) => ({
+          ...w,
+          rows: withGroup(w.rows),
+        }))
       : undefined,
   };
 }
@@ -86,8 +117,14 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
 /** Ciclo para a planilha: o ciclo ativo, senão o mais recente. */
 export async function loadCurrentCycle(): Promise<CompResultG | null> {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-  const { data } = await db.from("periods").select("id").eq("kind", "ciclo")
-    .order("status", { ascending: true }).order("started_at", { ascending: false }).limit(1).maybeSingle();
+  const { data } = await db
+    .from("periods")
+    .select("id")
+    .eq("kind", "ciclo")
+    .order("status", { ascending: true })
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
   return data ? loadCompetition(data.id) : null;
 }
 
@@ -96,7 +133,9 @@ export async function loadSnapshot(periodId: string): Promise<CompResultG> {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   const [{ data: p }, rows] = await Promise.all([
     db.from("periods").select("*").eq("id", periodId).maybeSingle(),
-    fetchAll((a, b) => db.from("period_snapshots").select("*").eq("period_id", periodId).order("id").range(a, b)),
+    fetchAll((a, b) =>
+      db.from("period_snapshots").select("*").eq("period_id", periodId).order("id").range(a, b),
+    ),
   ]);
   if (!p) throw new Error("Período não encontrado");
   const admins = await adminIds(db);
@@ -115,15 +154,31 @@ export async function loadSnapshot(periodId: string): Promise<CompResultG> {
       .map((r) => {
         const e = ex(r);
         return {
-          hunter_id: r.hunter_id, hunter: r.hunter_name, grupo: r.group_name, subgrupo: r.subgroup_name,
-          ats: r.ats_count, leads: r.leads_count, propostas: r.propostas_count, aprovacoes: r.aprovacoes_count, vendidos: r.vendas_count,
-          pontos_funil: e.pontos_funil ?? 0, bonus_primeiro_at: r.first_at_bonus ? 5 : 0,
-          semanas_vencidas: r.weekly_wins, bonus_semanas: e.bonus_semanas ?? r.weekly_wins * 6,
-          total_pontos: e.total_pontos ?? 0, linkedin1: e.linkedin1 ?? r.sent1,
-          taxa_conversao: e.taxa_conversao ?? 0, pontuacao_final: Number(r.points),
+          hunter_id: r.hunter_id,
+          hunter: r.hunter_name,
+          grupo: r.group_name,
+          subgrupo: r.subgroup_name,
+          ats: r.ats_count,
+          leads: r.leads_count,
+          propostas: r.propostas_count,
+          aprovacoes: r.aprovacoes_count,
+          vendidos: r.vendas_count,
+          pontos_funil: e.pontos_funil ?? 0,
+          bonus_primeiro_at: r.first_at_bonus ? 5 : 0,
+          semanas_vencidas: r.weekly_wins,
+          bonus_semanas: e.bonus_semanas ?? r.weekly_wins * 6,
+          total_pontos: e.total_pontos ?? 0,
+          linkedin1: e.linkedin1 ?? r.sent1,
+          taxa_conversao: e.taxa_conversao ?? 0,
+          pontuacao_final: Number(r.points),
         };
       })
-      .sort((a, b) => b.pontuacao_final - a.pontuacao_final || b.total_pontos - a.total_pontos || a.hunter.localeCompare(b.hunter, "pt-BR")),
+      .sort(
+        (a, b) =>
+          b.pontuacao_final - a.pontuacao_final ||
+          b.total_pontos - a.total_pontos ||
+          a.hunter.localeCompare(b.hunter, "pt-BR"),
+      ),
   };
 }
 
