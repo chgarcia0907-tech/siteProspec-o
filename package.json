@@ -12,7 +12,10 @@
     "lint:ci": "eslint . --rule \"prettier/prettier: off\"",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:new": "npx -y supabase@2 migration new",
+    "db:push": "npx -y supabase@2 db push",
+    "db:types": "npx -y supabase@2 gen types typescript --linked --schema public > src/integrations/supabase/types.ts"
   },
   "overrides": {
     "rolldown": "1.2.1"
