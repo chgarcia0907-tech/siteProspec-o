@@ -22,6 +22,7 @@ const COLS = STEPS.length + 10;
 /** Tabela de contatos com seleção, edição inline e marcação das etapas. */
 export function ContactsTable({
   rows,
+  allIds,
   isLoading,
   offsets,
   holidays,
@@ -29,7 +30,10 @@ export function ContactsTable({
   onPatch,
   onStatus,
 }: {
+  /** Linhas da página atual. */
   rows: Contact[];
+  /** Todos os contatos do filtro atual ("selecionar todos" vale para eles, não só a página). */
+  allIds: string[];
   isLoading: boolean;
   offsets: Offsets;
   holidays: Holidays;
@@ -44,10 +48,9 @@ export function ContactsTable({
           <TableRow>
             <TableHead className="w-8">
               <Checkbox
-                checked={rows.length > 0 && selection.size === rows.length}
-                onCheckedChange={(v) =>
-                  v ? selection.selectAll(rows.map((r) => r.id)) : selection.clear()
-                }
+                checked={allIds.length > 0 && selection.size === allIds.length}
+                onCheckedChange={(v) => (v ? selection.selectAll(allIds) : selection.clear())}
+                aria-label={`Selecionar todos os contatos do filtro (${allIds.length})`}
               />
             </TableHead>
             <TableHead>Nome</TableHead>
