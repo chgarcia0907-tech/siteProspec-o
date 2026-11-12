@@ -336,6 +336,8 @@ export type FunnelStage = {
   short: string;
   /** Rótulo do contador no placar e na planilha (ex.: "ATs"). */
   plural: string;
+  /** Versão curta de `plural` para cabeçalhos de tabela nas telas. */
+  abbr: string;
   points: number;
 };
 
@@ -352,6 +354,7 @@ export const FUNNEL: readonly FunnelStage[] = [
     label: "AT marcada",
     short: "AT",
     plural: "ATs",
+    abbr: "ATs",
     points: 3,
   },
   {
@@ -361,6 +364,7 @@ export const FUNNEL: readonly FunnelStage[] = [
     label: "Lead",
     short: "Lead",
     plural: "Leads",
+    abbr: "Leads",
     points: 5,
   },
   {
@@ -370,6 +374,7 @@ export const FUNNEL: readonly FunnelStage[] = [
     label: "Proposta marcada",
     short: "Proposta",
     plural: "Propostas",
+    abbr: "Propostas",
     points: 10,
   },
   {
@@ -379,6 +384,7 @@ export const FUNNEL: readonly FunnelStage[] = [
     label: "Aprovação verbal",
     short: "Aprovação",
     plural: "Aprovações verbais",
+    abbr: "Aprov. verbais",
     points: 25,
   },
   {
@@ -388,6 +394,7 @@ export const FUNNEL: readonly FunnelStage[] = [
     label: "Projeto vendido",
     short: "Vendido",
     plural: "Vendidos",
+    abbr: "Vendidos",
     points: 50,
   },
 ];

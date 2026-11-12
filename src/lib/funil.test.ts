@@ -35,6 +35,13 @@ describe("configuração do funil", () => {
       ["Projeto vendido", 50],
     ]);
     expect(FUNNEL_MAX_POINTS).toBe(93);
+    expect(FUNNEL.map((f) => f.abbr)).toEqual([
+      "ATs",
+      "Leads",
+      "Propostas",
+      "Aprov. verbais",
+      "Vendidos",
+    ]);
   });
 
   it("toda etapa tem coluna de data e de registro distintas, sem repetição", () => {

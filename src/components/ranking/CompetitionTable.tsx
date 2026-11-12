@@ -28,7 +28,7 @@ export function CompetitionTable({ rows, isLoading }: { rows: CompRowG[]; isLoad
                 <TableHead>Grupo</TableHead>
                 {FUNNEL.map((f) => (
                   <TableHead key={f.countKey} className="text-right">
-                    {f.plural}
+                    {f.abbr}
                   </TableHead>
                 ))}
                 <TableHead className="text-right">Pontos funil</TableHead>

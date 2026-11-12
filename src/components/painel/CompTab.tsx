@@ -65,7 +65,7 @@ export function CompTab() {
               {[
                 "#",
                 "Hunter",
-                ...FUNNEL.map((f) => f.plural),
+                ...FUNNEL.map((f) => f.abbr),
                 "Funil",
                 "Bônus",
                 "Total",
