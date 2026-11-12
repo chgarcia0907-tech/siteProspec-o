@@ -16,6 +16,19 @@ export const COMP_CONTACT_COLUMNS = [
   ...FUNNEL.flatMap((f) => [f.field, f.registeredField]),
 ].join(", ");
 
+/**
+ * Contatos que podem mudar o placar de um período que começa em `start`: LinkedIn 1 enviada
+ * a partir do início (conta na conversão) ou alguma etapa do funil preenchida. Os demais não
+ * somam nada, então a consulta pode deixá-los no banco. `competitionFilter` é o mesmo critério
+ * no formato do PostgREST (`.or(...)`); os dois precisam andar juntos.
+ */
+export function isRelevantContact(c: CompContact, start: string): boolean {
+  return (!!c.sent1_at && c.sent1_at >= start) || FUNNEL.some((f) => !!c[f.field]);
+}
+export function competitionFilter(start: string): string {
+  return [`sent1_at.gte.${start}`, ...FUNNEL.map((f) => `${f.field}.not.is.null`)].join(",");
+}
+
 /** Data (SP) em que a etapa foi registrada na plataforma; sem registro, usa a data informada. */
 export function stageScoreDate(c: CompContact, f: FunnelField): string | null {
   if (!c[f]) return null;

@@ -47,6 +47,12 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Etapas da cadência vêm de `STEPS` e etapas do funil de `FUNNEL` (ambos em `cadencia.ts`):
   colunas, rótulos, pontos e CSVs derivam dessas listas; não repita os campos à mão.
 - Selects simples usam `NativeSelect`; erros em toast usam `errorMessage` (`src/lib/utils.ts`).
+- Listas longas não renderizam tudo: a tabela de contatos pagina (`paginate` + `TablePagination`,
+  50 por página) e as filas de envio mostram 50 cartões por vez. Consultas grandes usam
+  `fetchAll` (páginas de 1.000, as seguintes em paralelo).
+- O placar só busca contatos que podem pontuar (`isRelevantContact` em `competition.ts`, com o
+  mesmo critério em `competitionFilter` para o banco). Ao mudar a pontuação, revise os dois
+  juntos; o teste de equivalência em `competition.test.ts` compara com o cálculo sobre todos.
 
 ## Arquitetura (Cadência Outbound)
 

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import {
   COMP_CONTACT_COLUMNS,
+  competitionFilter,
   computeCompetition,
   computeWeekly,
   type CompContact,
@@ -40,13 +41,8 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
   if (periodId && !period) throw new Error("Período não encontrado");
   const ciclo = !!periodId && period?.kind === "ciclo";
 
-  const [contacts, profiles, s, members, groups, subgroups] = await Promise.all([
-    fetchAll((a, b) => {
-      let q = db.from("contacts").select(COMP_CONTACT_COLUMNS);
-      if (periodId && !ciclo) q = q.eq("period_id", periodId);
-      // select montado a partir do FUNNEL: o tipo da linha é declarado aqui.
-      return q.order("id").range(a, b) as unknown as PageResult<CompContact>;
-    }),
+  // 1) Período, configuração e membros definem o intervalo e quem participa.
+  const [profiles, s, members, groups, subgroups, admins] = await Promise.all([
     fetchAll((a, b) =>
       db.from("profiles").select("id, display_name, email").order("id").range(a, b),
     ),
@@ -65,29 +61,53 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
         ),
     db.from("groups").select("id, name"),
     db.from("subgroups").select("id, name"),
+    adminIds(db),
+  ]);
+  const range =
+    periodId && period
+      ? {
+          start: spDate(period.started_at),
+          end: period.closed_at ? spDate(period.closed_at) : null,
+        }
+      : { start: s.data?.start_date ?? "2026-10-01", end: s.data?.end_date ?? null };
+  const memberIds = members.map((m) => m.user_id);
+
+  // 2) Só os contatos que podem pontuar (ver isRelevantContact); no ciclo, só dos membros.
+  const [contacts, periodOwners] = await Promise.all([
+    ciclo && memberIds.length === 0
+      ? Promise.resolve([] as CompContact[])
+      : fetchAll((a, b) => {
+          let q = db
+            .from("contacts")
+            .select(COMP_CONTACT_COLUMNS)
+            .or(competitionFilter(range.start));
+          if (periodId && !ciclo) q = q.eq("period_id", periodId);
+          if (ciclo) q = q.in("user_id", memberIds);
+          // select montado a partir do FUNNEL: o tipo da linha é declarado aqui.
+          return q.order("id").range(a, b) as unknown as PageResult<CompContact>;
+        }),
+    // Na competição por período, quem tem contatos no período participa mesmo sem pontuar.
+    periodId && period && !ciclo
+      ? fetchAll((a, b) =>
+          db.from("contacts").select("user_id").eq("period_id", periodId).order("id").range(a, b),
+        )
+      : Promise.resolve([] as { user_id: string }[]),
   ]);
 
   const pname = new Map(profiles.map((h) => [h.id, h.display_name?.trim() || h.email || "Hunter"]));
   let hunters: { id: string; name: string }[];
-  let range: { start: string; end: string | null };
   if (periodId && period) {
-    const ids = new Set<string>(members.map((m) => m.user_id));
-    if (!ciclo) for (const c of contacts) ids.add(c.user_id);
+    const ids = new Set<string>(memberIds);
+    for (const c of periodOwners) ids.add(c.user_id);
     hunters = [...ids].map((id) => ({ id, name: pname.get(id) ?? "Hunter" }));
-    range = {
-      start: spDate(period.started_at),
-      end: period.closed_at ? spDate(period.closed_at) : null,
-    };
   } else {
     hunters = profiles.map((h) => ({ id: h.id, name: pname.get(h.id)! }));
-    range = { start: s.data?.start_date ?? "2026-10-01", end: s.data?.end_date ?? null };
   }
   const today = spParts().iso;
   const res = computeCompetition(contacts, hunters, range, today);
   const gname = new Map((groups.data ?? []).map((g) => [g.id, g.name]));
   const sname = new Map((subgroups.data ?? []).map((g) => [g.id, g.name]));
   const mem = new Map(members.map((m) => [m.user_id, m]));
-  const admins = await adminIds(db);
   const withGroup = (rows: CompRow[]): CompRowG[] =>
     rows
       .filter((r) => !admins.has(r.hunter_id))
