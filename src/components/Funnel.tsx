@@ -2,7 +2,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { FUNNEL, formatBR, funnelIndex, todayISO, type Contact } from "@/lib/cadencia";
+import {
+  FUNNEL,
+  advancePatch,
+  formatBR,
+  funnelIndex,
+  todayISO,
+  undoPatch,
+  type Contact,
+} from "@/lib/cadencia";
 import { cn } from "@/lib/utils";
 
 const COLORS = [
@@ -26,36 +34,6 @@ export function FunnelBadge({ contact }: { contact: Contact }) {
       {FUNNEL[i]!.label}
     </span>
   );
-}
-
-/** Campo que guarda o momento do registro na plataforma (usado na pontuação). */
-export const REG_FIELD = {
-  at_marcada_em: "at_registrado_em",
-  lead_em: "lead_registrado_em",
-  proposta_em: "proposta_registrado_em",
-  aprovacao_em: "aprovacao_registrado_em",
-  vendido_em: "vendido_registrado_em",
-} as const;
-
-/** Patch para marcar a etapa `idx` na data `date`, preenchendo etapas anteriores vazias. */
-export function advancePatch(contact: Contact, idx: number, date: string): Partial<Contact> {
-  const patch: Partial<Contact> = {};
-  const now = new Date().toISOString();
-  for (let i = 0; i <= idx; i++) {
-    const f = FUNNEL[i]!.field;
-    if (!contact[f]) {
-      patch[f] = date;
-      patch[REG_FIELD[f]] = now;
-    }
-  }
-  return patch;
-}
-
-export function undoPatch(contact: Contact): Partial<Contact> | null {
-  const i = funnelIndex(contact);
-  if (i < 0) return null;
-  const f = FUNNEL[i]!.field;
-  return { [f]: null, [REG_FIELD[f]]: null };
 }
 
 export function FunnelControl({

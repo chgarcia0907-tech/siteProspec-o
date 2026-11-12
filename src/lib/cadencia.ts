@@ -318,13 +318,82 @@ export function cargoSemEmpresa(cargo: string, empresa: string): string {
 
 export type FunnelField =
   "at_marcada_em" | "lead_em" | "proposta_em" | "aprovacao_em" | "vendido_em";
-export const FUNNEL: { field: FunnelField; label: string; short: string; points: number }[] = [
-  { field: "at_marcada_em", label: "AT marcada", short: "AT", points: 3 },
-  { field: "lead_em", label: "Lead", short: "Lead", points: 5 },
-  { field: "proposta_em", label: "Proposta marcada", short: "Proposta", points: 10 },
-  { field: "aprovacao_em", label: "Aprovação verbal", short: "Aprovação", points: 25 },
-  { field: "vendido_em", label: "Projeto vendido", short: "Vendido", points: 50 },
+/** Coluna com o momento do clique que registrou a etapa (usada na pontuação). */
+export type FunnelRegisteredField =
+  | "at_registrado_em"
+  | "lead_registrado_em"
+  | "proposta_registrado_em"
+  | "aprovacao_registrado_em"
+  | "vendido_registrado_em";
+/** Nome do contador da etapa no placar da competição. */
+export type FunnelCountKey = "ats" | "leads" | "propostas" | "aprovacoes" | "vendidos";
+
+export type FunnelStage = {
+  field: FunnelField;
+  registeredField: FunnelRegisteredField;
+  countKey: FunnelCountKey;
+  label: string;
+  short: string;
+  /** Rótulo do contador no placar e na planilha (ex.: "ATs"). */
+  plural: string;
+  points: number;
+};
+
+/**
+ * Etapas do funil, em ordem. Fonte única: telas, pontuação, painel e planilha derivam daqui.
+ * Para mudar nome ou pontos, edite só esta lista. Uma etapa nova também precisa das colunas
+ * `field` e `registeredField` no banco (migração) e de um contador no placar (`CompRow`).
+ */
+export const FUNNEL: readonly FunnelStage[] = [
+  {
+    field: "at_marcada_em",
+    registeredField: "at_registrado_em",
+    countKey: "ats",
+    label: "AT marcada",
+    short: "AT",
+    plural: "ATs",
+    points: 3,
+  },
+  {
+    field: "lead_em",
+    registeredField: "lead_registrado_em",
+    countKey: "leads",
+    label: "Lead",
+    short: "Lead",
+    plural: "Leads",
+    points: 5,
+  },
+  {
+    field: "proposta_em",
+    registeredField: "proposta_registrado_em",
+    countKey: "propostas",
+    label: "Proposta marcada",
+    short: "Proposta",
+    plural: "Propostas",
+    points: 10,
+  },
+  {
+    field: "aprovacao_em",
+    registeredField: "aprovacao_registrado_em",
+    countKey: "aprovacoes",
+    label: "Aprovação verbal",
+    short: "Aprovação",
+    plural: "Aprovações verbais",
+    points: 25,
+  },
+  {
+    field: "vendido_em",
+    registeredField: "vendido_registrado_em",
+    countKey: "vendidos",
+    label: "Projeto vendido",
+    short: "Vendido",
+    plural: "Vendidos",
+    points: 50,
+  },
 ];
+
+/** Pontos de um contato que percorre o funil inteiro (as etapas são cumulativas). */
+export const FUNNEL_MAX_POINTS = FUNNEL.reduce((sum, f) => sum + f.points, 0);
 
 /** Índice da última etapa marcada (-1 se nenhuma). */
 export function funnelIndex(c: Partial<Record<FunnelField, string | null>>): number {
@@ -333,6 +402,31 @@ export function funnelIndex(c: Partial<Record<FunnelField, string | null>>): num
     if (c[f.field]) idx = i;
   });
   return idx;
+}
+
+/** Patch para marcar a etapa `idx` na data `date`, preenchendo etapas anteriores vazias. */
+export function advancePatch(
+  contact: Contact,
+  idx: number,
+  date: string,
+  now: string = new Date().toISOString(),
+): Partial<Contact> {
+  const patch: Partial<Contact> = {};
+  for (let i = 0; i <= idx; i++) {
+    const { field, registeredField } = FUNNEL[i]!;
+    if (!contact[field]) {
+      patch[field] = date;
+      patch[registeredField] = now;
+    }
+  }
+  return patch;
+}
+
+export function undoPatch(contact: Contact): Partial<Contact> | null {
+  const i = funnelIndex(contact);
+  if (i < 0) return null;
+  const { field, registeredField } = FUNNEL[i]!;
+  return { [field]: null, [registeredField]: null };
 }
 
 export function onlyDigits(v: string): string {

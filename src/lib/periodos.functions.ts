@@ -6,6 +6,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import type { CompContact } from "./competition";
+import type { PageResult } from "./fetch-all";
+
+type SnapshotContact = CompContact &
+  Record<"sent2_at" | "sent3_at" | "sent4_at" | "sent5_at", string | null>;
 
 type Db = SupabaseClient<Database>;
 type Ctx = { supabase: Db; userId: string };
@@ -134,8 +138,11 @@ export const closePeriod = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const db = await admin();
     const { fetchAll } = await import("./fetch-all");
-    const { computeCompetition } = await import("./competition");
-    const { spParts } = await import("./cadencia");
+    const { computeCompetition, COMP_CONTACT_COLUMNS } = await import("./competition");
+    const { spParts, STEPS } = await import("./cadencia");
+    const SNAPSHOT_COLUMNS = [
+      ...new Set([...COMP_CONTACT_COLUMNS.split(", "), ...STEPS.map((st) => st.sentField)]),
+    ].join(", ");
 
     const { data: p } = await db.from("periods").select("*").eq("id", data.id).maybeSingle();
     if (!p) fail("Período não encontrado");
@@ -152,13 +159,10 @@ export const closePeriod = createServerFn({ method: "POST" })
     const ciclo = p.kind === "ciclo";
     const [contacts, members, profiles, groups, subgroups] = await Promise.all([
       fetchAll((a, b) => {
-        let q = db
-          .from("contacts")
-          .select(
-            "user_id, sent1_at, sent2_at, sent3_at, sent4_at, sent5_at, at_marcada_em, lead_em, proposta_em, aprovacao_em, vendido_em, at_registrado_em, lead_registrado_em, proposta_registrado_em, aprovacao_registrado_em, vendido_registrado_em, created_at",
-          );
+        let q = db.from("contacts").select(SNAPSHOT_COLUMNS);
         if (!ciclo) q = q.eq("period_id", p.id);
-        return q.order("id").range(a, b);
+        // select montado a partir do FUNNEL/STEPS: o tipo da linha é declarado aqui.
+        return q.order("id").range(a, b) as unknown as PageResult<SnapshotContact>;
       }),
       fetchAll((a, b) =>
         db.from("period_members").select("*").eq("period_id", p.id).order("id").range(a, b),
@@ -180,7 +184,7 @@ export const closePeriod = createServerFn({ method: "POST" })
     const ids = new Set<string>(members.map((m) => m.user_id));
     if (!ciclo) for (const c of contacts) ids.add(c.user_id);
     const hunters = [...ids].map((id) => ({ id, name: pname.get(id) ?? "Hunter" }));
-    const result = computeCompetition(contacts as CompContact[], hunters, { start, end }, today);
+    const result = computeCompetition(contacts, hunters, { start, end }, today);
 
     const frozen = new Date().toISOString();
     // Contagens do placar só dentro do período (data em SP), como os pontos.

@@ -1,29 +1,25 @@
 // Cálculo puro da competição (usado só no servidor; o cliente recebe apenas totais).
-import { FUNNEL, addDaysISO, type FunnelField } from "./cadencia";
+import { FUNNEL, addDaysISO, type FunnelField, type FunnelRegisteredField } from "./cadencia";
 
 export type CompContact = {
   user_id: string;
   sent1_at: string | null;
-  at_registrado_em: string | null;
-  lead_registrado_em?: string | null;
-  proposta_registrado_em?: string | null;
-  aprovacao_registrado_em?: string | null;
-  vendido_registrado_em?: string | null;
   created_at: string;
-} & Record<FunnelField, string | null>;
+} & Record<FunnelField, string | null> &
+  Partial<Record<FunnelRegisteredField, string | null>>;
 
-const REG: Record<FunnelField, keyof CompContact> = {
-  at_marcada_em: "at_registrado_em",
-  lead_em: "lead_registrado_em",
-  proposta_em: "proposta_registrado_em",
-  aprovacao_em: "aprovacao_registrado_em",
-  vendido_em: "vendido_registrado_em",
-};
+/** Colunas de `contacts` que o cálculo usa (as do funil vêm do FUNNEL). */
+export const COMP_CONTACT_COLUMNS = [
+  "user_id",
+  "sent1_at",
+  "created_at",
+  ...FUNNEL.flatMap((f) => [f.field, f.registeredField]),
+].join(", ");
 
 /** Data (SP) em que a etapa foi registrada na plataforma; sem registro, usa a data informada. */
 export function stageScoreDate(c: CompContact, f: FunnelField): string | null {
   if (!c[f]) return null;
-  const reg = c[REG[f]] as string | null | undefined;
+  const reg = c[FUNNEL.find((s) => s.field === f)!.registeredField];
   if (!reg) return c[f];
   return new Date(reg).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
 }
@@ -111,7 +107,6 @@ export function computeCompetition(
       pontuacao_final: 0,
     });
   }
-  const keys = ["ats", "leads", "propostas", "aprovacoes", "vendidos"] as const;
 
   let first: { c: CompContact; key: string } | null = null;
   const weekCounts = new Map<string, Map<string, number>>();
@@ -122,13 +117,13 @@ export function computeCompetition(
     if (inP(c.sent1_at)) r.linkedin1++;
     // AT conta no dia em que foi registrada na plataforma (não no dia da reunião).
     const at = atScoreDate(c);
-    FUNNEL.forEach((f, i) => {
+    for (const f of FUNNEL) {
       const d = f.field === "at_marcada_em" ? at : stageScoreDate(c, f.field);
       if (inP(d)) {
-        r[keys[i]!]++;
+        r[f.countKey]++;
         r.pontos_funil += f.points;
       }
-    });
+    }
     if (inP(at)) {
       const key = c.at_registrado_em ?? `${at}T99`;
       if (!first || key < first.key) first = { c, key };

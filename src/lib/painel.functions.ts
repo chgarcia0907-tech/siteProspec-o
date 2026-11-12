@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { FUNNEL, STEPS } from "./cadencia";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Tables } from "@/integrations/supabase/types";
@@ -61,18 +62,11 @@ export const painelHunters = createServerFn({ method: "GET" })
     return { hunters, total: contacts.length };
   });
 
+/** Colunas de atividade do contato (envios da cadência e etapas do funil) com seus rótulos. */
 const ACTIVITY = [
-  ["sent1_at", "LinkedIn 1"],
-  ["sent2_at", "WhatsApp 1"],
-  ["sent3_at", "LinkedIn 2"],
-  ["sent4_at", "WhatsApp 2"],
-  ["sent5_at", "LinkedIn 3"],
-  ["at_marcada_em", "AT marcada"],
-  ["lead_em", "Lead"],
-  ["proposta_em", "Proposta"],
-  ["aprovacao_em", "Aprovação verbal"],
-  ["vendido_em", "Projeto vendido"],
-] as const;
+  ...STEPS.map((st) => [st.sentField, st.label] as const),
+  ...FUNNEL.map((f) => [f.field, f.label] as const),
+];
 const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 /**

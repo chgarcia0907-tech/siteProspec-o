@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import {
+  COMP_CONTACT_COLUMNS,
   computeCompetition,
   computeWeekly,
   type CompContact,
@@ -8,7 +9,7 @@ import {
   type CompRow,
 } from "./competition";
 import { spParts } from "./cadencia";
-import { fetchAll } from "./fetch-all";
+import { fetchAll, type PageResult } from "./fetch-all";
 
 export type CompRowG = CompRow & { grupo: string; subgrupo: string };
 export type WeekBoardG = { inicio: string; fim: string; parcial: boolean; rows: CompRowG[] };
@@ -39,13 +40,12 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
   if (periodId && !period) throw new Error("Período não encontrado");
   const ciclo = !!periodId && period?.kind === "ciclo";
 
-  const cols =
-    "user_id, sent1_at, at_marcada_em, lead_em, proposta_em, aprovacao_em, vendido_em, at_registrado_em, lead_registrado_em, proposta_registrado_em, aprovacao_registrado_em, vendido_registrado_em, created_at";
   const [contacts, profiles, s, members, groups, subgroups] = await Promise.all([
     fetchAll((a, b) => {
-      let q = db.from("contacts").select(cols);
+      let q = db.from("contacts").select(COMP_CONTACT_COLUMNS);
       if (periodId && !ciclo) q = q.eq("period_id", periodId);
-      return q.order("id").range(a, b);
+      // select montado a partir do FUNNEL: o tipo da linha é declarado aqui.
+      return q.order("id").range(a, b) as unknown as PageResult<CompContact>;
     }),
     fetchAll((a, b) =>
       db.from("profiles").select("id, display_name, email").order("id").range(a, b),
@@ -83,7 +83,7 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
     range = { start: s.data?.start_date ?? "2026-10-01", end: s.data?.end_date ?? null };
   }
   const today = spParts().iso;
-  const res = computeCompetition(contacts as CompContact[], hunters, range, today);
+  const res = computeCompetition(contacts, hunters, range, today);
   const gname = new Map((groups.data ?? []).map((g) => [g.id, g.name]));
   const sname = new Map((subgroups.data ?? []).map((g) => [g.id, g.name]));
   const mem = new Map(members.map((m) => [m.user_id, m]));
@@ -106,7 +106,7 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
     periodKind: periodId ? (ciclo ? "ciclo" : "competicao") : undefined,
     rows: withGroup(res.rows),
     semanas: ciclo
-      ? computeWeekly(contacts as CompContact[], hunters, range, today).map((w) => ({
+      ? computeWeekly(contacts, hunters, range, today).map((w) => ({
           ...w,
           rows: withGroup(w.rows),
         }))

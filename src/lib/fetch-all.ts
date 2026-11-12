@@ -1,7 +1,8 @@
 // Busca todas as linhas paginando com .range() (o banco limita 1.000 por consulta).
 const PAGE = 1000;
 
-type PageResult<T> = PromiseLike<{ data: T[] | null; error: unknown }>;
+/** Resultado de uma página; use para tipar consultas com `select` montado dinamicamente. */
+export type PageResult<T> = PromiseLike<{ data: T[] | null; error: unknown }>;
 
 export async function fetchAll<T>(page: (from: number, to: number) => PageResult<T>): Promise<T[]> {
   const out: T[] = [];
