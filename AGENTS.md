@@ -32,6 +32,22 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Segredos de servidor (`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `SHEET_EXPORT_TOKEN`)
   ficam nas variáveis de ambiente da Vercel, nunca no repositório.
 
+## Organização do código
+
+- Rotas em `src/routes/` são finas: estado da tela e composição. Componentes de uma tela ficam
+  em `src/components/<tela>/` (`contatos`, `hoje`, `ranking`, `painel`); componentes usados em
+  mais de uma tela ficam na raiz de `src/components/` (ex.: `SectorSelect`, `InlineInput`,
+  `Funnel`); `src/components/ui/` é o shadcn/ui.
+- Regras puras de cada tela ficam em `src/lib/<tela>.ts` (`contatos.ts`, `fila.ts`,
+  `ranking.ts`), com testes ao lado (`*.test.ts`). Lógica que dá para testar não fica em
+  componente.
+- Hooks compartilhados: `useCadencia` (dados do hunter), `usePainel` (dados do admin),
+  `useSelection` (seleção por checkbox). No painel, ações destrutivas passam por
+  `useConfirm` (`ask({ title, desc, word?, run })`).
+- Etapas da cadência vêm de `STEPS` e etapas do funil de `FUNNEL` (ambos em `cadencia.ts`):
+  colunas, rótulos, pontos e CSVs derivam dessas listas; não repita os campos à mão.
+- Selects simples usam `NativeSelect`; erros em toast usam `errorMessage` (`src/lib/utils.ts`).
+
 ## Arquitetura (Cadência Outbound)
 
 - Regras de cadência, parser do LinkedIn e utilitários de data ficam em `src/lib/cadencia.ts` — uma única fonte de verdade reutilizada por todas as telas.
@@ -46,5 +62,5 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Ações de períodos/grupos/membros, transferência de contatos e exclusão de hunter ficam em src/lib/periodos.functions.ts (has_role antes do service role); excluir hunter exige zero contatos porque contacts.user_id apaga em cascata com a conta.
 - Ranking por período: período encerrado lê o placar oficial de period_snapshots (loadSnapshot); "maturação atual" recalcula ao vivo só com contatos do período; sem período mantém o cálculo original para não quebrar a planilha.
 - Feriados: leitura pública para logados; escrita só por `adminAddHoliday`/`adminRemoveHoliday` (senha de administrador), para manter o mesmo controle das outras ações sensíveis.
-- Funil: cada etapa tem coluna `*_registrado_em` (momento do clique); a pontuação usa `stageScoreDate` em `competition.ts`, e a data agendada (`*_em`) fica só para consolidado — assim agendamentos futuros não represam pontos.
+- Funil: `FUNNEL` em `cadencia.ts` é a fonte única das etapas (coluna da data, coluna de registro, contador do placar, rótulos e pontos). Cada etapa tem coluna `*_registrado_em` (momento do clique); a pontuação usa `stageScoreDate` em `competition.ts`, e a data agendada (`*_em`) fica só para consolidado — assim agendamentos futuros não represam pontos.
 - Tipos de período (periods.kind): 'competicao' (Hacka: contatos do próprio período) e 'ciclo' (equipe: só membros, todos os contatos deles contados pela data de cada etapa, com ranking por semana via computeWeekly). closePeriod aceita `end` para congelar o placar numa data passada. A planilha lê o ciclo em ranking.csv?visao=ciclo e ?visao=semanas.

@@ -16,15 +16,17 @@ trabalho.
 
 ## Onde fica cada coisa
 
-| Pasta / arquivo                      | Conteúdo                                                                                                                                       |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/lib/cadencia.ts`                | Regras da cadência, datas previstas (dias úteis), parser do LinkedIn, modelos de mensagem. Fonte única — telas, CSVs e exports importam daqui. |
-| `src/lib/competition.ts`             | Cálculo puro da pontuação/ranking. `competition.server.ts` carrega os dados com service role.                                                  |
-| `src/lib/*.functions.ts`             | Server functions (ações de admin, painel, períodos). Sempre validam `has_role`/senha antes do service role.                                    |
-| `src/hooks/useCadencia.ts`           | Leitura e escrita dos dados do hunter (React Query + RLS).                                                                                     |
-| `src/routes/_authenticated/*`        | Telas logadas (hoje, contatos, importar, ranking, painel…).                                                                                    |
-| `src/routes/api/public/*`            | Endpoints CSV/JSON consumidos pela planilha (protegidos por token).                                                                            |
-| `src/integrations/supabase/types.ts` | Tipos gerados do banco. O tipo `Contact` deriva daqui.                                                                                         |
+| Pasta / arquivo                                | Conteúdo                                                                                                                                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/cadencia.ts`                          | Regras da cadência (`STEPS`), etapas do funil (`FUNNEL`), datas previstas em dias úteis, parser do LinkedIn, modelos de mensagem. Fonte única — telas, CSVs e exports importam daqui. |
+| `src/lib/competition.ts`                       | Cálculo puro da pontuação/ranking. `competition.server.ts` carrega os dados com service role.                                                                                         |
+| `src/lib/contatos.ts`, `fila.ts`, `ranking.ts` | Regras puras de cada tela (filtros, filas do dia, CSV), com testes.                                                                                                                   |
+| `src/lib/*.functions.ts`                       | Server functions (ações de admin, painel, períodos). Sempre validam `has_role`/senha antes do service role.                                                                           |
+| `src/hooks/`                                   | `useCadencia` (dados do hunter, React Query + RLS), `usePainel` (dados do admin), `useSelection`.                                                                                     |
+| `src/routes/_authenticated/*`                  | Telas logadas. As rotas só guardam o estado e compõem os componentes.                                                                                                                 |
+| `src/components/<tela>/`                       | Componentes de cada tela (`contatos`, `hoje`, `ranking`, `painel`).                                                                                                                   |
+| `src/routes/api/public/*`                      | Endpoints CSV/JSON consumidos pela planilha (protegidos por token).                                                                                                                   |
+| `src/integrations/supabase/types.ts`           | Tipos gerados do banco. O tipo `Contact` deriva daqui.                                                                                                                                |
 
 ## Rodando localmente
 
