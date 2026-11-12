@@ -11,6 +11,13 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   `bun run typecheck && bun run lint && bun run test && bun run build`.
 - Gerenciador de pacotes: bun (`bun.lock` versionado). Instale com `bun install`.
 - Não reescreva histórico já enviado (force push, rebase ou amend de commits publicados).
+- Commits e títulos de pull request seguem [Conventional Commits](https://www.conventionalcommits.org/pt-br/v1.0.0/):
+  `<tipo>(<escopo opcional>): <descrição>`, com a descrição em português, no imperativo e
+  em minúsculas, sem ponto final. Tipos: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`,
+  `style`, `build`, `ci`, `chore`, `revert`. Mudança incompatível leva `!` após o tipo
+  (ex.: `feat(db)!: ...`) e um rodapé `BREAKING CHANGE: ...`.
+  Escopos comuns: `cadencia`, `funil`, `ranking`, `painel`, `periodos`, `planilha`,
+  `auth`, `db`, `ui`, `deps`.
 
 ## Banco de dados (Supabase, projeto próprio)
 
