@@ -7,6 +7,7 @@ import { CompTab } from "@/components/painel/CompTab";
 import { useConfirm } from "@/components/painel/useConfirm";
 import { HuntersTab } from "@/components/painel/HuntersTab";
 import { PeriodosTab } from "@/components/painel/periodos/PeriodosTab";
+import { SetoresTab } from "@/components/painel/setores/SetoresTab";
 import { painelIsAdmin } from "@/lib/painel.functions";
 
 export const Route = createFileRoute("/_authenticated/painel")({
@@ -54,6 +55,7 @@ function PainelAdmin() {
         <TabsList>
           <TabsTrigger value="hunters">Hunters</TabsTrigger>
           <TabsTrigger value="periodos">Períodos e grupos</TabsTrigger>
+          <TabsTrigger value="setores">Setores e cadências</TabsTrigger>
           <TabsTrigger value="competicao">Competição</TabsTrigger>
           <TabsTrigger value="busca">Busca geral</TabsTrigger>
         </TabsList>
@@ -62,6 +64,9 @@ function PainelAdmin() {
         </TabsContent>
         <TabsContent value="periodos">
           <PeriodosTab ask={ask} />
+        </TabsContent>
+        <TabsContent value="setores">
+          <SetoresTab ask={ask} />
         </TabsContent>
         <TabsContent value="competicao">
           <CompTab />

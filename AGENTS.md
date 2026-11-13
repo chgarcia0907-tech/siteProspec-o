@@ -26,7 +26,7 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   `style`, `build`, `ci`, `chore`, `revert`. Mudança incompatível leva `!` após o tipo
   (ex.: `feat(db)!: ...`) e um rodapé `BREAKING CHANGE: ...`.
   Escopos comuns: `cadencia`, `funil`, `ranking`, `painel`, `periodos`, `planilha`,
-  `auth`, `db`, `ui`, `deps`.
+  `empresas`, `auth`, `db`, `ui`, `deps`.
 
 ## Banco de dados (Supabase, projeto próprio)
 
@@ -44,10 +44,10 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 ## Organização do código
 
 - Rotas em `src/routes/` são finas: estado da tela e composição. Componentes de uma tela ficam
-  em `src/components/<tela>/` (`contatos`, `hoje`, `ranking`, `painel`); componentes usados em
+  em `src/components/<tela>/` (`contatos`, `empresas`, `hoje`, `ranking`, `painel`); componentes usados em
   mais de uma tela ficam na raiz de `src/components/` (ex.: `SectorSelect`, `InlineInput`,
   `Funnel`); `src/components/ui/` é o shadcn/ui.
-- Regras puras de cada tela ficam em `src/lib/<tela>.ts` (`contatos.ts`, `fila.ts`,
+- Regras puras de cada tela ficam em `src/lib/<tela>.ts` (`contatos.ts`, `empresas.ts`, `fila.ts`,
   `ranking.ts`), com testes ao lado (`*.test.ts`). Lógica que dá para testar não fica em
   componente.
 - Hooks compartilhados: `useCadencia` (dados do hunter), `usePainel` (dados do admin),
@@ -79,3 +79,13 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Feriados: leitura pública para logados; escrita só por `adminAddHoliday`/`adminRemoveHoliday` (senha de administrador), para manter o mesmo controle das outras ações sensíveis.
 - Funil: `FUNNEL` em `cadencia.ts` é a fonte única das etapas (coluna da data, coluna de registro, contador do placar, rótulos e pontos). Cada etapa tem coluna `*_registrado_em` (momento do clique); a pontuação usa `stageScoreDate` em `competition.ts`, e a data agendada (`*_em`) fica só para consolidado — assim agendamentos futuros não represam pontos.
 - Tipos de período (periods.kind): 'competicao' (Hacka: contatos do próprio período) e 'ciclo' (equipe: só membros, todos os contatos deles contados pela data de cada etapa, com ranking por semana via computeWeekly). closePeriod aceita `end` para congelar o placar numa data passada. A planilha lê o ciclo em ranking.csv?visao=ciclo e ?visao=semanas.
+- Empresas e setores: o hunter cadastra as empresas da semana em /empresas (`companies`, RLS por hunter,
+  `week_start` = segunda-feira) e escolhe o setor (ramo de atuação, tabela `sectors`). O contato se liga
+  à empresa por `contacts.company_id`; um trigger copia nome e concordância para `contacts.company` e
+  `company_gender`, então planilha, ranking e mensagens seguem lendo esses campos. `contacts.sector` é
+  outra coisa: a área do contato (TI, RH...), que alimenta [DOR_DO_SETOR].
+- Cadências por setor: `sector_templates` (setor × etapa), escritas só pelo admin na aba "Setores e
+  cadências" do painel via `src/lib/setores.functions.ts` (has_role antes do service role). Em Envios de
+  hoje, `pickTemplate` (`fila.ts`) usa a mensagem do setor da empresa e cai no modelo padrão
+  (`message_templates`) quando a etapa não tem mensagem própria. Setor com empresas não é excluído, só
+  desativado.

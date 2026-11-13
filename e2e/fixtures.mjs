@@ -8,6 +8,9 @@ const P1 = "aaaaaaaa-0000-4000-8000-000000000001";
 const P0 = "aaaaaaaa-0000-4000-8000-000000000000";
 const G1 = "bbbbbbbb-0000-4000-8000-000000000001";
 const S1 = "cccccccc-0000-4000-8000-000000000001";
+export const SETOR_VAREJO = "12121212-0000-4000-8000-000000000001";
+const SETOR_SAUDE = "12121212-0000-4000-8000-000000000002";
+const EMPRESA_DELTA = "13131313-0000-4000-8000-000000000001";
 
 export const USER = {
   id: U1,
@@ -45,6 +48,7 @@ const blank = {
   aprovacao_registrado_em: null,
   vendido_registrado_em: null,
   period_id: P1,
+  company_id: null,
   updated_at: "2026-11-01T00:00:00Z",
 };
 let n = 0;
@@ -91,6 +95,7 @@ export function makeContacts() {
       name: "Diego Rocha",
       headline: "CEO na Delta",
       company: "Delta",
+      company_id: EMPRESA_DELTA,
       job_title: "CEO",
       phone: "11911112222",
       step1_date: "2026-11-03",
@@ -226,6 +231,32 @@ export function initialDb() {
       code: `M${step}`,
       body: `Olá, [FIRST NAME]! Mensagem ${step} [NA_EMPRESA].`,
     })),
+    sectors: [
+      { id: SETOR_VAREJO, name: "Varejo", active: true, sort: 0 },
+      { id: SETOR_SAUDE, name: "Saúde", active: false, sort: 1 },
+    ],
+    // Cadência do Varejo só com o WhatsApp 2; as outras etapas usam o modelo padrão.
+    sector_templates: [
+      {
+        sector_id: SETOR_VAREJO,
+        step: 4,
+        code: "VAR4",
+        body: "Oi, [FIRST NAME]! Cadência do varejo [NA_EMPRESA].",
+      },
+    ],
+    companies: [
+      {
+        id: EMPRESA_DELTA,
+        user_id: U1,
+        name: "Delta",
+        gender: "feminino",
+        sector_id: SETOR_VAREJO,
+        week_start: "2026-11-09",
+        period_id: P1,
+        created_at: "2026-11-09T12:00:00Z",
+        updated_at: "2026-11-09T12:00:00Z",
+      },
+    ],
     holidays: [
       { date: "2026-11-02", name: "Finados" },
       { date: "2026-11-20", name: "Consciência Negra" },

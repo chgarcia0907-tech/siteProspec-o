@@ -90,7 +90,7 @@ export function formatBR(iso: string | null | undefined): string {
 }
 
 /** Dia da semana (0 = domingo) de uma data ISO, independente de fuso. */
-function weekdayISO(iso: string): number {
+export function weekdayISO(iso: string): number {
   const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
   return new Date(Date.UTC(y!, (m ?? 1) - 1, d ?? 1)).getUTCDay();
 }
