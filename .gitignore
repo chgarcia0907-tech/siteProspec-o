@@ -33,7 +33,3 @@ dist-ssr
 
 # Vercel
 .vercel
-
-# Playwright
-test-results/
-playwright-report/

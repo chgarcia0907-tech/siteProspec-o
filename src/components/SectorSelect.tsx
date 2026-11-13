@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/select";
 import { SECTORS } from "@/lib/cadencia";
 
-/** Seletor da área do lead (TI, RH...), que alimenta [DOR_DO_SETOR]. O ramo da empresa fica em `IndustrySelect`. */
+/** Seletor do setor do lead (alimenta a dor do setor nas mensagens). */
 export function SectorSelect({
   value,
   onChange,
@@ -19,8 +19,8 @@ export function SectorSelect({
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className={className} aria-label="Área do contato">
-        <SelectValue placeholder="Área" />
+      <SelectTrigger className={className} aria-label="Setor">
+        <SelectValue placeholder="Setor" />
       </SelectTrigger>
       <SelectContent>
         {SECTORS.map((s) => (
