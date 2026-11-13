@@ -91,7 +91,8 @@ export function HolidaysAdmin({
             {items.map((h) => (
               <li key={h.date} className="flex items-center justify-between gap-2 px-3 py-1.5">
                 <span>
-                  <span className="tabular-nums text-muted-foreground">{formatBR(h.date)}</span> — {h.name}
+                  <span className="tabular-nums text-muted-foreground">{formatBR(h.date)}</span> —{" "}
+                  {h.name}
                 </span>
                 <Button
                   variant="ghost"
@@ -99,7 +100,9 @@ export function HolidaysAdmin({
                   className="h-7 w-7"
                   aria-label={`Remover ${h.name}`}
                   disabled={busy}
-                  onClick={() => run(() => remove({ data: { password, date: h.date } }), "Feriado removido")}
+                  onClick={() =>
+                    run(() => remove({ data: { password, date: h.date } }), "Feriado removido")
+                  }
                 >
                   <X className="h-4 w-4" />
                 </Button>

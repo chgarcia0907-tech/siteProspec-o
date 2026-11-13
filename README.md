@@ -1,29 +1,93 @@
-# Welcome to your Lovable project
+# Cadência Outbound
 
-This project was built with [Lovable](https://lovable.dev).
+Plataforma de prospecção outbound dos hunters: cadência de 5 toques (LinkedIn e WhatsApp),
+fila do dia, funil (AT → venda), ranking/competição por período e exportação para Google Sheets.
 
-## Build with Lovable
+Desenvolvido com o Claude Code e publicado na Vercel. Leia o `AGENTS.md` (carregado pelo
+`CLAUDE.md`) antes de mudar a arquitetura: ele registra as decisões de projeto e o fluxo de
+trabalho.
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+## Stack
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- TanStack Start (React 19, roteamento por arquivos em `src/routes`) + Vite + nitro (deploy na Vercel)
+- Supabase (Postgres, Auth, RLS) — cliente em `src/integrations/supabase`
+- React Query, Tailwind CSS 4, shadcn/ui (`src/components/ui`)
+- Vitest para testes das regras de negócio
 
-## Development
+## Onde fica cada coisa
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+| Pasta / arquivo                                | Conteúdo                                                                                                                                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/cadencia.ts`                          | Regras da cadência (`STEPS`), etapas do funil (`FUNNEL`), datas previstas em dias úteis, parser do LinkedIn, modelos de mensagem. Fonte única — telas, CSVs e exports importam daqui. |
+| `src/lib/competition.ts`                       | Cálculo puro da pontuação/ranking. `competition.server.ts` carrega os dados com service role.                                                                                         |
+| `src/lib/contatos.ts`, `fila.ts`, `ranking.ts` | Regras puras de cada tela (filtros, filas do dia, CSV), com testes.                                                                                                                   |
+| `src/lib/*.functions.ts`                       | Server functions (ações de admin, painel, períodos). Sempre validam `has_role`/senha antes do service role.                                                                           |
+| `src/hooks/`                                   | `useCadencia` (dados do hunter, React Query + RLS), `usePainel` (dados do admin), `useSelection`.                                                                                     |
+| `src/routes/_authenticated/*`                  | Telas logadas. As rotas só guardam o estado e compõem os componentes.                                                                                                                 |
+| `src/components/<tela>/`                       | Componentes de cada tela (`contatos`, `hoje`, `ranking`, `painel`).                                                                                                                   |
+| `src/routes/api/public/*`                      | Endpoints CSV/JSON consumidos pela planilha (protegidos por token).                                                                                                                   |
+| `src/integrations/supabase/types.ts`           | Tipos gerados do banco. O tipo `Contact` deriva daqui.                                                                                                                                |
+
+## Rodando localmente
+
+Requer [Bun](https://bun.sh). As variáveis públicas do Supabase já estão no `.env`
+versionado. As rotas de servidor (admin, planilha) precisam também de
+`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD` e `SHEET_EXPORT_TOKEN`: coloque-os num
+`.env.local` (ignorado pelo git) e carregue no terminal antes de subir o servidor.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+bun install
+set -a; source .env.local; set +a   # opcional: só para testar admin e planilha
+bun run dev                          # http://localhost:8080
 ```
 
-## Built with
+## Verificações
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+Rode antes de cada push (o CI em `.github/workflows/ci.yml` roda as mesmas):
+
+```sh
+bun run typecheck   # TypeScript
+bun run lint        # ESLint + Prettier (bun run format corrige a formatação)
+bun run test        # Vitest
+bun run build       # build de produção
+```
+
+## Deploy
+
+Produção é o branch `main`: a Vercel publica cada push nele. O trabalho acontece no `dev`
+(a Vercel gera um deploy de preview para ele) e vai para o `main` por pull request, depois
+do CI verde. A Vercel faz o build (`bun run build`); o nitro detecta a Vercel e gera
+`.vercel/output`; fora dela, gera um servidor Node em `.output`
+(`node .output/server/index.mjs`). Segredos de servidor ficam nas variáveis de ambiente
+do projeto na Vercel.
+
+## Banco de dados e migrações
+
+Todas as migrações ficam em `supabase/migrations/`, aplicadas pelo
+[Supabase CLI](https://supabase.com/docs/guides/cli):
+
+```sh
+npx supabase login
+npx supabase link --project-ref ctxsmboaqbjgslctojeq
+bun run db:new nome_da_mudanca   # cria supabase/migrations/<timestamp>_nome_da_mudanca.sql
+bun run db:push                  # aplica as pendentes no banco
+bun run db:types                 # regenera src/integrations/supabase/types.ts
+```
+
+SQL que só pode rodar depois de publicar a versão do app que o entende fica em
+`pendente-pos-publicacao/` e é executado manualmente após o deploy.
+
+### Primeira vez com o CLI (uma vez só)
+
+O banco de produção é o projeto `ctxsmboaqbjgslctojeq`. Ele já tem o esquema de todas as
+migrações até `20261106154640` (conferido em 13/11/2026), mas elas não foram aplicadas pelo
+Supabase CLI, então o CLI pode não saber disso. Antes do primeiro `db:push`, rode
+`npx supabase migration list`: as que aparecerem só na coluna Local já existem no banco e
+devem ser marcadas como aplicadas, **exceto** a `20261112150000`, que é nova:
+
+```sh
+npx supabase migration repair --status applied 20260928210133 20260928210149 20260929192736 20260929210824 20260929211718 20261001175726 20261001180328 20261010200102 20261010200850 20261010222519 20261010223448 20261011171543 20261012200246 20261023173127 20261023181702 20261103192940 20261106154640
+```
+
+Depois disso, `migration list` deve mostrar só a `20261112150000` como pendente, e
+`db:push` aplica só ela (remove o agendamento antigo do Lovable, se existir).

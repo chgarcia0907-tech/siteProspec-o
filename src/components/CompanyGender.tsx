@@ -4,7 +4,11 @@ import { cn } from "@/lib/utils";
 const OPTIONS: { value: CompanyGender; label: string; tip: string }[] = [
   { value: "masculino", label: "♂ no", tip: "Masculino — “no Grupo Bild”" },
   { value: "feminino", label: "♀ na", tip: "Feminino — “na Ada”" },
-  { value: "sem_artigo", label: "em", tip: "Sem artigo (plural ou ambíguo) — “em Lojas Americanas”" },
+  {
+    value: "sem_artigo",
+    label: "em",
+    tip: "Sem artigo (plural ou ambíguo) — “em Lojas Americanas”",
+  },
 ];
 
 /** Seletor segmentado da concordância da empresa nas mensagens. */
@@ -16,7 +20,11 @@ export function CompanyGenderToggle({
   onChange: (v: CompanyGender) => void;
 }) {
   return (
-    <div role="radiogroup" aria-label="Artigo da empresa" className="inline-flex h-7 overflow-hidden rounded-md border">
+    <div
+      role="radiogroup"
+      aria-label="Artigo da empresa"
+      className="inline-flex h-7 overflow-hidden rounded-md border"
+    >
       {OPTIONS.map((o) => (
         <button
           key={o.value}

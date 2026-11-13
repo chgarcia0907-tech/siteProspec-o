@@ -6,13 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -75,9 +69,7 @@ function AuthPage() {
         if (data.session) {
           navigate({ to: "/hoje", replace: true });
         } else {
-          toast.success(
-            "Conta criada. Confirme o e-mail pelo link que enviamos para entrar.",
-          );
+          toast.success("Conta criada. Confirme o e-mail pelo link que enviamos para entrar.");
         }
       }
     } catch (err) {
@@ -144,11 +136,7 @@ function AuthPage() {
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading
-                ? "Aguarde..."
-                : mode === "login"
-                  ? "Entrar"
-                  : "Criar conta"}
+              {loading ? "Aguarde..." : mode === "login" ? "Entrar" : "Criar conta"}
             </Button>
           </form>
           <div className="mt-4 flex items-center justify-between text-sm">
@@ -159,10 +147,7 @@ function AuthPage() {
             >
               {mode === "login" ? "Criar conta" : "Já tenho conta"}
             </button>
-            <Link
-              to="/"
-              className="text-muted-foreground underline-offset-4 hover:underline"
-            >
+            <Link to="/" className="text-muted-foreground underline-offset-4 hover:underline">
               Voltar
             </Link>
           </div>

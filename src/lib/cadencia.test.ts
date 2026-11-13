@@ -1,12 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_OFFSETS, addBusinessDaysISO, plannedDates } from "./cadencia";
 
-const base = { step1_date: null, sent1_at: null, sent2_at: null, sent3_at: null, sent4_at: null, sent5_at: null };
+const base = {
+  step1_date: null,
+  sent1_at: null,
+  sent2_at: null,
+  sent3_at: null,
+  sent4_at: null,
+  sent5_at: null,
+};
 
 describe("cadência em dias úteis", () => {
   it("envio na sexta: próxima etapa na segunda", () => {
-    const p = plannedDates({ ...base, step1_date: "2026-10-09", sent1_at: "2026-10-09" }, DEFAULT_OFFSETS);
-    expect(p).toEqual({ 1: "2026-10-09", 2: "2026-10-12", 3: "2026-10-13", 4: "2026-10-14", 5: "2026-10-15" });
+    const p = plannedDates(
+      { ...base, step1_date: "2026-10-09", sent1_at: "2026-10-09" },
+      DEFAULT_OFFSETS,
+    );
+    expect(p).toEqual({
+      1: "2026-10-09",
+      2: "2026-10-12",
+      3: "2026-10-13",
+      4: "2026-10-14",
+      5: "2026-10-15",
+    });
   });
 
   it("envio atrasado no meio recalcula as seguintes", () => {
@@ -38,12 +54,18 @@ describe("cadência em dias úteis", () => {
 describe("feriados", () => {
   const hol = new Set(["2026-10-12"]);
   it("sexta 09/10 → WhatsApp 1 na terça 13/10 (12/10 feriado)", () => {
-    const p = plannedDates({ ...base, step1_date: "2026-10-09", sent1_at: "2026-10-09" }, DEFAULT_OFFSETS, hol);
+    const p = plannedDates(
+      { ...base, step1_date: "2026-10-09", sent1_at: "2026-10-09" },
+      DEFAULT_OFFSETS,
+      hol,
+    );
     expect(p[2]).toBe("2026-10-13");
     expect(p[3]).toBe("2026-10-14");
   });
   it("LinkedIn 1 prevista no feriado vai para o próximo útil", () => {
-    expect(plannedDates({ ...base, step1_date: "2026-10-12" }, DEFAULT_OFFSETS, hol)[1]).toBe("2026-10-13");
+    expect(plannedDates({ ...base, step1_date: "2026-10-12" }, DEFAULT_OFFSETS, hol)[1]).toBe(
+      "2026-10-13",
+    );
   });
 });
 
@@ -106,7 +128,11 @@ Mensagem`;
   });
 });
 
-import { normalizarNome as _nn, cleanName as _cn, parseLinkedInConnections as _pl } from "./cadencia";
+import {
+  normalizarNome as _nn,
+  cleanName as _cn,
+  parseLinkedInConnections as _pl,
+} from "./cadencia";
 describe("normalizarNome / cleanName", () => {
   it.each([
     ["RENATO F. RODRIGUES", "Renato F. Rodrigues"],
@@ -122,17 +148,24 @@ describe("normalizarNome / cleanName", () => {
     ["John McDonald", "John McDonald"],
     ["DE PAULA SANTOS", "De Paula Santos"],
   ])("%s", (a, b) => expect(_cn(a)).toBe(b));
-  it("preserva sigla quando há minúsculas", () => expect(_nn("João Mesquita MBA")).toBe("João Mesquita MBA"));
+  it("preserva sigla quando há minúsculas", () =>
+    expect(_nn("João Mesquita MBA")).toBe("João Mesquita MBA"));
   it("primeira letra após pontuação", () => expect(_nn("(PMP")).toBe("(Pmp"));
   it("apóstrofo longo fica minúsculo", () => expect(_nn("FIORATO'S")).toBe("Fiorato's"));
   it("parser extrai nome da foto", () => {
-    const r = _pl("Foto de perfil de Maria Souza\nMaria Souza\nGerente\nConexão feita em 1 de outubro de 2026");
+    const r = _pl(
+      "Foto de perfil de Maria Souza\nMaria Souza\nGerente\nConexão feita em 1 de outubro de 2026",
+    );
     expect(r.map((c) => c.name)).toEqual(["Maria Souza"]);
-    const r2 = _pl("Carlos Fiorato’s profile picture\nCarlos Fiorato\nCEO\nConexão feita em 1 de outubro de 2026");
+    const r2 = _pl(
+      "Carlos Fiorato’s profile picture\nCarlos Fiorato\nCEO\nConexão feita em 1 de outubro de 2026",
+    );
     expect(r2.map((c) => c.name)).toEqual(["Carlos Fiorato"]);
   });
   it("acessar perfil e ruídos", () => {
-    const r = _pl("Classificar por:\nPor:\nAcessar perfil de Nelson A.A última atividade de Nelson foi há 2 dias\nNelson A.\nDiretor\nSalvar no Sales Navigator\nConexão feita em 1 de outubro de 2026");
+    const r = _pl(
+      "Classificar por:\nPor:\nAcessar perfil de Nelson A.A última atividade de Nelson foi há 2 dias\nNelson A.\nDiretor\nSalvar no Sales Navigator\nConexão feita em 1 de outubro de 2026",
+    );
     expect(r.map((c) => c.name)).toEqual(["Nelson A."]);
   });
 });
@@ -161,12 +194,20 @@ describe("concordância da empresa", () => {
   const r = (b: string, company: string, g: "masculino" | "feminino" | "sem_artigo", job = "") =>
     _rt(b, { name: "X", company, company_gender: g, job_title: job }, h);
   it("tags", () => {
-    expect(r("[NA_EMPRESA]|[A_EMPRESA]|[DA_EMPRESA]", "Grupo Bild", "masculino")).toBe("no Grupo Bild|o Grupo Bild|do Grupo Bild");
-    expect(r("[NA_EMPRESA]|[A_EMPRESA]|[DA_EMPRESA]", "Ada", "feminino")).toBe("na Ada|a Ada|da Ada");
-    expect(r("[NA_EMPRESA]|[A_EMPRESA]|[DA_EMPRESA]", "Lojas Americanas", "sem_artigo")).toBe("em Lojas Americanas|Lojas Americanas|de Lojas Americanas");
+    expect(r("[NA_EMPRESA]|[A_EMPRESA]|[DA_EMPRESA]", "Grupo Bild", "masculino")).toBe(
+      "no Grupo Bild|o Grupo Bild|do Grupo Bild",
+    );
+    expect(r("[NA_EMPRESA]|[A_EMPRESA]|[DA_EMPRESA]", "Ada", "feminino")).toBe(
+      "na Ada|a Ada|da Ada",
+    );
+    expect(r("[NA_EMPRESA]|[A_EMPRESA]|[DA_EMPRESA]", "Lojas Americanas", "sem_artigo")).toBe(
+      "em Lojas Americanas|Lojas Americanas|de Lojas Americanas",
+    );
   });
   it("cargo não repete empresa", () =>
-    expect(r("atua como [CARGO] [NA_EMPRESA]", "Grupo Bild", "masculino", "Diretor no Grupo Bild")).toBe("atua como Diretor no Grupo Bild"));
+    expect(
+      r("atua como [CARGO] [NA_EMPRESA]", "Grupo Bild", "masculino", "Diretor no Grupo Bild"),
+    ).toBe("atua como Diretor no Grupo Bild"));
 });
 
 import { janelaDeTempo, renderTemplate as rt } from "./cadencia";
@@ -182,7 +223,12 @@ describe("janela de tempo da reunião", () => {
     expect(janelaDeTempo(new Date("2026-11-05T02:30:00Z"))).toBe("nos próximos dias");
   });
   it("texto antigo vira janela", () => {
-    const out = rt("Que tal marcarmos na [DIA_SUGERIDO]?", { name: "Renato", company: "X" }, { name: "A", gender: "m" }, { now: new Date("2026-11-06T15:00:00Z") });
+    const out = rt(
+      "Que tal marcarmos na [DIA_SUGERIDO]?",
+      { name: "Renato", company: "X" },
+      { name: "A", gender: "m" },
+      { now: new Date("2026-11-06T15:00:00Z") },
+    );
     expect(out).toBe("Que tal marcarmos uma conversa nas próximas semanas?");
   });
 });

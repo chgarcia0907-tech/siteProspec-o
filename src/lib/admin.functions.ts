@@ -7,7 +7,10 @@ const pw = z.string().min(1).max(200);
 export const getCompetition = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ periodId: z.string().uuid().nullish(), oficial: z.boolean().optional() }).optional().parse(d),
+    z
+      .object({ periodId: z.string().uuid().nullish(), oficial: z.boolean().optional() })
+      .optional()
+      .parse(d),
   )
   .handler(async ({ data }) => {
     const m = await import("./competition.server");
@@ -18,7 +21,10 @@ export const getCompetition = createServerFn({ method: "GET" })
 async function counts(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const [mine, all] = await Promise.all([
-    supabaseAdmin.from("contacts").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    supabaseAdmin
+      .from("contacts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId),
     supabaseAdmin.from("contacts").select("id", { count: "exact", head: true }),
   ]);
   return { mine: mine.count ?? 0, all: all.count ?? 0 };
@@ -56,11 +62,16 @@ export const adminDeleteContacts = createServerFn({ method: "POST" })
 export const adminSetCompetition = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({
-      password: pw,
-      start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
-    }).parse(d),
+    z
+      .object({
+        password: pw,
+        start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        end: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { checkAdminPassword } = await import("./admin.server");
@@ -69,7 +80,10 @@ export const adminSetCompetition = createServerFn({ method: "POST" })
     if (data.end && data.end < data.start) return { status: "invalid" as const };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("competition_settings").upsert({
-      id: 1, start_date: data.start, end_date: data.end, updated_at: new Date().toISOString(),
+      id: 1,
+      start_date: data.start,
+      end_date: data.end,
+      updated_at: new Date().toISOString(),
     });
     if (error) throw new Error("Falha ao salvar período");
     return { status: "ok" as const };
@@ -79,13 +93,17 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 export const adminAddHoliday = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ password: pw, date: isoDate, name: z.string().trim().min(1).max(100) }).parse(d))
+  .inputValidator((d) =>
+    z.object({ password: pw, date: isoDate, name: z.string().trim().min(1).max(100) }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { checkAdminPassword } = await import("./admin.server");
     const check = await checkAdminPassword(context.userId, data.password);
     if (check.status !== "ok") return check;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("holidays").upsert({ date: data.date, name: data.name });
+    const { error } = await supabaseAdmin
+      .from("holidays")
+      .upsert({ date: data.date, name: data.name });
     if (error) throw new Error("Falha ao salvar feriado");
     return { status: "ok" as const };
   });

@@ -2,11 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useContacts, useImportContacts } from "@/hooks/useCadencia";
-import {
-  formatBR,
-  normalizeKey,
-  parseLinkedInConnections,
-} from "@/lib/cadencia";
+import { formatBR, normalizeKey, parseLinkedInConnections } from "@/lib/cadencia";
 import { jobTitleFromHeadline } from "@/lib/cadencia";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,14 +24,12 @@ export const Route = createFileRoute("/_authenticated/importar")({
       { title: "Importar conexões — Cadência Outbound" },
       {
         name: "description",
-        content:
-          "Cole a lista de conexões aceitas do LinkedIn e importe os novos contatos.",
+        content: "Cole a lista de conexões aceitas do LinkedIn e importe os novos contatos.",
       },
       { property: "og:title", content: "Importar conexões" },
       {
         property: "og:description",
-        content:
-          "Cole a lista de conexões aceitas do LinkedIn e importe os novos contatos.",
+        content: "Cole a lista de conexões aceitas do LinkedIn e importe os novos contatos.",
       },
     ],
   }),
@@ -50,8 +44,7 @@ function Importar() {
   const importMutation = useImportContacts();
 
   const existing = useMemo(
-    () =>
-      new Set((contacts ?? []).map((c) => normalizeKey(c.name, c.headline))),
+    () => new Set((contacts ?? []).map((c) => normalizeKey(c.name, c.headline))),
     [contacts],
   );
 
@@ -97,9 +90,7 @@ function Importar() {
           />
           <div className="flex flex-wrap items-end gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="from">
-                Importar apenas conexões feitas a partir de
-              </Label>
+              <Label htmlFor="from">Importar apenas conexões feitas a partir de</Label>
               <Input
                 id="from"
                 type="date"
@@ -119,8 +110,7 @@ function Importar() {
         <Card>
           <CardHeader className="flex-row items-center justify-between gap-2">
             <CardTitle className="text-base">
-              Pré-visualização — {rows.length} detectados, {toImport.length}{" "}
-              novos
+              Pré-visualização — {rows.length} detectados, {toImport.length} novos
             </CardTitle>
             <Button
               disabled={toImport.length === 0 || importMutation.isPending}

@@ -43,9 +43,9 @@ function Modelos() {
         <h1 className="text-2xl font-bold tracking-tight">Modelos</h1>
         <p className="text-sm text-muted-foreground">
           Modelos padrão da equipe (somente leitura). Variáveis: [FIRST NAME], [EMPRESA], [CARGO],
-          [DOR_DO_SETOR], [NOME], [CONSULTOR], [OBRIGADO], [JANELA] e [SAUDACAO].
-          Pré-visualização com o contato de exemplo {EXEMPLO.name} · {EXEMPLO.job_title} ·{" "}
-          {EXEMPLO.company} (setor {EXEMPLO.sector}).
+          [DOR_DO_SETOR], [NOME], [CONSULTOR], [OBRIGADO], [JANELA] e [SAUDACAO]. Pré-visualização
+          com o contato de exemplo {EXEMPLO.name} · {EXEMPLO.job_title} · {EXEMPLO.company} (setor{" "}
+          {EXEMPLO.sector}).
         </p>
       </div>
       {STEPS.map((step) => {

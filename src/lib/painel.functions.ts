@@ -1,18 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { FUNNEL, STEPS } from "./cadencia";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database, Tables } from "@/integrations/supabase/types";
 
-type Ctx = { supabase: any; userId: string };
+type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
 async function assertAdmin(ctx: Ctx) {
-  const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+  const { data, error } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "admin",
+  });
   if (error || !data) throw new Error("Acesso negado");
 }
 
 export const painelIsAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const { data } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
     return { admin: !!data };
   });
 
@@ -23,8 +32,16 @@ export const painelHunters = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { fetchAll } = await import("./fetch-all");
     const [profiles, contacts] = await Promise.all([
-      fetchAll((a, b) => supabaseAdmin.from("profiles").select("id, display_name, email").order("id").range(a, b)),
-      fetchAll((a, b) => supabaseAdmin.from("contacts").select("user_id, status, at_marcada_em").order("id").range(a, b)),
+      fetchAll((a, b) =>
+        supabaseAdmin.from("profiles").select("id, display_name, email").order("id").range(a, b),
+      ),
+      fetchAll((a, b) =>
+        supabaseAdmin
+          .from("contacts")
+          .select("user_id, status, at_marcada_em")
+          .order("id")
+          .range(a, b),
+      ),
     ]);
     const stats = new Map<string, { total: number; descartados: number; ats: number }>();
     for (const c of contacts) {
@@ -35,15 +52,21 @@ export const painelHunters = createServerFn({ method: "GET" })
       stats.set(c.user_id, s);
     }
     const hunters = profiles
-      .map((p) => ({ id: p.id, name: p.display_name?.trim() || p.email || "Hunter", email: p.email ?? "", ...(stats.get(p.id) ?? { total: 0, descartados: 0, ats: 0 }) }))
+      .map((p) => ({
+        id: p.id,
+        name: p.display_name?.trim() || p.email || "Hunter",
+        email: p.email ?? "",
+        ...(stats.get(p.id) ?? { total: 0, descartados: 0, ats: 0 }),
+      }))
       .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
     return { hunters, total: contacts.length };
   });
 
+/** Colunas de atividade do contato (envios da cadência e etapas do funil) com seus rótulos. */
 const ACTIVITY = [
-  ["sent1_at", "LinkedIn 1"], ["sent2_at", "WhatsApp 1"], ["sent3_at", "LinkedIn 2"], ["sent4_at", "WhatsApp 2"], ["sent5_at", "LinkedIn 3"],
-  ["at_marcada_em", "AT marcada"], ["lead_em", "Lead"], ["proposta_em", "Proposta"], ["aprovacao_em", "Aprovação verbal"], ["vendido_em", "Projeto vendido"],
-] as const;
+  ...STEPS.map((st) => [st.sentField, st.label] as const),
+  ...FUNNEL.map((f) => [f.field, f.label] as const),
+];
 const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 /**
@@ -53,24 +76,30 @@ const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const painelContacts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({
-      hunterId: z.string().uuid().nullable(),
-      q: z.string().max(100),
-      from: isoDay.nullable().optional(),
-      to: isoDay.nullable().optional(),
-    }).parse(d))
+    z
+      .object({
+        hunterId: z.string().uuid().nullable(),
+        q: z.string().max(100),
+        from: isoDay.nullable().optional(),
+        to: isoDay.nullable().optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { fetchAll } = await import("./fetch-all");
     const q = data.q.trim().replace(/[%,()]/g, " ");
-    const range = data.from && data.to && data.from <= data.to ? { from: data.from, to: data.to } : null;
+    const range =
+      data.from && data.to && data.from <= data.to ? { from: data.from, to: data.to } : null;
     if (!data.hunterId && q.length < 2 && !range) return { rows: [] };
     const cols = ACTIVITY.map(([f]) => f).join(", ");
     const rows = await fetchAll((a, b) => {
       let s = supabaseAdmin
         .from("contacts")
-        .select(`id, user_id, name, headline, company, phone, status, connected_at, created_at, ${cols}`)
+        .select(
+          `id, user_id, name, headline, company, phone, status, connected_at, created_at, ${cols}`,
+        )
         .order("created_at", { ascending: false })
         .order("id")
         .range(a, b);
@@ -85,13 +114,30 @@ export const painelContacts = createServerFn({ method: "POST" })
       }
       return s;
     });
-    const spDay = (ts: string) => new Date(ts).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+    const spDay = (ts: string) =>
+      new Date(ts).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
     const inR = (d: string | null) => !!range && !!d && d >= range.from && d <= range.to;
-    const out = (rows as any[]).map((r) => ({
+    type Row = Pick<
+      Tables<"contacts">,
+      | "id"
+      | "user_id"
+      | "name"
+      | "headline"
+      | "company"
+      | "phone"
+      | "status"
+      | "connected_at"
+      | "created_at"
+      | (typeof ACTIVITY)[number][0]
+    >;
+    // O select é montado a partir de ACTIVITY (string dinâmica), então o tipo é declarado aqui.
+    const out = (rows as unknown as Row[]).map((r) => ({
       ...r,
       atividades: range
-        ? [...(inR(spDay(r.created_at)) ? [`Importado em ${spDay(r.created_at)}`] : []),
-           ...ACTIVITY.filter(([f]) => inR(r[f])).map(([f, l]) => `${l} em ${r[f]}`)]
+        ? [
+            ...(inR(spDay(r.created_at)) ? [`Importado em ${spDay(r.created_at)}`] : []),
+            ...ACTIVITY.filter(([f]) => inR(r[f])).map(([f, l]) => `${l} em ${r[f]}`),
+          ]
         : [],
     }));
     return { rows: data.hunterId || range ? out.slice(0, 2000) : out.slice(0, 300) };
@@ -100,22 +146,30 @@ export const painelContacts = createServerFn({ method: "POST" })
 export const painelDelete = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.union([
-      z.object({ mode: z.literal("ids"), ids: z.array(z.string().uuid()).min(1).max(5000) }),
-      z.object({ mode: z.literal("hunter"), hunterId: z.string().uuid() }),
-    ]).parse(d),
+    z
+      .union([
+        z.object({ mode: z.literal("ids"), ids: z.array(z.string().uuid()).min(1).max(5000) }),
+        z.object({ mode: z.literal("hunter"), hunterId: z.string().uuid() }),
+      ])
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let deleted = 0;
     if (data.mode === "hunter") {
-      const { count, error } = await supabaseAdmin.from("contacts").delete({ count: "exact" }).eq("user_id", data.hunterId);
+      const { count, error } = await supabaseAdmin
+        .from("contacts")
+        .delete({ count: "exact" })
+        .eq("user_id", data.hunterId);
       if (error) throw new Error("Falha ao excluir");
       deleted = count ?? 0;
     } else {
       for (let i = 0; i < data.ids.length; i += 200) {
-        const { count, error } = await supabaseAdmin.from("contacts").delete({ count: "exact" }).in("id", data.ids.slice(i, i + 200));
+        const { count, error } = await supabaseAdmin
+          .from("contacts")
+          .delete({ count: "exact" })
+          .in("id", data.ids.slice(i, i + 200));
         if (error) throw new Error("Falha ao excluir");
         deleted += count ?? 0;
       }
@@ -126,13 +180,26 @@ export const painelDelete = createServerFn({ method: "POST" })
 export const painelSetPeriod = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z.object({ start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable() }).parse(d),
+    z
+      .object({
+        start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        end: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     if (data.end && data.end < data.start) return { ok: false as const };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("competition_settings").upsert({ id: 1, start_date: data.start, end_date: data.end, updated_at: new Date().toISOString() });
+    const { error } = await supabaseAdmin.from("competition_settings").upsert({
+      id: 1,
+      start_date: data.start,
+      end_date: data.end,
+      updated_at: new Date().toISOString(),
+    });
     if (error) throw new Error("Falha ao salvar");
     return { ok: true as const };
   });
