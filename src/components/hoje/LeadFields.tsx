@@ -1,22 +1,18 @@
 import { useState } from "react";
 import { CompanyGenderToggle } from "@/components/CompanyGender";
-import { CompanySelect } from "@/components/CompanySelect";
 import { SectorSelect } from "@/components/SectorSelect";
 import { Input } from "@/components/ui/input";
 import type { Contact } from "@/lib/cadencia";
-import type { Company } from "@/lib/empresas";
 import { cn } from "@/lib/utils";
 
-/** Campos editáveis do lead na fila (nome, empresa e, no LinkedIn 1, área e cargo). */
+/** Campos editáveis do lead na fila (nome, gênero da empresa e, no LinkedIn 1, setor e cargo). */
 export function LeadFields({
   contact,
   showStep1,
-  companies,
   onPatch,
 }: {
   contact: Contact;
   showStep1: boolean;
-  companies: readonly Company[];
   onPatch: (p: Partial<Contact>) => void;
 }) {
   const [cargo, setCargo] = useState(contact.job_title);
@@ -35,24 +31,13 @@ export function LeadFields({
             : setNome(contact.name)
         }
       />
-      {companies.length > 0 && (
-        <CompanySelect
-          companies={companies}
-          value={contact.company_id}
-          onChange={(id) => onPatch({ company_id: id })}
-          emptyLabel="Vincular empresa…"
-          className={cn("w-48", !contact.company_id && "border-warning")}
+      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+        {contact.company.trim() || "Empresa"}
+        <CompanyGenderToggle
+          value={contact.company_gender ?? "feminino"}
+          onChange={(g) => onPatch({ company_gender: g })}
         />
-      )}
-      {!contact.company_id && (
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          {contact.company.trim() || "Empresa"}
-          <CompanyGenderToggle
-            value={contact.company_gender ?? "feminino"}
-            onChange={(g) => onPatch({ company_gender: g })}
-          />
-        </span>
-      )}
+      </span>
       {showStep1 && (
         <>
           <SectorSelect

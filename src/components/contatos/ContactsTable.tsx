@@ -15,7 +15,6 @@ import {
   type Holidays,
   type Offsets,
 } from "@/lib/cadencia";
-import type { Company } from "@/lib/empresas";
 import { ContactRow } from "./ContactRow";
 
 const COLS = STEPS.length + 10;
@@ -27,7 +26,6 @@ export function ContactsTable({
   isLoading,
   offsets,
   holidays,
-  companies,
   selection,
   onPatch,
   onStatus,
@@ -39,7 +37,6 @@ export function ContactsTable({
   isLoading: boolean;
   offsets: Offsets;
   holidays: Holidays;
-  companies: readonly Company[];
   selection: Selection;
   onPatch: (c: Contact, changes: Partial<Contact>) => void;
   onStatus: (c: Contact, s: ContactStatus) => void;
@@ -59,7 +56,7 @@ export function ContactsTable({
             <TableHead>Nome</TableHead>
             <TableHead>Cargo/Headline</TableHead>
             <TableHead>Cargo na empresa</TableHead>
-            <TableHead>Área</TableHead>
+            <TableHead>Setor</TableHead>
             <TableHead>Empresa</TableHead>
             <TableHead>Telefone/WhatsApp</TableHead>
             <TableHead>Conexão</TableHead>
@@ -91,7 +88,6 @@ export function ContactsTable({
               contact={c}
               offsets={offsets}
               holidays={holidays}
-              companies={companies}
               selected={selection.has(c.id)}
               onToggle={() => selection.toggle(c.id)}
               onPatch={(changes) => onPatch(c, changes)}
