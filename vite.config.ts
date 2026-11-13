@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { configDefaults } from "vitest/config";
 import tailwindcss from "@tailwindcss/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
@@ -9,6 +10,8 @@ import { nitro } from "nitro/vite";
 // `.vercel/output`. Fora da Vercel (build local), gera um servidor Node em `.output`.
 export default defineConfig(({ command }) => ({
   server: { host: "::", port: 8080 },
+  // Testes de unidade ficam em src/; e2e/ é do Playwright (bun run e2e).
+  test: { exclude: [...configDefaults.exclude, "e2e/**"] },
   css: { transformer: "lightningcss" },
   resolve: {
     dedupe: [

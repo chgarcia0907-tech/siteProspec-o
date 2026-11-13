@@ -50,6 +50,7 @@ bun run typecheck   # TypeScript
 bun run lint        # ESLint + Prettier (bun run format corrige a formatação)
 bun run test        # Vitest
 bun run build       # build de produção
+bun run e2e         # testes de ponta a ponta (Playwright + Supabase simulado)
 ```
 
 ## Deploy
