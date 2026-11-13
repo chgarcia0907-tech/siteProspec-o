@@ -9,8 +9,16 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Deploy: produção é o branch `main` (a Vercel publica cada push nele) e o banco de produção é
   o Supabase `ctxsmboaqbjgslctojeq`. O desenvolvimento acontece no `dev` e chega ao `main` por
   pull request. Rode as verificações antes de cada push:
-  `bun run typecheck && bun run lint && bun run test && bun run build`.
+  `bun run typecheck && bun run lint && bun run test && bun run build && bun run e2e`.
 - Gerenciador de pacotes: bun (`bun.lock` versionado). Instale com `bun install`.
+- Testes de ponta a ponta: `bun run e2e` roda o Playwright contra o build de produção e um
+  Supabase simulado (`e2e/mock-supabase.mjs`, dados em `e2e/fixtures.mjs`, relógio fixo em
+  12/11/2026). Mudou uma tela ou um fluxo? Ajuste ou acrescente o teste em `e2e/*.spec.ts`
+  no mesmo commit. Nunca pule ou apague teste para ficar verde.
+- Skills do projeto (`.claude/skills/`): `/verificar` (todas as verificações),
+  `/nova-migracao` (migração seguindo as regras abaixo) e `/publicar` (PR `dev` → `main`).
+  O `.claude/settings.json` libera os comandos de verificação e formata com o prettier todo
+  arquivo editado.
 - Não reescreva histórico já enviado (force push, rebase ou amend de commits publicados).
 - Commits e títulos de pull request seguem [Conventional Commits](https://www.conventionalcommits.org/pt-br/v1.0.0/):
   `<tipo>(<escopo opcional>): <descrição>`, com a descrição em português, no imperativo e
