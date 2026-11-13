@@ -1,4 +1,5 @@
 import { CompanyGenderToggle } from "@/components/CompanyGender";
+import { CompanySelect } from "@/components/CompanySelect";
 import { FunnelBadge, FunnelControl } from "@/components/Funnel";
 import { InlineInput } from "@/components/InlineInput";
 import { SectorSelect } from "@/components/SectorSelect";
@@ -27,6 +28,7 @@ import {
   type Holidays,
   type Offsets,
 } from "@/lib/cadencia";
+import type { Company } from "@/lib/empresas";
 import { CONTACT_STATUSES } from "@/lib/contatos";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +37,7 @@ export function ContactRow({
   contact: c,
   offsets,
   holidays,
+  companies,
   selected,
   onToggle,
   onPatch,
@@ -43,6 +46,7 @@ export function ContactRow({
   contact: Contact;
   offsets: Offsets;
   holidays: Holidays;
+  companies: readonly Company[];
   selected: boolean;
   onToggle: () => void;
   onPatch: (changes: Partial<Contact>) => void;
@@ -90,17 +94,28 @@ export function ContactRow({
         />
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-1">
-          <InlineInput
-            value={c.company}
-            placeholder="Empresa"
-            onCommit={(v) => onPatch({ company: v })}
+        {companies.length > 0 && (
+          <CompanySelect
+            companies={companies}
+            value={c.company_id}
+            onChange={(id) => onPatch({ company_id: id })}
+            emptyLabel="Texto livre (sem cadastro)"
+            className="mb-1 w-44"
           />
-          <CompanyGenderToggle
-            value={c.company_gender ?? "feminino"}
-            onChange={(g) => onPatch({ company_gender: g })}
-          />
-        </div>
+        )}
+        {!c.company_id && (
+          <div className="flex items-center gap-1">
+            <InlineInput
+              value={c.company}
+              placeholder="Empresa"
+              onCommit={(v) => onPatch({ company: v })}
+            />
+            <CompanyGenderToggle
+              value={c.company_gender ?? "feminino"}
+              onChange={(g) => onPatch({ company_gender: g })}
+            />
+          </div>
+        )}
       </TableCell>
       <TableCell>
         <InlineInput

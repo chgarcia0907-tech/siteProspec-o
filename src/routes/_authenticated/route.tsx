@@ -17,6 +17,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 const NAV = [
   { to: "/hoje", label: "Envios de hoje" },
+  { to: "/empresas", label: "Empresas" },
   { to: "/contatos", label: "Contatos" },
   { to: "/importar", label: "Importar conexões" },
   { to: "/modelos", label: "Modelos" },
