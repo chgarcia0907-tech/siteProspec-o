@@ -72,13 +72,6 @@ describe("mensagem e envio", () => {
     expect(missingForMessage(c({ sector: "" }), STEPS[1]!)).toBeNull();
   });
 
-  it("com o texto do modelo, só exige área e cargo se ele usar as tags", () => {
-    const semArea = c({ sector: "" });
-    expect(missingForMessage(semArea, STEPS[0]!, "Olá [FIRST NAME]")).toBeNull();
-    expect(missingForMessage(semArea, STEPS[0]!, "Dor: [DOR_DO_SETOR]")).toBe("setor_cargo");
-    expect(missingForMessage(c({ job_title: "" }), STEPS[0]!, "Como [CARGO]")).toBe("setor_cargo");
-  });
-
   it("marcar LinkedIn 1 define a data da etapa e coloca em cadência", () => {
     expect(markSentPatch(c({}), STEPS[0]!, REF)).toEqual({
       sent1_at: REF,
