@@ -6,8 +6,9 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 ## Fluxo de trabalho
 
 - Desenvolvimento só pelo Claude Code; o projeto não usa mais o Lovable.
-- Deploy: a Vercel publica a cada push no branch de produção. Mantenha o branch sempre
-  funcionando e rode as verificações antes de cada push:
+- Deploy: produção é o branch `main` (a Vercel publica cada push nele) e o banco de produção é
+  o Supabase `ctxsmboaqbjgslctojeq`. O desenvolvimento acontece no `dev` e chega ao `main` por
+  pull request. Rode as verificações antes de cada push:
   `bun run typecheck && bun run lint && bun run test && bun run build`.
 - Gerenciador de pacotes: bun (`bun.lock` versionado). Instale com `bun install`.
 - Não reescreva histórico já enviado (force push, rebase ou amend de commits publicados).

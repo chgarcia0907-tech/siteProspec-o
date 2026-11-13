@@ -54,7 +54,9 @@ bun run build       # build de produção
 
 ## Deploy
 
-A Vercel faz o build (`bun run build`) a cada push. O nitro detecta a Vercel e gera
+Produção é o branch `main`: a Vercel publica cada push nele. O trabalho acontece no `dev`
+(a Vercel gera um deploy de preview para ele) e vai para o `main` por pull request, depois
+do CI verde. A Vercel faz o build (`bun run build`); o nitro detecta a Vercel e gera
 `.vercel/output`; fora dela, gera um servidor Node em `.output`
 (`node .output/server/index.mjs`). Segredos de servidor ficam nas variáveis de ambiente
 do projeto na Vercel.
@@ -66,7 +68,7 @@ Todas as migrações ficam em `supabase/migrations/`, aplicadas pelo
 
 ```sh
 npx supabase login
-npx supabase link --project-ref djxfcjgrjntfdgvgyaoe
+npx supabase link --project-ref ctxsmboaqbjgslctojeq
 bun run db:new nome_da_mudanca   # cria supabase/migrations/<timestamp>_nome_da_mudanca.sql
 bun run db:push                  # aplica as pendentes no banco
 bun run db:types                 # regenera src/integrations/supabase/types.ts
@@ -77,15 +79,15 @@ SQL que só pode rodar depois de publicar a versão do app que o entende fica em
 
 ### Primeira vez com o CLI (uma vez só)
 
-As migrações de `20261010200102` a `20261106154640` foram aplicadas em produção pelo
-drizzle, não pelo Supabase CLI, então o CLI ainda não sabe que elas já rodaram. Antes do
-primeiro `db:push`, confira com `npx supabase migration list` e marque como aplicadas as que
-aparecerem só no lado local:
+O banco de produção é o projeto `ctxsmboaqbjgslctojeq`. Ele já tem o esquema de todas as
+migrações até `20261106154640` (conferido em 13/11/2026), mas elas não foram aplicadas pelo
+Supabase CLI, então o CLI pode não saber disso. Antes do primeiro `db:push`, rode
+`npx supabase migration list`: as que aparecerem só na coluna Local já existem no banco e
+devem ser marcadas como aplicadas, **exceto** a `20261112150000`, que é nova:
 
 ```sh
-npx supabase migration repair --status applied 20261010200102 20261010200850 20261010222519 20261010223448 20261011171543 20261012200246 20261023173127 20261023181702 20261103192940 20261106154640
+npx supabase migration repair --status applied 20260928210133 20260928210149 20260929192736 20260929210824 20260929211718 20261001175726 20261001180328 20261010200102 20261010200850 20261010222519 20261010223448 20261011171543 20261012200246 20261023173127 20261023181702 20261103192940 20261106154640
 ```
 
-Faça o mesmo com qualquer uma das 7 migrações iniciais (`20260928…` a `20261001…`) que
-apareça como pendente. Depois disso, `db:push` aplica só o que é novo (hoje,
-`20261112150000_unschedule_lovable_sheet_sync`).
+Depois disso, `migration list` deve mostrar só a `20261112150000` como pendente, e
+`db:push` aplica só ela (remove o agendamento antigo do Lovable, se existir).
