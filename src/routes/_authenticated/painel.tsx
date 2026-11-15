@@ -53,7 +53,8 @@ function PainelAdmin() {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Painel do administrador</h1>
       <Tabs defaultValue="indicadores">
-        <TabsList>
+        {/* Quebra em linhas no celular, para todas as abas ficarem ao alcance do toque. */}
+        <TabsList className="h-auto flex-wrap justify-start">
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           <TabsTrigger value="hunters">Hunters</TabsTrigger>
           <TabsTrigger value="periodos">Períodos e grupos</TabsTrigger>
