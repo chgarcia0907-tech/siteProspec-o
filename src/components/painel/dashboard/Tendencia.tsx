@@ -11,11 +11,12 @@ import { cn } from "@/lib/utils";
 import { Section } from "./shared";
 import { dm, num, pctText, type Dash } from "./format";
 
-type Metric = "envios" | "ats" | "importados" | "conversao";
+type Metric = "envios" | "respostas" | "ats" | "importados" | "conversao";
 const CONFIG: Record<Metric, ChartConfig> = {
   envios: { value: { label: "Mensagens", color: "var(--chart-1)" } },
   ats: { value: { label: "ATs", color: "var(--chart-1)" } },
   importados: { value: { label: "Importados", color: "var(--chart-1)" } },
+  respostas: { value: { label: "Respostas", color: "var(--chart-1)" } },
   conversao: { value: { label: "Conversão (%)", color: "var(--chart-1)" } },
 };
 
@@ -26,6 +27,7 @@ export function Tendencia({ d }: { d: Dash }) {
     envios: w.envios,
     ats: w.ats,
     importados: w.importados,
+    respostas: w.respostas,
     // Semana sem LinkedIn 1 não tem conversão: fica em branco no gráfico, não em 0%.
     conversao: pct(w.ats, w.l1),
   }));
@@ -34,10 +36,11 @@ export function Tendencia({ d }: { d: Dash }) {
       title="Tendência das últimas 12 semanas"
       hint="Semanas de segunda a domingo, terminando na semana do fim do intervalo."
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <Mini title="Mensagens enviadas" metric="envios" data={data} kind="bar" />
         <Mini title="ATs marcadas" metric="ats" data={data} kind="bar" />
         <Mini title="Conversão LinkedIn 1 → AT (%)" metric="conversao" data={data} kind="line" />
+        <Mini title="Respostas" metric="respostas" data={data} kind="bar" />
         <Mini title="Contatos importados" metric="importados" data={data} kind="bar" />
       </div>
     </Section>
@@ -105,6 +108,7 @@ export function Coortes({ d }: { d: Dash }) {
             <tr>
               <th className="py-1">Semana</th>
               <th className="py-1 text-right">LinkedIn 1</th>
+              <th className="py-1 text-right">Resposta em 14 dias</th>
               <th className="py-1 text-right">AT em 14 dias</th>
               <th className="py-1 text-right">AT em 28 dias</th>
             </tr>
@@ -114,6 +118,7 @@ export function Coortes({ d }: { d: Dash }) {
               <tr key={c.inicio} className="border-t">
                 <td className="py-1">{dm(c.inicio)}</td>
                 <td className="py-1 text-right tabular-nums">{num(c.l1)}</td>
+                <Rate n={c.resp14} of={c.l1} mature={c.mature14} />
                 <Rate n={c.at14} of={c.l1} mature={c.mature14} />
                 <Rate n={c.at28} of={c.l1} mature={c.mature28} />
               </tr>

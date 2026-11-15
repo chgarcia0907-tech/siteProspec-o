@@ -111,5 +111,14 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   (`painel.functions.ts`, has_role antes). Reaproveita `plannedDates`/`isActive`/`computedStatus` e
   `atScoreDate`/`stageScoreDate`, então envios, atrasados e funil batem com Envios de hoje e com o
   placar. O "hoje" vem do navegador (fuso SP) para servidor e tela concordarem. Componentes em
-  `src/components/painel/dashboard/`. Limites conhecidos: `sentN_at` é o dia em que a etapa foi
-  marcada (sem histórico) e "respondeu" não tem data; metas ainda não existem.
+  `src/components/painel/dashboard/`. Limite conhecido: `sentN_at` é o dia em que a etapa foi
+  marcada (sem histórico).
+- Respostas: `contacts.respondeu_em` é carimbado por trigger quando a situação vira "respondeu"
+  (descartar depois mantém a data; voltar para uma situação de cadência apaga). O painel usa
+  `responseDate` (`dashboard.ts`): essa data, senão o registro da AT. Respostas marcadas antes da
+  coluna existir ficam sem data e fora das contagens por período.
+- Metas: tabela `goals` (só service role), uma linha por escopo — equipe (sem `user_id` e
+  `group_id`), grupo ou hunter —, com herança campo a campo hunter → grupo → equipe
+  (`resolveGoal`). Metas diárias/semanais viram metas do intervalo pelos dias úteis já passados;
+  semáforo: na meta ≥ 100%, perto ≥ 70% (no prazo: até 10 pontos abaixo). Escrita por
+  `painelSaveGoal`/`painelDeleteGoal` (`painel.functions.ts`, has_role antes).

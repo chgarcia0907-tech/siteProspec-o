@@ -9,8 +9,9 @@ export function Kpis({ d }: { d: Dash }) {
   const conv = pct(k.ats.value, k.l1.value);
   const convPrev = pct(k.ats.prev ?? 0, k.l1.prev ?? 0);
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
       <Tile label="ATs marcadas" kpi={k.ats} highlight />
+      <Tile label="Respostas" kpi={k.respostas} />
       <Tile label="Mensagens enviadas" kpi={k.envios} />
       <Tile label="LinkedIn" kpi={k.linkedin} />
       <Tile label="WhatsApp" kpi={k.whatsapp} />
@@ -33,6 +34,11 @@ export function Kpis({ d }: { d: Dash }) {
         label="Hunters parados (2+ dias úteis)"
         value={num(k.parados)}
         tone={k.parados ? "bad" : undefined}
+      />
+      <Tile
+        label="Tempo até a resposta"
+        value={d.responseTime.avg === null ? "—" : `${num(d.responseTime.avg)} d úteis`}
+        sub={`média desde o LinkedIn 1 · ${num(d.responseTime.n)} respostas`}
       />
     </div>
   );

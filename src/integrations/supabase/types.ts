@@ -4,7 +4,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17";
+    PostgrestVersion: "14.18";
   };
   public: {
     Tables: {
@@ -122,6 +122,7 @@ export type Database = {
           phone: string;
           proposta_em: string | null;
           proposta_registrado_em: string | null;
+          respondeu_em: string | null;
           sector: string;
           sent1_at: string | null;
           sent2_at: string | null;
@@ -155,6 +156,7 @@ export type Database = {
           phone?: string;
           proposta_em?: string | null;
           proposta_registrado_em?: string | null;
+          respondeu_em?: string | null;
           sector?: string;
           sent1_at?: string | null;
           sent2_at?: string | null;
@@ -188,6 +190,7 @@ export type Database = {
           phone?: string;
           proposta_em?: string | null;
           proposta_registrado_em?: string | null;
+          respondeu_em?: string | null;
           sector?: string;
           sent1_at?: string | null;
           sent2_at?: string | null;
@@ -214,6 +217,50 @@ export type Database = {
             columns: ["period_id"];
             isOneToOne: false;
             referencedRelation: "periods";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      goals: {
+        Row: {
+          ats_semana: number | null;
+          created_at: string;
+          envios_dia: number | null;
+          group_id: string | null;
+          id: string;
+          l1_semana: number | null;
+          no_prazo_pct: number | null;
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          ats_semana?: number | null;
+          created_at?: string;
+          envios_dia?: number | null;
+          group_id?: string | null;
+          id?: string;
+          l1_semana?: number | null;
+          no_prazo_pct?: number | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          ats_semana?: number | null;
+          created_at?: string;
+          envios_dia?: number | null;
+          group_id?: string | null;
+          id?: string;
+          l1_semana?: number | null;
+          no_prazo_pct?: number | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "goals_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
             referencedColumns: ["id"];
           },
         ];
@@ -427,8 +474,8 @@ export type Database = {
           closed_at: string | null;
           created_at: string;
           id: string;
-          name: string;
           kind: string;
+          name: string;
           started_at: string;
           status: string;
         };

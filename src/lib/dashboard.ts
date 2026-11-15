@@ -36,6 +36,7 @@ export type DashContact = Pick<
   | "status"
   | "created_at"
   | "step1_date"
+  | "respondeu_em"
   | StepDef["sentField"]
   | FunnelField
   | FunnelRegisteredField
@@ -53,6 +54,7 @@ export const DASH_CONTACT_COLUMNS = [
   "status",
   "created_at",
   "step1_date",
+  "respondeu_em",
   ...STEPS.map((s) => s.sentField),
   ...FUNNEL.flatMap((f) => [f.field, f.registeredField]),
 ].join(", ");
@@ -65,7 +67,23 @@ export type DashCompany = {
   week_start: string;
 };
 export type DashSector = { id: string; name: string; active: boolean };
-export type DashHunter = { id: string; name: string; grupo: string; subgrupo: string };
+export type DashHunter = {
+  id: string;
+  name: string;
+  grupo: string;
+  subgrupo: string;
+  /** Grupo no período escolhido, para herdar a meta do grupo. */
+  groupId?: string | null;
+};
+/** Linha de `goals`: sem user_id e group_id é o padrão da equipe. */
+export type DashGoal = {
+  user_id: string | null;
+  group_id: string | null;
+  envios_dia: number | null;
+  l1_semana: number | null;
+  ats_semana: number | null;
+  no_prazo_pct: number | null;
+};
 export type ChannelFilter = "todos" | Channel;
 
 export type DashInput = {
@@ -84,6 +102,7 @@ export type DashInput = {
   channel?: ChannelFilter;
   /** Só contatos e empresas de empresas deste setor. */
   sectorId?: string | null;
+  goals?: readonly DashGoal[];
 };
 
 /* --------------------------------- Saída --------------------------------- */
@@ -123,15 +142,24 @@ export type HunterRow = {
   noPhone: number;
   l1: number;
   ats: number;
+  /** Respostas no intervalo (data da resposta; sem ela, o registro da AT). */
+  responses: number;
   discarded: number;
   heat: number[];
+  goals: GoalSet;
 };
+export type GoalMetric = "envios" | "l1" | "ats" | "noPrazo";
+/** ok = meta batida; atencao = 70% da meta ou mais (no prazo: até 10 pontos abaixo); abaixo = menos. */
+export type GoalStatus = "ok" | "atencao" | "abaixo";
+export type GoalProgress = { real: number; target: number; pct: number; status: GoalStatus };
+export type GoalSet = Record<GoalMetric, GoalProgress | null>;
 export type Breakdown = { name: string; l1: number; ats: number };
 export type WeekPoint = {
   inicio: string;
   envios: number;
   l1: number;
   ats: number;
+  respostas: number;
   importados: number;
 };
 export type Cohort = {
@@ -139,6 +167,8 @@ export type Cohort = {
   l1: number;
   at14: number;
   at28: number;
+  /** Respostas em até 14 dias do LinkedIn 1. */
+  resp14: number;
   /** Já passaram 14/28 dias do fim da semana (taxa definitiva). */
   mature14: boolean;
   mature28: boolean;
@@ -149,6 +179,7 @@ export type Dashboard = {
   range: { from: string; to: string; prevFrom: string; prevTo: string };
   kpis: {
     ats: Kpi;
+    respostas: Kpi;
     envios: Kpi;
     linkedin: Kpi;
     whatsapp: Kpi;
@@ -174,6 +205,20 @@ export type Dashboard = {
   };
   funnel: { label: string; count: number }[];
   atOrigin: { label: string; count: number }[];
+  respOrigin: { label: string; count: number }[];
+  /** Dias úteis médios entre o LinkedIn 1 e a resposta, para respostas no intervalo. */
+  responseTime: { avg: number | null; n: number };
+  /** Contatos marcados como "respondeu" antes de existir a data da resposta. */
+  undatedResponses: number;
+  goals: {
+    team: GoalSet;
+    /** Dias úteis do intervalo até hoje: base para converter metas diárias e semanais. */
+    elapsedDays: number;
+    /** O intervalo ainda não terminou (as metas são proporcionais aos dias já passados). */
+    partial: boolean;
+    /** Hunters com meta definida e quantos a batem, por indicador. */
+    onTarget: Record<GoalMetric, { ok: number; total: number }>;
+  };
   bySector: Breakdown[];
   byArea: Breakdown[];
   trend: WeekPoint[];
@@ -193,6 +238,70 @@ export function businessDaysBetween(a: string, b: string, holidays: Holidays): n
   let n = 0;
   for (let d = addDaysISO(a, 1); d <= b; d = addDaysISO(d, 1)) if (isBusinessDay(d, holidays)) n++;
   return n;
+}
+
+/** Dias úteis de `from` a `to`, inclusive. */
+export function businessDaysIn(from: string, to: string, holidays: Holidays): number {
+  let n = 0;
+  for (let d = from; d <= to; d = addDaysISO(d, 1)) if (isBusinessDay(d, holidays)) n++;
+  return n;
+}
+
+/** Dia (SP) da resposta: data marcada em "respondeu"; sem ela, o registro da AT. */
+export function responseDate(
+  c: Pick<DashContact, "respondeu_em" | "at_marcada_em" | "at_registrado_em">,
+): string | null {
+  return c.respondeu_em ? spDay(c.respondeu_em) : atScoreDate(c);
+}
+
+type GoalValues = Omit<DashGoal, "user_id" | "group_id">;
+const GOAL_FIELDS = ["envios_dia", "l1_semana", "ats_semana", "no_prazo_pct"] as const;
+
+/** Meta efetiva do hunter, campo a campo: a dele, senão a do grupo, senão o padrão da equipe. */
+export function resolveGoal(
+  goals: readonly DashGoal[],
+  hunterId: string,
+  groupId: string | null | undefined,
+): GoalValues {
+  const own = goals.find((g) => g.user_id === hunterId);
+  const group = groupId ? goals.find((g) => !g.user_id && g.group_id === groupId) : undefined;
+  const team = goals.find((g) => !g.user_id && !g.group_id);
+  const out = {} as GoalValues;
+  for (const f of GOAL_FIELDS) out[f] = own?.[f] ?? group?.[f] ?? team?.[f] ?? null;
+  return out;
+}
+
+/** Progresso de uma meta de volume (real ÷ meta proporcional ao intervalo). */
+export function volumeProgress(real: number, target: number): GoalProgress {
+  const ratio = target > 0 ? real / target : 1;
+  return {
+    real,
+    target: Math.round(target * 10) / 10,
+    pct: Math.round(ratio * 100),
+    status: ratio >= 1 ? "ok" : ratio >= 0.7 ? "atencao" : "abaixo",
+  };
+}
+
+/** Progresso da meta de pontualidade (percentual no prazo contra o mínimo). */
+export function onTimeProgress(onTime: number, due: number, targetPct: number): GoalProgress {
+  const real = Math.round((onTime / due) * 1000) / 10;
+  return {
+    real,
+    target: targetPct,
+    pct: targetPct > 0 ? Math.round((real / targetPct) * 100) : 100,
+    status: real >= targetPct ? "ok" : real >= targetPct - 10 ? "atencao" : "abaixo",
+  };
+}
+
+const NO_GOALS: GoalSet = { envios: null, l1: null, ats: null, noPrazo: null };
+
+/** Última etapa enviada até `date` (0 = nenhuma, ou seja, antes do LinkedIn 1). */
+function originOf(sent: readonly (string | null)[], date: string): number {
+  let origin = 0;
+  sent.forEach((d, i) => {
+    if (d && d <= date) origin = i + 1;
+  });
+  return origin;
 }
 
 /** Intervalo anterior com o mesmo número de dias, terminando na véspera de `from`. */
@@ -280,19 +389,24 @@ export function computeDashboard(input: DashInput): Dashboard {
         noPhone: 0,
         l1: 0,
         ats: 0,
+        responses: 0,
         discarded: 0,
         heat: buckets.map(() => 0),
+        goals: NO_GOALS,
       },
     ]),
   );
 
   const kp = {
-    cur: { ats: 0, envios: 0, linkedin: 0, whatsapp: 0, l1: 0, importados: 0 },
-    prev: { ats: 0, envios: 0, linkedin: 0, whatsapp: 0, l1: 0, importados: 0 },
+    cur: { ats: 0, respostas: 0, envios: 0, linkedin: 0, whatsapp: 0, l1: 0, importados: 0 },
+    prev: { ats: 0, respostas: 0, envios: 0, linkedin: 0, whatsapp: 0, l1: 0, importados: 0 },
   };
   const supply = { waiting: 0, noPhone: 0, noCompany: 0, noArea: 0 };
   const funnel = FUNNEL.map(() => 0);
   const atOrigin = [0, ...STEPS.map(() => 0)]; // 0 = antes do LinkedIn 1
+  const respOrigin = [0, ...STEPS.map(() => 0)];
+  const respTime = { sum: 0, n: 0 };
+  let undatedResponses = 0;
   const pace = STEPS.slice(1).map(() => ({ real: 0, planned: 0, n: 0 }));
   const sectorAgg = new Map<string, Breakdown>();
   const areaAgg = new Map<string, Breakdown>();
@@ -301,7 +415,7 @@ export function computeDashboard(input: DashInput): Dashboard {
     addDaysISO(trendStart, 7 * i),
   );
   const trend = new Map<string, WeekPoint>(
-    weeks.map((w) => [w, { inicio: w, envios: 0, l1: 0, ats: 0, importados: 0 }]),
+    weeks.map((w) => [w, { inicio: w, envios: 0, l1: 0, ats: 0, respostas: 0, importados: 0 }]),
   );
   const cohorts = new Map<string, Cohort>(
     weeks.map((w) => [
@@ -311,6 +425,7 @@ export function computeDashboard(input: DashInput): Dashboard {
         l1: 0,
         at14: 0,
         at28: 0,
+        resp14: 0,
         mature14: addDaysISO(w, 6 + 14) <= today,
         mature28: addDaysISO(w, 6 + 28) <= today,
       },
@@ -368,6 +483,8 @@ export function computeDashboard(input: DashInput): Dashboard {
     for (const s of steps) {
       const p = planned[s.n];
       if (!inR(p, from, dueEnd)) continue;
+      // Etapa só é devida depois que a anterior saiu: um atraso não conta de novo nas seguintes.
+      if (s.n > 1 && !c[STEPS[s.n - 2]!.sentField]) continue;
       const d = day(c[s.sentField]);
       if (!d && !active) continue; // contato saiu da cadência: a etapa não era mais devida
       r.due++;
@@ -422,13 +539,23 @@ export function computeDashboard(input: DashInput): Dashboard {
       r.ats++;
       kp.cur.ats++;
       // Etapa que gerou a AT: última mensagem enviada até o registro da AT.
-      let origin = 0;
-      STEPS.forEach((_, i) => {
-        if (sent[i] && sent[i]! <= at!) origin = i + 1;
-      });
-      atOrigin[origin]!++;
+      atOrigin[originOf(sent, at!)]!++;
     }
     if (inR(at, prev.from, prev.to)) kp.prev.ats++;
+
+    // Respostas: quando, depois de qual mensagem e quanto tempo depois do LinkedIn 1.
+    const resp = responseDate(c);
+    if (inR(resp, from, to)) {
+      r.responses++;
+      kp.cur.respostas++;
+      respOrigin[originOf(sent, resp!)]!++;
+      if (l1 && resp! >= l1) {
+        respTime.sum += businessDaysBetween(l1, resp!, holidays);
+        respTime.n++;
+      }
+    }
+    if (inR(resp, prev.from, prev.to)) kp.prev.respostas++;
+    if (c.status === "respondeu" && !c.respondeu_em && !at) undatedResponses++;
     if (inR(imported, from, to)) kp.cur.importados++;
     if (inR(imported, prev.from, prev.to)) kp.prev.importados++;
 
@@ -470,9 +597,11 @@ export function computeDashboard(input: DashInput): Dashboard {
         ch.l1++;
         if (at && at >= l1 && at <= addDaysISO(l1, 14)) ch.at14++;
         if (at && at >= l1 && at <= addDaysISO(l1, 28)) ch.at28++;
+        if (resp && resp >= l1 && resp <= addDaysISO(l1, 14)) ch.resp14++;
       }
     }
     if (tw(at)) tw(at)!.ats++;
+    if (tw(resp)) tw(resp)!.respostas++;
     if (tw(imported)) tw(imported)!.importados++;
   }
 
@@ -485,6 +614,72 @@ export function computeDashboard(input: DashInput): Dashboard {
   const hunters = [...rows.values()].sort(
     (a, b) => b.total - a.total || a.hunter.localeCompare(b.hunter, "pt-BR"),
   );
+  // Metas: diárias e semanais viram metas do intervalo pelos dias úteis já passados.
+  const elapsedDays = businessDaysIn(from, to < today ? to : today, holidays);
+  const goals = input.goals ?? [];
+  const groupOf = new Map(input.hunters.map((h) => [h.id, h.groupId ?? null]));
+  const teamAcc = {
+    envios: { real: 0, target: 0, n: 0 },
+    l1: { real: 0, target: 0, n: 0 },
+    ats: { real: 0, target: 0, n: 0 },
+    noPrazo: { onTime: 0, due: 0, weighted: 0 },
+  };
+  const onTarget = {
+    envios: { ok: 0, total: 0 },
+    l1: { ok: 0, total: 0 },
+    ats: { ok: 0, total: 0 },
+    noPrazo: { ok: 0, total: 0 },
+  };
+  if (goals.length && elapsedDays > 0) {
+    for (const r of hunters) {
+      const g = resolveGoal(goals, r.hunter_id, groupOf.get(r.hunter_id));
+      const vol = (
+        key: "envios" | "l1" | "ats",
+        real: number,
+        perDay: number | null,
+      ): GoalProgress | null => {
+        if (perDay === null) return null;
+        const p = volumeProgress(real, perDay * elapsedDays);
+        teamAcc[key].real += real;
+        teamAcc[key].target += perDay * elapsedDays;
+        teamAcc[key].n++;
+        onTarget[key].total++;
+        if (p.status === "ok") onTarget[key].ok++;
+        return p;
+      };
+      let noPrazo: GoalProgress | null = null;
+      if (g.no_prazo_pct !== null && r.due > 0) {
+        noPrazo = onTimeProgress(r.onTime, r.due, g.no_prazo_pct);
+        teamAcc.noPrazo.onTime += r.onTime;
+        teamAcc.noPrazo.due += r.due;
+        teamAcc.noPrazo.weighted += g.no_prazo_pct * r.due;
+        onTarget.noPrazo.total++;
+        if (noPrazo.status === "ok") onTarget.noPrazo.ok++;
+      }
+      r.goals = {
+        // Meta de envios vale para todas as etapas: com filtro de canal não se aplica.
+        envios: channel === "todos" ? vol("envios", r.total, g.envios_dia) : null,
+        l1: vol("l1", r.l1, g.l1_semana === null ? null : g.l1_semana / 5),
+        ats: vol("ats", r.ats, g.ats_semana === null ? null : g.ats_semana / 5),
+        noPrazo,
+      };
+    }
+  }
+  const teamVol = (key: "envios" | "l1" | "ats") =>
+    teamAcc[key].n ? volumeProgress(teamAcc[key].real, teamAcc[key].target) : null;
+  const teamGoals: GoalSet = {
+    envios: teamVol("envios"),
+    l1: teamVol("l1"),
+    ats: teamVol("ats"),
+    noPrazo: teamAcc.noPrazo.due
+      ? onTimeProgress(
+          teamAcc.noPrazo.onTime,
+          teamAcc.noPrazo.due,
+          Math.round(teamAcc.noPrazo.weighted / teamAcc.noPrazo.due),
+        )
+      : null,
+  };
+
   const isIdle = (r: HunterRow) =>
     r.inProgress + r.waiting > 0 && (r.idleDays === null || r.idleDays >= 2);
 
@@ -518,6 +713,20 @@ export function computeDashboard(input: DashInput): Dashboard {
         hunter: r.hunter,
         text: `${r.noPhone} WhatsApps previstos sem telefone cadastrado`,
       });
+    // Meta abaixo só vira alerta com pelo menos 3 dias úteis de intervalo (evita ruído na segunda).
+    if (elapsedDays >= 3)
+      for (const [key, label] of [
+        ["envios", "mensagens"],
+        ["ats", "ATs"],
+      ] as const) {
+        const p = r.goals[key];
+        if (p?.status === "abaixo")
+          alerts.push({
+            level: "media",
+            hunter: r.hunter,
+            text: `abaixo da meta de ${label}: ${p.real} de ${p.target} (${p.pct}%)`,
+          });
+      }
   }
   const hunterName = new Map(input.hunters.map((h) => [h.id, h.name]));
   for (const co of curCompanies.filter((x) => !contactsPerCompany.has(x.id)))
@@ -550,6 +759,7 @@ export function computeDashboard(input: DashInput): Dashboard {
     range: { from, to, prevFrom: prev.from, prevTo: prev.to },
     kpis: {
       ats: k("ats"),
+      respostas: k("respostas"),
       envios: k("envios"),
       linkedin: k("linkedin"),
       whatsapp: k("whatsapp"),
@@ -586,6 +796,16 @@ export function computeDashboard(input: DashInput): Dashboard {
       { label: "Antes do LinkedIn 1", count: atOrigin[0]! },
       ...STEPS.map((s, i) => ({ label: s.label, count: atOrigin[i + 1]! })),
     ],
+    respOrigin: [
+      { label: "Antes do LinkedIn 1", count: respOrigin[0]! },
+      ...STEPS.map((s, i) => ({ label: s.label, count: respOrigin[i + 1]! })),
+    ],
+    responseTime: {
+      avg: respTime.n ? Math.round((respTime.sum / respTime.n) * 10) / 10 : null,
+      n: respTime.n,
+    },
+    undatedResponses,
+    goals: { team: teamGoals, elapsedDays, partial: to >= today, onTarget },
     bySector: sortBreakdown(sectorAgg),
     byArea: sortBreakdown(areaAgg),
     trend: [...trend.values()],
@@ -640,4 +860,12 @@ export function presetRange(preset: RangePreset, today: string): { from: string;
       return { from: first, to: addDaysISO(`${next.slice(0, 8)}01`, -1) };
     }
   }
+}
+
+/** Campo de meta digitado: vazio = herdar (null); aceita vírgula decimal; inválido = undefined. */
+export function parseGoalNumber(text: string): number | null | undefined {
+  const t = text.trim().replace(",", ".");
+  if (!t) return null;
+  if (!/^\d+(\.\d+)?$/.test(t)) return undefined;
+  return Number(t);
 }

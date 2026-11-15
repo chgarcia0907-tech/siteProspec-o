@@ -237,7 +237,7 @@ export const painelDashboard = createServerFn({ method: "POST" })
     const { adminIds } = await import("./competition.server");
     const { computeDashboard, DASH_CONTACT_COLUMNS } = await import("./dashboard");
 
-    const [profiles, admins, periods, groups, subgroups, members, sectors, templates] =
+    const [profiles, admins, periods, groups, subgroups, members, sectors, templates, goals] =
       await Promise.all([
         fetchAll((a, b) =>
           db.from("profiles").select("id, display_name, email").order("id").range(a, b),
@@ -255,6 +255,9 @@ export const painelDashboard = createServerFn({ method: "POST" })
         ),
         db.from("sectors").select("id, name, active, sort"),
         db.from("sector_templates").select("sector_id, step, body"),
+        db
+          .from("goals")
+          .select("id, user_id, group_id, envios_dia, l1_semana, ats_semana, no_prazo_pct"),
       ]);
 
     const allPeriods = (periods.data ?? []).sort((a, b) => (a.started_at < b.started_at ? 1 : -1));
@@ -337,6 +340,7 @@ export const painelDashboard = createServerFn({ method: "POST" })
       today: data.today,
       channel: data.channel,
       sectorId: data.sectorId,
+      goals: goals.data ?? [],
     });
 
     const spDay = (ts: string) =>
@@ -344,6 +348,7 @@ export const painelDashboard = createServerFn({ method: "POST" })
     return {
       dashboard,
       periodId: period?.id ?? null,
+      goals: goals.data ?? [],
       options: {
         periods: allPeriods.map((p) => ({
           id: p.id,
@@ -360,4 +365,60 @@ export const painelDashboard = createServerFn({ method: "POST" })
           .map((s) => ({ id: s.id, name: s.name })),
       },
     };
+  });
+
+const goalValue = z.number().min(0).max(100000).nullable();
+
+/**
+ * Cria ou atualiza a meta de um escopo: equipe (sem userId e groupId), grupo ou hunter.
+ * Campo nulo = herda do escopo acima (hunter → grupo → equipe).
+ */
+export const painelSaveGoal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        userId: z.string().uuid().nullable(),
+        groupId: z.string().uuid().nullable(),
+        envios_dia: goalValue,
+        l1_semana: goalValue,
+        ats_semana: goalValue,
+        no_prazo_pct: z.number().int().min(0).max(100).nullable(),
+      })
+      .refine((v) => !(v.userId && v.groupId), "Meta é do hunter ou do grupo, não dos dois")
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { userId, groupId, ...values } = data;
+    const row = {
+      ...values,
+      envios_dia: values.envios_dia === null ? null : Math.round(values.envios_dia),
+      l1_semana: values.l1_semana === null ? null : Math.round(values.l1_semana),
+      ats_semana: values.ats_semana === null ? null : Math.round(values.ats_semana * 10) / 10,
+    };
+    // O índice único do escopo usa COALESCE, que o upsert do PostgREST não aceita: busca e grava.
+    let q = db.from("goals").select("id");
+    q = userId ? q.eq("user_id", userId) : q.is("user_id", null);
+    q = groupId ? q.eq("group_id", groupId) : q.is("group_id", null);
+    const { data: existing, error: findError } = await q.maybeSingle();
+    if (findError) throw new Error("Falha ao carregar a meta");
+    const { error } = existing
+      ? await db.from("goals").update(row).eq("id", existing.id)
+      : await db.from("goals").insert({ ...row, user_id: userId, group_id: groupId });
+    if (error) throw new Error("Falha ao salvar a meta");
+    return { ok: true as const };
+  });
+
+/** Remove a meta de um grupo ou hunter (passa a valer a do escopo acima). */
+export const painelDeleteGoal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { error } = await db.from("goals").delete().eq("id", data.id);
+    if (error) throw new Error("Falha ao remover a meta");
+    return { ok: true as const };
   });

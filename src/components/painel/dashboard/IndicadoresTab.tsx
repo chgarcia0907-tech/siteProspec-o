@@ -6,8 +6,9 @@ import { presetRange } from "@/lib/dashboard";
 import { painelDashboard } from "@/lib/painel.functions";
 import { Execucao, Heatmap, Ritmo } from "./Execucao";
 import { Filters, type DashFilters } from "./Filters";
-import { Abastecimento, ConversaoPor, Funil, OrigemAt } from "./Funil";
+import { Abastecimento, ConversaoPor, Funil, OrigemAt, OrigemResposta } from "./Funil";
 import { Kpis } from "./Kpis";
+import { Metas } from "./Metas";
 import { Alertas, Coortes, Tendencia } from "./Tendencia";
 
 /** Aba "Indicadores" do painel: execução da cadência, funil e tendência da equipe. */
@@ -54,13 +55,15 @@ export function IndicadoresTab() {
             <Alertas d={d} />
             <Abastecimento d={d} />
           </div>
+          <Metas d={d} data={q.data!} />
           <Execucao d={d} />
           <div className="grid gap-4 xl:grid-cols-[1fr_380px]">
             <Heatmap d={d} />
             <Ritmo d={d} />
           </div>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-3">
             <Funil d={d} />
+            <OrigemResposta d={d} />
             <OrigemAt d={d} />
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
