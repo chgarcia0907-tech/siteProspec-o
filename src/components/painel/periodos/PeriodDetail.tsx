@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { Overview, OverviewPeriod } from "@/hooks/usePainel";
 import { spParts } from "@/lib/cadencia";
 import { closePeriod } from "@/lib/periodos.functions";
-import type { Ask } from "../useConfirm";
+import type { Ask } from "@/components/useConfirm";
 import { AddMembersDialog } from "./AddMembersDialog";
 import { GroupsCard } from "./GroupsCard";
 import { MembersCard } from "./MembersCard";

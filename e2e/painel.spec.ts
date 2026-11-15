@@ -46,4 +46,13 @@ test.describe("Painel do administrador", () => {
     await expect(page.getByRole("row", { name: /Hunter Um/ })).toContainText("Squad Azul");
     await expect(page.getByRole("row", { name: /Hunter Dois/ })).toContainText("Sem grupo");
   });
+
+  test("no celular todas as abas ficam ao alcance do toque", async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 });
+    await page.goto("/painel");
+    await page.getByRole("tab", { name: "Busca geral" }).click();
+    await expect(
+      page.getByPlaceholder("Nome ou empresa (opcional com filtro de data)"),
+    ).toBeVisible();
+  });
 });

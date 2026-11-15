@@ -41,6 +41,38 @@ describe("contatos", () => {
     expect(filterContacts(list, "", "descartado").map((x) => x.id)).toEqual(["2"]);
   });
 
+  it("filtra pela situação calculada, a mesma do selo, e não pela gravada", () => {
+    // Gravado como "aguardando", mas com o LinkedIn 1 enviado: o selo mostra "em cadência".
+    const desatualizado = c({ id: "1", sent1_at: "2026-11-03", step1_date: "2026-11-03" });
+    const todas = c({
+      id: "2",
+      status: "em_cadencia",
+      sent1_at: "2026-11-03",
+      sent2_at: "2026-11-04",
+      sent3_at: "2026-11-05",
+      sent4_at: "2026-11-06",
+      sent5_at: "2026-11-09",
+    });
+    const list = [desatualizado, todas];
+    expect(filterContacts(list, "", "em_cadencia").map((x) => x.id)).toEqual(["1"]);
+    expect(filterContacts(list, "", "aguardando")).toEqual([]);
+    expect(filterContacts(list, "", "concluido").map((x) => x.id)).toEqual(["2"]);
+  });
+
+  it("filtra contatos sem empresa ou sem área", () => {
+    const list = [
+      c({ id: "1", company: "", company_id: null, sector: "RH" }),
+      c({ id: "2", company: "Beta", company_id: null, sector: "" }),
+      c({ id: "3", company: "Delta", company_id: "d", sector: "" }),
+      c({ id: "4", company: "Gama", company_id: null, sector: "RH" }),
+    ];
+    const ids = (m: "todos" | "empresa" | "area") =>
+      filterContacts(list, "", "todos", m).map((x) => x.id);
+    expect(ids("empresa")).toEqual(["1"]);
+    expect(ids("area")).toEqual(["2", "3"]);
+    expect(ids("todos")).toEqual(["1", "2", "3", "4"]);
+  });
+
   it("acrescenta a situação só quando ela muda", () => {
     expect(withSyncedStatus(c({}), { sent1_at: "2026-11-12" })).toEqual({
       sent1_at: "2026-11-12",

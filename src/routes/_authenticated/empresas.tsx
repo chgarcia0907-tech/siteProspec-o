@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { CompanyForm } from "@/components/empresas/CompanyForm";
 import { CompanyList } from "@/components/empresas/CompanyList";
-import { useConfirm } from "@/components/painel/useConfirm";
+import { useConfirm } from "@/components/useConfirm";
 import { useCompanies, useContacts, useSectorTemplates, useSectors } from "@/hooks/useCadencia";
 
 export const Route = createFileRoute("/_authenticated/empresas")({
@@ -47,7 +47,7 @@ function Empresas() {
           hoje.
         </p>
       </div>
-      <CompanyForm sectors={sectors ?? []} existing={companies ?? []} />
+      <CompanyForm sectors={sectors} existing={companies ?? []} />
       <CompanyList
         companies={companies ?? []}
         sectors={sectors ?? []}

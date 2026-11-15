@@ -7,6 +7,7 @@ test.describe("Empresas", () => {
   test("lista as empresas por semana, com setor e contatos vinculados", async ({ page }) => {
     await page.goto("/empresas");
     await expect(page.getByText("Semana de 09/11/2026 a 15/11/2026")).toBeVisible();
+    await expect(page.getByText("· 1 empresa", { exact: true })).toBeVisible();
     await expect(page.getByPlaceholder("Empresa")).toHaveValue("Delta");
     await expect(page.getByText("1 contato", { exact: true })).toBeVisible();
     await expect(page.getByText("cadência do setor incompleta")).toBeVisible();

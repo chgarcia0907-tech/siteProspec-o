@@ -24,7 +24,8 @@ export function CompanyForm({
   sectors,
   existing,
 }: {
-  sectors: readonly Sector[];
+  /** `undefined` enquanto os setores carregam. */
+  sectors: readonly Sector[] | undefined;
   existing: readonly Company[];
 }) {
   const add = useAddCompanies();
@@ -38,7 +39,7 @@ export function CompanyForm({
   const names = parseCompanyLines(text);
   const fresh = names.filter((n) => !known.has(normalizeCompany(n)));
   const repeated = names.length - fresh.length;
-  const noSectors = sectors.every((s) => !s.active);
+  const noSectors = !!sectors && sectors.every((s) => !s.active);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,7 +69,9 @@ export function CompanyForm({
         <CardTitle className="text-base">Cadastrar empresas</CardTitle>
       </CardHeader>
       <CardContent>
-        {noSectors ? (
+        {!sectors ? (
+          <p className="text-sm text-muted-foreground">Carregando os setores…</p>
+        ) : noSectors ? (
           <p className="text-sm text-muted-foreground">
             Nenhum setor cadastrado ainda. Peça ao administrador para criar os setores no Painel
             Admin.

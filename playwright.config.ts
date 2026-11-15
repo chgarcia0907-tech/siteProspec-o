@@ -7,6 +7,10 @@ const APP = "http://127.0.0.1:3999";
 
 export default defineConfig({
   testDir: "e2e",
+  // As screenshots do redesign só rodam com `bun run screenshots` (SCREENSHOTS=1).
+  ...(process.env["SCREENSHOTS"]
+    ? { testMatch: "screenshots.spec.ts" }
+    : { testIgnore: "screenshots.spec.ts" }),
   // O banco simulado é compartilhado: os testes rodam em sequência e cada um o reinicia.
   workers: 1,
   fullyParallel: false,
