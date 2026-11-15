@@ -3,14 +3,18 @@
 Plano: o **Claude Design** desenha o sistema visual e as telas; o **Claude Code** implementa
 tela a tela, em PRs pequenos que vão para o `main` funcionando. A lógica não muda.
 
-| Fase | O quê                                                                                   | Status    |
-| ---- | --------------------------------------------------------------------------------------- | --------- |
-| 0    | Inventário, screenshots do "antes" e regras de proteção                                 | concluída |
-| 1    | Design no Claude Design: tokens e componentes primeiro, depois as telas (Hoje primeiro) | a fazer   |
-| 2    | Implementação: tokens → shell/navegação → uma tela por PR                               | a fazer   |
+| Etapa | O quê                                                                                | Status    |
+| ----- | ------------------------------------------------------------------------------------ | --------- |
+| 0     | Consolidar o `main` (PR #13) e voltar ao fluxo `dev` → `main`                        | concluída |
+| 1     | Limpeza: componentes e dependências sem uso, rotas de importar e configurações (#14) | concluída |
+| 2     | Inventário atualizado, screenshots e briefing para o Claude Design                   | concluída |
+| 3     | Design no Claude Design (tokens → componentes base → navegação → Hoje → Indicadores) | a fazer   |
+| 4     | Implementação: tokens → componentes base → navegação → uma tela por PR               | a fazer   |
 
 ## O que levar para o Claude Design
 
+- [`briefing-claude-design.md`](briefing-claude-design.md): o pedido de design, em ordem de
+  prioridade, com as restrições. **Comece por ele.**
 - [`inventario.md`](inventario.md): objetivo, dados, ações, estados e problemas de UX de cada
   tela, componentes compartilhados, tokens atuais e as regras que o redesign não pode quebrar.
 - [`screenshots/`](screenshots/): todas as telas em `desktop/` (1440 px) e `celular/`
