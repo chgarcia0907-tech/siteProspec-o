@@ -79,7 +79,7 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Regras de cadência, parser do LinkedIn e utilitários de data ficam em `src/lib/cadencia.ts` — uma única fonte de verdade reutilizada por todas as telas.
 - Acesso a dados via cliente Supabase do navegador em hooks React Query (`src/hooks/useCadencia.ts`), protegido por RLS por hunter; não usar server functions para CRUD simples.
 - Datas previstas são calculadas (nunca gravadas) por `plannedDates` em `cadencia.ts`, em dias úteis (sem fins de semana nem feriados da tabela `holidays`, carregada uma vez por tela/export e passada como Set) e encadeadas a partir do envio real (ou previsão) da etapa anterior; todas as telas, CSVs e o export usam essa função única.
-- Ranking usa a função SQL `public.ranking(date)` (SECURITY DEFINER) porque agrega dados de outros hunters, que o RLS esconde.
+- Ranking é só do administrador: fica na aba "Competição" do /painel (`/ranking` redireciona para `/painel?aba=competicao`); `getCompetition` exige has_role e a função SQL `public.ranking(date)` (SECURITY DEFINER, porque agrega dados de outros hunters que o RLS esconde) devolve vazio para quem não é admin.
 - Exclusão de contatos e período da competição só via server functions em `src/lib/admin.functions.ts`, após validar ADMIN_PASSWORD (bloqueio em `admin_attempts`); hunters não têm DELETE em `contacts`.
 - Pontuação da competição: cálculo puro em `src/lib/competition.ts`, carregado com service role em `competition.server.ts`; o cliente recebe só totais.
 - Planilha: o Google Sheets puxa CSV via IMPORTDATA de `/api/public/planilha/*.csv` (token = secret SHEET_EXPORT_TOKEN); lógica em `src/lib/planilha.server.ts`, reaproveitando `cadencia.ts` e `competition.server.ts`.
