@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import type { StepDef } from "@/lib/cadencia";
 import type { QueueItem } from "@/lib/fila";
@@ -20,11 +20,7 @@ export function QueueList({
 }) {
   const [visible, setVisible] = useState(BATCH);
   if (items.length === 0) {
-    return (
-      <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-        Nada na fila de {step.label} para esta data.
-      </div>
-    );
+    return <QueueMessage>Nada na fila de {step.label} para esta data.</QueueMessage>;
   }
   const rest = items.length - visible;
   return (
@@ -42,6 +38,15 @@ export function QueueList({
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Aviso no lugar da fila (vazia, carregando ou com erro). */
+export function QueueMessage({ children }: { children: ReactNode }) {
+  return (
+    <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
+      {children}
     </div>
   );
 }
