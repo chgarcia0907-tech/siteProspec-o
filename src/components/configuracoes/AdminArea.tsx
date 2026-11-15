@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { adminDeleteContacts, adminStatus, adminVerify } from "@/lib/admin.functions";
-import { HolidaysAdmin } from "@/components/HolidaysAdmin";
+import { HolidaysAdmin } from "@/components/configuracoes/HolidaysAdmin";
 
 function failMsg(r: { status: string; remaining?: number; lockedUntil?: string }) {
   if (r.status === "not_configured") return "Senha de administrador ainda não configurada";
