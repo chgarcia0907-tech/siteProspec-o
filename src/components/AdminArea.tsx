@@ -7,13 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  adminDeleteContacts,
-  adminSetCompetition,
-  adminStatus,
-  adminVerify,
-} from "@/lib/admin.functions";
-import { useCompetitionSettings } from "@/hooks/useCadencia";
+import { adminDeleteContacts, adminStatus, adminVerify } from "@/lib/admin.functions";
 import { HolidaysAdmin } from "@/components/HolidaysAdmin";
 
 function failMsg(r: { status: string; remaining?: number; lockedUntil?: string }) {
@@ -33,21 +27,14 @@ export function AdminArea() {
   const status = useServerFn(adminStatus);
   const verify = useServerFn(adminVerify);
   const del = useServerFn(adminDeleteContacts);
-  const setComp = useServerFn(adminSetCompetition);
   const { data: st } = useQuery({ queryKey: ["admin_status"], queryFn: () => status() });
-  const { data: comp } = useCompetitionSettings();
 
   const [password, setPassword] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [counts, setCounts] = useState<{ mine: number; all: number } | null>(null);
   const [scope, setScope] = useState<"mine" | "all">("mine");
   const [confirming, setConfirming] = useState(false);
-  const [start, setStart] = useState<string | null>(null);
-  const [end, setEnd] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  const startV = start ?? comp?.start_date ?? "2026-10-01";
-  const endV = end ?? comp?.end_date ?? "";
 
   const lock = () => {
     setUnlocked(false);
@@ -88,30 +75,13 @@ export function AdminArea() {
     }
   }
 
-  async function saveComp() {
-    setBusy(true);
-    try {
-      const r = await setComp({ data: { password, start: startV, end: endV || null } });
-      if (r.status === "ok") {
-        toast.success("Período da competição salvo");
-        qc.invalidateQueries();
-      } else if (r.status === "invalid") toast.error("A data de fim deve ser depois do início");
-      else {
-        toast.error(failMsg(r));
-        lock();
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const n = scope === "mine" ? (counts?.mine ?? 0) : (counts?.all ?? 0);
 
   return (
     <Card className="border-dashed">
       <CardHeader>
         <CardTitle className="text-sm text-muted-foreground">Área do administrador</CardTitle>
-        <CardDescription>Exclusão de contatos, período da competição e feriados.</CardDescription>
+        <CardDescription>Exclusão de contatos e feriados.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         {st && !st.configured ? (
@@ -181,32 +151,6 @@ export function AdminArea() {
                   </Button>
                 </div>
               )}
-            </div>
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Período da competição</p>
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="c-start">Início</Label>
-                  <Input
-                    id="c-start"
-                    type="date"
-                    value={startV}
-                    onChange={(e) => setStart(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="c-end">Fim (opcional)</Label>
-                  <Input
-                    id="c-end"
-                    type="date"
-                    value={endV}
-                    onChange={(e) => setEnd(e.target.value)}
-                  />
-                </div>
-                <Button size="sm" disabled={busy || !startV} onClick={saveComp}>
-                  Salvar período
-                </Button>
-              </div>
             </div>
             <HolidaysAdmin
               password={password}

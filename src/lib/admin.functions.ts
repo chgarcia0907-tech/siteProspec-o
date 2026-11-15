@@ -65,36 +65,6 @@ export const adminDeleteContacts = createServerFn({ method: "POST" })
     return { status: "ok" as const, deleted: count ?? 0 };
   });
 
-export const adminSetCompetition = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d) =>
-    z
-      .object({
-        password: pw,
-        start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-        end: z
-          .string()
-          .regex(/^\d{4}-\d{2}-\d{2}$/)
-          .nullable(),
-      })
-      .parse(d),
-  )
-  .handler(async ({ data, context }) => {
-    const { checkAdminPassword } = await import("./admin.server");
-    const check = await checkAdminPassword(context.userId, data.password);
-    if (check.status !== "ok") return check;
-    if (data.end && data.end < data.start) return { status: "invalid" as const };
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("competition_settings").upsert({
-      id: 1,
-      start_date: data.start,
-      end_date: data.end,
-      updated_at: new Date().toISOString(),
-    });
-    if (error) throw new Error("Falha ao salvar período");
-    return { status: "ok" as const };
-  });
-
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 export const adminAddHoliday = createServerFn({ method: "POST" })

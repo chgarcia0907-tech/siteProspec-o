@@ -14,4 +14,12 @@ test.describe("Configurações", () => {
     expect(removed).toMatchObject([{ method: "DELETE" }]);
     expect(removed[0]!.query).toContain("date=eq.2026-11-02");
   });
+
+  test("a área do administrador não edita mais o período da competição", async ({ page }) => {
+    await page.goto("/configuracoes");
+    await page.getByLabel("Senha de administrador").fill("e2e-admin");
+    await page.getByRole("button", { name: "Entrar" }).click();
+    await expect(page.getByRole("button", { name: "Excluir contatos" })).toBeVisible();
+    await expect(page.getByText("Período da competição")).toHaveCount(0);
+  });
 });
