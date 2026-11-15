@@ -20,6 +20,8 @@ export function QueueCard({
 }) {
   const hasPhone = onlyDigits(contact.phone).length >= 10;
   const noCompany = !contact.company.trim();
+  const sector = actions.sectorOf(contact);
+  const template = actions.templateFor(contact, step);
   return (
     <div
       className={cn(
@@ -36,7 +38,7 @@ export function QueueCard({
             </span>
           )}
           {noCompany && <Warn>sem empresa</Warn>}
-          {step.n === 1 && !contact.sector && <Warn>sem setor</Warn>}
+          {step.n === 1 && !contact.sector && <Warn>sem área</Warn>}
           {step.n === 1 && !contact.job_title.trim() && <Warn>sem cargo</Warn>}
           <FunnelBadge contact={contact} />
         </div>
@@ -45,7 +47,20 @@ export function QueueCard({
           {contact.headline || "Sem cargo"}
         </p>
       </div>
+      {sector && (
+        <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-accent-foreground">
+          {sector.name}
+        </span>
+      )}
       <ChannelBadge channel={step.channel}>{step.label}</ChannelBadge>
+      {template && (
+        <span
+          className="font-mono text-[11px] text-muted-foreground"
+          title={template.fromSector ? "Mensagem da cadência do setor" : "Modelo padrão da equipe"}
+        >
+          {template.code || (template.fromSector ? "setor" : "padrão")}
+        </span>
+      )}
       <span className="text-xs text-muted-foreground">
         {step.n === 1 && !planned ? "Sem data de LinkedIn 1" : `Previsto ${formatBR(planned)}`}
       </span>
@@ -73,6 +88,7 @@ export function QueueCard({
         key={`${contact.id}-${contact.name}`}
         contact={contact}
         showStep1={step.n === 1}
+        companies={actions.companies}
         onPatch={(p) => actions.patchContact(contact, p)}
       />
       {actions.needCompany === contact.id && noCompany && (

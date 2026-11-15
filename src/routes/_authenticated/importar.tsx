@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useContacts, useImportContacts } from "@/hooks/useCadencia";
+import { CompanySelect } from "@/components/CompanySelect";
+import { useCompanies, useContacts, useImportContacts } from "@/hooks/useCadencia";
 import { formatBR, normalizeKey, parseLinkedInConnections } from "@/lib/cadencia";
 import { jobTitleFromHeadline } from "@/lib/cadencia";
+import { matchCompany } from "@/lib/empresas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,6 +43,9 @@ function Importar() {
   const [text, setText] = useState("");
   const [fromDate, setFromDate] = useState("");
   const { data: contacts } = useContacts();
+  const { data: companies } = useCompanies();
+  /** Empresa escolhida à mão por linha (sobrepõe a sugestão pelo headline). */
+  const [chosen, setChosen] = useState<Record<string, string | null>>({});
   const importMutation = useImportContacts();
 
   const existing = useMemo(
@@ -59,9 +64,12 @@ function Importar() {
       const noDate = fromDate !== "" && !p.connected_at;
       const filteredOut =
         noDate || (fromDate !== "" && !!p.connected_at && p.connected_at < fromDate);
-      return { ...p, duplicate, filteredOut, noDate };
+      const suggested = matchCompany(p.headline, companies ?? [])?.id ?? null;
+      return { ...p, key, duplicate, filteredOut, noDate, suggested };
     });
-  }, [parsed, existing, fromDate]);
+  }, [parsed, existing, fromDate, companies]);
+  const companyOf = (r: { key: string; suggested: string | null }) =>
+    r.key in chosen ? (chosen[r.key] ?? null) : r.suggested;
 
   const toImport = rows.filter((r) => !r.duplicate && !r.filteredOut);
 
@@ -121,11 +129,13 @@ function Importar() {
                     headline: r.headline,
                     job_title: jobTitleFromHeadline(r.headline),
                     connected_at: r.connected_at,
+                    company_id: companyOf(r),
                   })),
                   {
                     onSuccess: (n) => {
                       toast.success(`${n} contatos importados`);
                       setText("");
+                      setChosen({});
                       navigate({ to: "/contatos" });
                     },
                     onError: (e) => toast.error(e.message),
@@ -144,6 +154,7 @@ function Importar() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Cargo/Headline</TableHead>
                     <TableHead>Conexão</TableHead>
+                    {!!companies?.length && <TableHead>Empresa</TableHead>}
                     <TableHead>Situação</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -155,6 +166,19 @@ function Importar() {
                         {r.headline || "—"}
                       </TableCell>
                       <TableCell>{formatBR(r.connected_at)}</TableCell>
+                      {!!companies?.length && (
+                        <TableCell>
+                          {!r.duplicate && !r.filteredOut && (
+                            <CompanySelect
+                              companies={companies}
+                              value={companyOf(r)}
+                              onChange={(id) => setChosen((m) => ({ ...m, [r.key]: id }))}
+                              emptyLabel="Sem empresa"
+                              className="w-44"
+                            />
+                          )}
+                        </TableCell>
+                      )}
                       <TableCell>
                         {r.duplicate ? (
                           <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
