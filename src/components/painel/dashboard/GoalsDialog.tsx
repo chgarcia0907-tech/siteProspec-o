@@ -195,7 +195,7 @@ function GoalForm({
           <Button
             size="sm"
             variant="ghost"
-            className="text-destructive"
+            className="text-destructive-text"
             disabled={busy}
             onClick={() => run(() => del({ data: { id: goal.id } }), "Meta removida")}
           >

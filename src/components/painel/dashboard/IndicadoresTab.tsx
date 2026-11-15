@@ -6,7 +6,15 @@ import { presetRange } from "@/lib/dashboard";
 import { painelDashboard } from "@/lib/painel.functions";
 import { Execucao, Heatmap, Ritmo } from "./Execucao";
 import { Filters, type DashFilters } from "./Filters";
-import { Abastecimento, ConversaoPor, Funil, OrigemAt, OrigemResposta } from "./Funil";
+import {
+  Abastecimento,
+  CanalEntrada,
+  ConversaoPor,
+  Funil,
+  Mensagens,
+  OrigemAt,
+  OrigemResposta,
+} from "./Funil";
 import { Kpis } from "./Kpis";
 import { Metas } from "./Metas";
 import { Alertas, Coortes, Tendencia } from "./Tendencia";
@@ -40,7 +48,7 @@ export function IndicadoresTab() {
     <div className="space-y-4">
       <Filters value={shown} onChange={setFilters} options={q.data?.options} today={today} />
       {q.isError && (
-        <p className="text-sm text-destructive">Não foi possível carregar os indicadores.</p>
+        <p className="text-sm text-destructive-text">Não foi possível carregar os indicadores.</p>
       )}
       {!d ? (
         !q.isError && <p className="text-sm text-muted-foreground">Carregando indicadores…</p>
@@ -65,6 +73,10 @@ export function IndicadoresTab() {
             <Funil d={d} />
             <OrigemResposta d={d} />
             <OrigemAt d={d} />
+          </div>
+          <div className="grid gap-4 xl:grid-cols-[380px_1fr]">
+            <CanalEntrada d={d} />
+            <Mensagens d={d} />
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <ConversaoPor

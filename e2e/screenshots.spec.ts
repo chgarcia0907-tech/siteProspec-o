@@ -1,7 +1,7 @@
-// Screenshots de todas as telas (desktop e celular) com os dados simulados, para o redesign
+// Screenshots de todas as telas (desktop) com os dados simulados, para o redesign
 // comparar o antes e o depois. Só roda com `bun run screenshots`; os arquivos vão para
-// docs/redesign/screenshots/<desktop|celular>/.
-import { devices, test as visitor } from "@playwright/test";
+// docs/redesign/screenshots/desktop/.
+import { test as visitor } from "@playwright/test";
 import { seed, test, TODAY } from "./helpers";
 
 /** Altura máxima da foto (px CSS): listas longas não precisam aparecer inteiras. */
@@ -24,16 +24,9 @@ const SHOTS: Shot[] = [
   { name: "14-painel-busca", path: "/painel", tab: "Busca geral" },
 ];
 
+// Só desktop: o design system não tem layout de celular (docs/redesign/DESIGN.md).
 const VIEWPORTS = {
   desktop: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 },
-  // Pixel 7 sem o defaultBrowserType, que não pode ser trocado dentro de um describe.
-  celular: {
-    viewport: devices["Pixel 7"].viewport,
-    userAgent: devices["Pixel 7"].userAgent,
-    isMobile: true,
-    hasTouch: true,
-    deviceScaleFactor: 2,
-  },
 } as const;
 
 async function snap(page: import("@playwright/test").Page, dir: string, name: string) {
@@ -72,6 +65,8 @@ for (const [dir, device] of Object.entries(VIEWPORTS)) {
           // Pelo teclado: no celular as últimas abas do painel ficam fora da tela.
           await page.getByRole("tab", { name: shot.tab }).focus();
           await page.keyboard.press("Enter");
+          // Tira o foco do teclado, para o anel de foco não aparecer na foto.
+          await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
         }
         await snap(page, dir, shot.name);
       });

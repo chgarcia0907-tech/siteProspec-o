@@ -2,84 +2,140 @@
 @source "../src";
 @import "tw-animate-css";
 
+/*
+ * Design system escuro da Cadência Outbound. Regras de uso em docs/redesign/DESIGN.md.
+ * Componentes usam só estas classes (bg-card, text-heading, text-dense...), nunca hex.
+ */
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 2px);
   --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Superfícies */
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-sidebar: var(--sidebar);
   --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
+  --color-card-foreground: var(--foreground);
+  --color-surface-inset: var(--surface-inset);
+  --color-control: var(--control);
   --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-popover-foreground: var(--foreground);
+  --color-divider: var(--divider);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
+
+  /* Texto */
+  --color-heading: var(--heading);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+
+  /* Ação principal e destrutiva */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--on-solid);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-text-strong: var(--primary-text-strong);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--on-solid);
+  --color-destructive-text: var(--destructive-text);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-border: var(--destructive-border);
+
+  /* Aliases do shadcn/ui, apontando para as superfícies acima */
+  --color-secondary: var(--control);
+  --color-secondary-foreground: var(--heading);
+  --color-muted: var(--surface-inset);
+  --color-accent: var(--control);
+  --color-accent-foreground: var(--heading);
+
+  /* Semânticas do produto */
   --color-linkedin: var(--linkedin);
   --color-linkedin-soft: var(--linkedin-soft);
   --color-whatsapp: var(--whatsapp);
   --color-whatsapp-soft: var(--whatsapp-soft);
-  --color-warning: var(--warning);
-  --color-warning-soft: var(--warning-soft);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
-  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-text: var(--warning-text);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+
+  /* Gráficos */
+  --color-chart-1: var(--primary);
+  --color-chart-2: var(--whatsapp);
+  --color-chart-3: var(--warning);
+  --color-chart-4: var(--success);
+  --color-chart-5: var(--destructive);
+
+  /* Tipografia (tamanho / altura de linha). text-card-title e não text-card, que é cor. */
+  --font-display: "Host Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --text-title: 1.875rem;
+  --text-title--line-height: 2.25rem;
+  --text-section: 1.25rem;
+  --text-section--line-height: 1.75rem;
+  --text-card-title: 1rem;
+  --text-card-title--line-height: 1.375rem;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.375rem;
+  --text-dense: 0.8125rem;
+  --text-dense--line-height: 1.125rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-kpi: 2.5rem;
+  --text-kpi--line-height: 2.875rem;
 }
 
 :root {
+  color-scheme: dark;
   --radius: 0.5rem;
-  --background: oklch(0.985 0.004 250);
-  --foreground: oklch(0.24 0.02 255);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.02 255);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.02 255);
-  --primary: oklch(0.34 0.045 255);
-  --primary-foreground: oklch(0.985 0.004 250);
-  --secondary: oklch(0.955 0.008 250);
-  --secondary-foreground: oklch(0.32 0.03 255);
-  --muted: oklch(0.955 0.008 250);
-  --muted-foreground: oklch(0.52 0.02 255);
-  --accent: oklch(0.94 0.014 250);
-  --accent-foreground: oklch(0.3 0.03 255);
-  --destructive: oklch(0.55 0.2 22);
-  --destructive-foreground: oklch(0.99 0.004 250);
-  --border: oklch(0.905 0.01 252);
-  --input: oklch(0.9 0.01 252);
-  --ring: oklch(0.55 0.08 250);
-  --linkedin: oklch(0.48 0.13 252);
-  --linkedin-soft: oklch(0.94 0.035 252);
-  --whatsapp: oklch(0.5 0.13 155);
-  --whatsapp-soft: oklch(0.945 0.045 155);
-  --warning: oklch(0.58 0.14 70);
-  --warning-soft: oklch(0.95 0.05 80);
-  --success: oklch(0.5 0.13 155);
-  --success-soft: oklch(0.945 0.045 155);
-  --chart-1: oklch(0.48 0.13 252);
-  --chart-2: oklch(0.5 0.13 155);
-  --chart-3: oklch(0.58 0.14 70);
-  --chart-4: oklch(0.45 0.08 290);
-  --chart-5: oklch(0.55 0.15 22);
+
+  --background: #121212;
+  --sidebar: #181818;
+  --card: #1e1e1e;
+  --surface-inset: #232323;
+  --control: #2a2a2a;
+  --popover: #232323;
+  --divider: #333333;
+  --border: #2e2e2e;
+  --input: #3d3d3d;
+
+  --heading: #ffffff;
+  --foreground: #dedede;
+  --muted-foreground: #a8a8a8;
+  --subtle-foreground: #8f8f8f;
+
+  /* Texto sobre cor sólida (primário, WhatsApp, sucesso, destrutivo) é sempre preto. */
+  --on-solid: #000000;
+  --primary: #8ab8f2;
+  --primary-hover: #a3c7f5;
+  --primary-text-strong: #b5d3f8;
+  --primary-soft: color-mix(in oklab, #8ab8f2 16%, transparent);
+  --ring: #8ab8f2;
+
+  --destructive: #cf6679;
+  --destructive-text: #e08a99;
+  --destructive-soft: color-mix(in oklab, #cf6679 16%, transparent);
+  --destructive-border: color-mix(in oklab, #cf6679 45%, transparent);
+
+  --linkedin: #8ab8f2;
+  --linkedin-soft: color-mix(in oklab, #8ab8f2 16%, transparent);
+  --whatsapp: #03dac6;
+  --whatsapp-soft: color-mix(in oklab, #03dac6 14%, transparent);
+  --success: #a5d6a7;
+  --success-soft: color-mix(in oklab, #a5d6a7 16%, transparent);
+  --success-border: color-mix(in oklab, #a5d6a7 45%, transparent);
+  --warning: #ffb74d;
+  --warning-text: #ffcc80;
+  --warning-soft: color-mix(in oklab, #ffb74d 14%, transparent);
+  --warning-border: color-mix(in oklab, #ffb74d 45%, transparent);
 }
 
 @layer base {
@@ -91,17 +147,37 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
     -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    color: var(--color-heading);
   }
 }
 
+/* Linha acima do H1: maiúsculas, azul ("Painel do administrador", "68 contatos"). */
+@utility eyebrow {
+  font-size: var(--text-caption);
+  line-height: var(--text-caption--line-height);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+/* Tabelas compactas: linhas de ~40 px e texto denso. */
 @utility table-dense {
   & th,
   & td {
-    padding-block: 0.375rem;
-    padding-inline: 0.5rem;
-    font-size: 0.8125rem;
-    line-height: 1.15rem;
+    padding-block: 0.625rem;
+    padding-inline: 0.75rem;
+    font-size: var(--text-dense);
+    line-height: var(--text-dense--line-height);
   }
 }
 

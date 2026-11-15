@@ -16,8 +16,8 @@ const METRICS: { key: GoalMetric; label: string; unit?: string }[] = [
 
 const STATUS: Record<GoalStatus, { label: string; icon: typeof CheckCircle2; cls: string }> = {
   ok: { label: "Na meta", icon: CheckCircle2, cls: "text-success" },
-  atencao: { label: "Perto", icon: AlertCircle, cls: "text-warning" },
-  abaixo: { label: "Abaixo", icon: XCircle, cls: "text-destructive" },
+  atencao: { label: "Perto", icon: AlertCircle, cls: "text-warning-text" },
+  abaixo: { label: "Abaixo", icon: XCircle, cls: "text-destructive-text" },
 };
 
 /** Metas por hunter com semáforo (ícone + rótulo, nunca só cor) e o editor de metas. */

@@ -70,7 +70,7 @@ function Tile({
       <p
         className={cn(
           "mt-1 text-2xl font-semibold tabular-nums",
-          tone === "bad" && "text-destructive",
+          tone === "bad" && "text-destructive-text",
         )}
       >
         {value ?? num(kpi!.value)}

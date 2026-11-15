@@ -112,7 +112,7 @@ export function Execucao({ d }: { d: Dash }) {
                         {r.hunter}
                       </button>
                       {(r.grupo || r.subgrupo) && (
-                        <span className="ml-5 block text-[11px] text-muted-foreground">
+                        <span className="ml-5 block text-caption text-muted-foreground">
                           {[r.grupo, r.subgrupo].filter(Boolean).join(" · ")}
                         </span>
                       )}
@@ -126,7 +126,7 @@ export function Execucao({ d }: { d: Dash }) {
                     <td className="p-2 text-right tabular-nums">
                       {pctText(noPrazo)}
                       {r.due > 0 && (
-                        <span className="block text-[11px] text-muted-foreground">
+                        <span className="block text-caption text-muted-foreground">
                           {r.onTime}/{r.due}
                         </span>
                       )}
@@ -134,13 +134,13 @@ export function Execucao({ d }: { d: Dash }) {
                     <td
                       className={cn(
                         "p-2 text-right tabular-nums",
-                        r.late > 0 && "font-semibold text-destructive",
+                        r.late > 0 && "font-semibold text-destructive-text",
                       )}
                       title={`1–2 dias úteis: ${r.lateBands[0]} · 3–5: ${r.lateBands[1]} · mais de 5: ${r.lateBands[2]}`}
                     >
                       {num(r.late)}
                       {r.late > 0 && (
-                        <span className="block text-[11px] font-normal text-muted-foreground">
+                        <span className="block text-caption font-normal text-muted-foreground">
                           {r.lateBands.join(" / ")}
                         </span>
                       )}
@@ -149,8 +149,8 @@ export function Execucao({ d }: { d: Dash }) {
                       {r.lastSend ? dm(r.lastSend) : "—"}
                       <span
                         className={cn(
-                          "block text-[11px] text-muted-foreground",
-                          (r.idleDays ?? 0) >= 2 && "text-destructive",
+                          "block text-caption text-muted-foreground",
+                          (r.idleDays ?? 0) >= 2 && "text-destructive-text",
                         )}
                       >
                         {r.idleDays === null
@@ -216,7 +216,12 @@ function LateList({ r }: { r: HunterRow }) {
               <td className="py-1 pr-2">{l.company || "—"}</td>
               <td className="py-1 pr-2">{l.step}</td>
               <td className="py-1 pr-2">{formatBR(l.planned)}</td>
-              <td className={cn("py-1 text-right", l.days > 5 && "font-semibold text-destructive")}>
+              <td
+                className={cn(
+                  "py-1 text-right",
+                  l.days > 5 && "font-semibold text-destructive-text",
+                )}
+              >
                 {l.days} d úteis
               </td>
             </tr>
@@ -328,7 +333,7 @@ export function Ritmo({ d }: { d: Dash }) {
                   p.real !== null &&
                     p.planned !== null &&
                     p.real > p.planned + 1 &&
-                    "text-destructive",
+                    "text-destructive-text",
                 )}
               >
                 {p.real === null ? "—" : `${num(p.real)} d`}

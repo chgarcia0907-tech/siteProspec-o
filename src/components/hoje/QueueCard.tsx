@@ -56,14 +56,14 @@ export function QueueCard({
         <div
           className={cn(
             "flex flex-wrap items-center gap-3 rounded-lg border bg-card px-3 py-2",
-            late && "border-destructive/50 bg-destructive/5",
+            late && "border-destructive-border",
           )}
         >
           <div className="min-w-56 flex-1">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold">{contact.name}</span>
               {late && (
-                <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive">
+                <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-caption font-semibold text-destructive-text">
                   Atrasado — previsto {formatBR(planned)}
                 </span>
               )}
@@ -78,14 +78,14 @@ export function QueueCard({
             </p>
           </div>
           {sector && (
-            <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-accent-foreground">
+            <span className="rounded-full bg-accent px-2 py-0.5 text-caption font-medium text-accent-foreground">
               {sector.name}
             </span>
           )}
           <ChannelBadge channel={step.channel}>{step.label}</ChannelBadge>
           {template && (
             <span
-              className="font-mono text-[11px] text-muted-foreground"
+              className="font-mono text-caption text-muted-foreground"
               title={
                 template.fromSector ? "Mensagem da cadência do setor" : "Modelo padrão da equipe"
               }
@@ -141,7 +141,7 @@ export function QueueCard({
 
 function Warn({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-medium text-warning">
+    <span className="rounded-sm bg-warning-soft px-2 py-0.5 text-caption font-semibold text-warning-text">
       {children}
     </span>
   );

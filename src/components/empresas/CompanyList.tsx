@@ -79,7 +79,7 @@ export function CompanyList({
                   />
                   {incompleta && (
                     <span
-                      className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+                      className="rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground"
                       title="Etapas sem mensagem própria do setor usam o modelo padrão"
                     >
                       cadência do setor incompleta
@@ -88,7 +88,7 @@ export function CompanyList({
                   <span
                     className={
                       n === 0
-                        ? "rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-medium text-warning"
+                        ? "rounded-full bg-warning-soft px-2 py-0.5 text-caption font-semibold text-warning-text"
                         : "text-xs text-muted-foreground"
                     }
                   >
@@ -97,7 +97,7 @@ export function CompanyList({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="ml-auto h-7 text-xs text-destructive"
+                    className="ml-auto h-7 text-xs text-destructive-text"
                     onClick={() =>
                       ask({
                         title: `Excluir ${c.name}?`,

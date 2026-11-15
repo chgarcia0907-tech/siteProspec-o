@@ -23,7 +23,7 @@ export function CompanyGenderToggle({
     <div
       role="radiogroup"
       aria-label="Artigo da empresa"
-      className="inline-flex h-7 overflow-hidden rounded-md border"
+      className="inline-flex h-7 shrink-0 overflow-hidden rounded-md border border-input"
     >
       {OPTIONS.map((o) => (
         <button
@@ -34,10 +34,10 @@ export function CompanyGenderToggle({
           title={o.tip}
           onClick={() => value !== o.value && onChange(o.value)}
           className={cn(
-            "px-1.5 text-[11px] font-medium transition-colors",
+            "whitespace-nowrap px-1.5 text-caption font-semibold transition-colors",
             value === o.value
               ? "bg-primary text-primary-foreground"
-              : "bg-background text-muted-foreground hover:bg-muted",
+              : "bg-control text-muted-foreground hover:text-heading",
           )}
         >
           {o.label}

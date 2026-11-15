@@ -81,15 +81,15 @@ export function SetoresTab({ ask }: { ask: Ask }) {
                       {s.name}
                       {!s.active && " (inativo)"}
                     </span>
-                    <span className="text-[11px] text-muted-foreground">
+                    <span className="text-caption text-muted-foreground">
                       {usage?.[s.id] ?? 0} emp.
                     </span>
                     <span
                       className={cn(
-                        "rounded-full px-1.5 text-[11px] font-medium",
+                        "rounded-full px-1.5 text-caption font-medium",
                         faltam === 0
                           ? "bg-whatsapp-soft text-whatsapp"
-                          : "bg-warning-soft text-warning",
+                          : "bg-warning-soft text-warning-text",
                       )}
                       title="Etapas com mensagem própria do setor"
                     >

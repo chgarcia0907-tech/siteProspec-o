@@ -8,8 +8,11 @@ tela a tela, em PRs pequenos que vão para o `main` funcionando. A lógica não 
 | 0     | Consolidar o `main` (PR #13) e voltar ao fluxo `dev` → `main`                        | concluída |
 | 1     | Limpeza: componentes e dependências sem uso, rotas de importar e configurações (#14) | concluída |
 | 2     | Inventário atualizado, screenshots e briefing para o Claude Design                   | concluída |
-| 3     | Design no Claude Design (tokens → componentes base → navegação → Hoje → Indicadores) | a fazer   |
-| 4     | Implementação: tokens → componentes base → navegação → uma tela por PR               | a fazer   |
+| 3     | Design no Claude Design (tokens → componentes base → navegação → Hoje → Indicadores) | concluída |
+| 4     | Implementação: tokens → componentes base → navegação → uma tela por PR               | em curso  |
+
+**Design system:** [`DESIGN.md`](DESIGN.md) (tema escuro, só desktop). Capturas do visual antigo em
+[`antes/`](antes/); as do estado atual em [`screenshots/`](screenshots/).
 
 ## O que levar para o Claude Design
 

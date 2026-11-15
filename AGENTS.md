@@ -28,15 +28,23 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   Escopos comuns: `cadencia`, `funil`, `ranking`, `painel`, `periodos`, `planilha`,
   `empresas`, `auth`, `db`, `ui`, `deps`.
 
-## Redesign do frontend (em andamento)
+## UI e design system
 
-- Plano, inventário das telas e screenshots do "antes" ficam em `docs/redesign/`.
-- O redesign troca só a apresentação: `src/routes/`, `src/components/` e os tokens em
-  `src/styles.css`. Não mexa em `src/lib/`, `src/hooks/` nem em `*.functions.ts`/`*.server.ts`;
-  se a tela nova precisar de outro dado ou regra, isso vai num PR separado, com teste.
-- Uma tela por PR, com as screenshots de antes e depois (`bun run screenshots` regenera
-  `docs/redesign/screenshots/`). Os testes em `e2e/*.spec.ts` são a rede de segurança: texto
-  ou botão mudado de propósito se ajusta no teste do mesmo PR.
+- Antes de criar ou alterar qualquer tela ou componente, leia `docs/redesign/DESIGN.md`.
+- Use só os tokens de `src/styles.css` (classes como `bg-card`, `text-heading`, `bg-primary`,
+  `text-dense`, `bg-warning-soft`). Não escreva hex, `text-[11px]` nem cores do Tailwind padrão
+  (`slate-*`, `blue-*`) em componentes. O tamanho de título de cartão é `text-card-title`
+  (`text-card` é a cor do cartão).
+- Tema escuro único: não use `dark:` nem a classe `.dark`. Só desktop: não crie layout de celular.
+- O redesign muda só a apresentação. Rótulos e etapas vêm de `STEPS`, `FUNNEL`, `STATUS_LABEL` e
+  `SECTORS`; regras e cálculos ficam em `src/lib/`. Respeite a seção 5 de `docs/redesign/inventario.md`.
+  Não mexa em `src/lib/`, `src/hooks/` nem em `*.functions.ts`/`*.server.ts` num PR de tela; se a
+  tela nova precisar de outro dado ou regra, isso vai num PR separado, com teste.
+- Uma tela por PR, com captura de antes e depois (`bun run screenshots` regenera
+  `docs/redesign/screenshots/`; as capturas do visual antigo ficam em `docs/redesign/antes/`) e os
+  testes de `e2e/` ajustados no mesmo commit.
+- Quando o pedido trouxer uma imagem da prancheta do Claude Design, siga a imagem para layout e
+  hierarquia, e este design system para cores, tipografia e componentes.
 
 ## Banco de dados (Supabase, projeto próprio)
 
@@ -118,6 +126,14 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   (descartar depois mantém a data; voltar para uma situação de cadência apaga). O painel usa
   `responseDate` (`dashboard.ts`): essa data, senão o registro da AT. Respostas marcadas antes da
   coluna existir ficam sem data e fora das contagens por período.
+- Mensagem que gerou a resposta: ao marcar "respondeu" ou a AT (`needsResponseOrigin` em
+  `cadencia.ts`), o hunter escolhe a etapa (`contacts.resposta_etapa`, 1–5; 0 = outro canal) num
+  diálogo obrigatório (`useResponseOrigin`, `src/components/RespostaOrigem.tsx`) e pode trocá-la
+  depois no "Avançar no funil". Um trigger carimba `resposta_modelo` com o código do modelo em uso
+  (o do setor, senão o padrão; mesma escolha de `pickTemplate`). O painel usa a etapa informada e,
+  sem ela, a última mensagem enviada antes; daí saem "Canal de entrada" e "Mensagens que geram
+  reunião" (`entryChannels`/`messages` em `dashboard.ts`). Limite: envios antigos contam com o
+  código atual do modelo.
 - Metas: tabela `goals` (só service role), uma linha por escopo — equipe (sem `user_id` e
   `group_id`), grupo ou hunter —, com herança campo a campo hunter → grupo → equipe
   (`resolveGoal`). Metas diárias/semanais viram metas do intervalo pelos dias úteis já passados;

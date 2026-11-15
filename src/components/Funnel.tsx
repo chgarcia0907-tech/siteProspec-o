@@ -13,13 +13,15 @@ import {
 } from "@/lib/cadencia";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/components/useConfirm";
+import { ResponseOriginSelect, useResponseOrigin } from "@/components/RespostaOrigem";
 
+/** Azul que se intensifica a cada etapa do FUNNEL; a última (Projeto vendido) é verde sólido. */
 const COLORS = [
-  "bg-linkedin-soft text-linkedin",
-  "bg-whatsapp-soft text-whatsapp",
-  "bg-warning-soft text-warning",
-  "bg-accent text-accent-foreground",
-  "bg-success-soft text-success",
+  "bg-primary/15 text-primary",
+  "bg-primary/25 text-primary-text-strong",
+  "bg-primary/40 text-heading",
+  "bg-primary/60 text-heading",
+  "bg-success text-primary-foreground",
 ];
 
 export function FunnelBadge({ contact }: { contact: Contact }) {
@@ -28,7 +30,7 @@ export function FunnelBadge({ contact }: { contact: Contact }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap",
+        "inline-flex items-center rounded-sm px-2 py-0.5 text-caption font-semibold whitespace-nowrap",
         COLORS[i],
       )}
     >
@@ -47,6 +49,7 @@ export function FunnelControl({
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(todayISO());
   const { ask, dialog } = useConfirm();
+  const origin = useResponseOrigin();
   const idx = funnelIndex(contact);
   const next = FUNNEL[idx + 1];
   return (
@@ -87,8 +90,8 @@ export function FunnelControl({
                 className="w-full"
                 disabled={!date}
                 onClick={() => {
-                  onPatch(advancePatch(contact, idx + 1, date));
                   setOpen(false);
+                  origin.guard(contact, advancePatch(contact, idx + 1, date), onPatch);
                 }}
               >
                 Marcar {next.label}
@@ -97,11 +100,12 @@ export function FunnelControl({
           ) : (
             <p className="text-sm font-medium text-success">Projeto vendido — funil completo.</p>
           )}
+          <ResponseOriginSelect contact={contact} onPatch={onPatch} />
           {idx >= 0 && (
             <Button
               size="sm"
               variant="ghost"
-              className="w-full text-xs text-destructive"
+              className="w-full text-xs text-destructive-text"
               onClick={() => {
                 setOpen(false);
                 ask({
@@ -122,6 +126,7 @@ export function FunnelControl({
         </PopoverContent>
       </Popover>
       {dialog}
+      {origin.dialog}
     </>
   );
 }
