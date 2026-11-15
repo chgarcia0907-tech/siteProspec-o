@@ -1,4 +1,4 @@
-import { expect, test } from "./helpers";
+import { expect, mutations, test } from "./helpers";
 
 // O ranking é só do administrador: fica na aba "Competição" do painel.
 test.describe("Ranking (painel › Competição)", () => {
@@ -34,5 +34,14 @@ test.describe("Ranking (painel › Competição)", () => {
       "true",
     );
     await expect(page.getByRole("link", { name: "Ranking", exact: true })).toHaveCount(0);
+  });
+
+  test("o período da competição geral se edita aqui", async ({ page }) => {
+    await page.goto("/painel?aba=competicao");
+    await page.getByLabel("Início").fill("2026-11-02");
+    await page.getByRole("button", { name: "Salvar período" }).click();
+    await expect(page.getByText("Período salvo")).toBeVisible();
+    const saved = (await mutations()).filter((m) => m.table === "competition_settings");
+    expect(JSON.parse(saved[0]!.body)).toMatchObject({ start_date: "2026-11-02", end_date: null });
   });
 });
