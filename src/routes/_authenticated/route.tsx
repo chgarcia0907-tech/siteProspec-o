@@ -7,7 +7,7 @@ import { useMemo } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useContacts, useHolidays, useSettings } from "@/hooks/useCadencia";
 import { DEFAULT_OFFSETS, todayISO } from "@/lib/cadencia";
-import { buildQueues } from "@/lib/fila";
+import { buildQueues, dayProgress } from "@/lib/fila";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -55,14 +55,15 @@ function AppLayout() {
   );
 }
 
-/** Envios previstos para hoje, somando as filas de todas as etapas (contador da navegação). */
+/** Leads com envio pendente hoje (contador da navegação; mesma conta da barra de progresso). */
 function usePendingToday(): number | undefined {
   const { data: contacts } = useContacts();
   const { data: settings } = useSettings();
   const holidays = useHolidays();
   return useMemo(() => {
     if (!contacts) return undefined;
-    const queues = buildQueues(contacts, settings ?? DEFAULT_OFFSETS, holidays, todayISO());
-    return Object.values(queues).reduce((n, q) => n + q.length, 0);
+    const ref = todayISO();
+    const queues = buildQueues(contacts, settings ?? DEFAULT_OFFSETS, holidays, ref);
+    return dayProgress(contacts, queues, ref).pending;
   }, [contacts, settings, holidays]);
 }

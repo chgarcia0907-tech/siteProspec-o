@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { RANGE_LABEL, presetRange, type ChannelFilter, type RangePreset } from "@/lib/dashboard";
@@ -38,33 +38,37 @@ export function Filters({
   );
 
   return (
-    <div className="space-y-2 rounded-lg border bg-card p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        {(Object.keys(RANGE_LABEL) as RangePreset[]).map((p) => (
-          <Button
-            key={p}
-            size="sm"
-            variant={value.preset === p ? "default" : "outline"}
-            onClick={() => set({ preset: p, ...presetRange(p, today) })}
-          >
-            {RANGE_LABEL[p]}
-          </Button>
-        ))}
-        {period && (
-          <Button
-            size="sm"
-            variant={value.preset === "periodo" ? "default" : "outline"}
-            onClick={() =>
-              set({
-                preset: "periodo",
-                from: period.start,
-                to: period.end && period.end < today ? period.end : today,
-              })
-            }
-          >
-            Período inteiro
-          </Button>
-        )}
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <div
+          role="group"
+          aria-label="Intervalo"
+          className="inline-flex rounded-lg border bg-card p-[3px]"
+        >
+          {(Object.keys(RANGE_LABEL) as RangePreset[]).map((p) => (
+            <Segment
+              key={p}
+              active={value.preset === p}
+              onClick={() => set({ preset: p, ...presetRange(p, today) })}
+            >
+              {RANGE_LABEL[p]}
+            </Segment>
+          ))}
+          {period && (
+            <Segment
+              active={value.preset === "periodo"}
+              onClick={() =>
+                set({
+                  preset: "periodo",
+                  from: period.start,
+                  to: period.end && period.end < today ? period.end : today,
+                })
+              }
+            >
+              Período inteiro
+            </Segment>
+          )}
+        </div>
         <div className="flex items-center gap-1">
           <Input
             aria-label="Início do intervalo"
@@ -74,7 +78,7 @@ export function Filters({
             max={value.to}
             onChange={(e) => e.target.value && set({ preset: "livre", from: e.target.value })}
           />
-          <span className="text-sm text-muted-foreground">a</span>
+          <span className="text-dense text-muted-foreground">a</span>
           <Input
             aria-label="Fim do intervalo"
             type="date"
@@ -162,5 +166,30 @@ export function Filters({
         </NativeSelect>
       </div>
     </div>
+  );
+}
+
+/** Item do controle segmentado de intervalo (ativo em azul suave, DESIGN.md seção 5). */
+function Segment({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "h-8 rounded-md px-3 text-dense font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        active ? "bg-primary-soft text-heading" : "text-muted-foreground hover:text-heading",
+      )}
+    >
+      {children}
+    </button>
   );
 }

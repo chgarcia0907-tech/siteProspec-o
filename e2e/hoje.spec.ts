@@ -12,7 +12,7 @@ test.describe("Envios de hoje", () => {
 
     await tab("WhatsApp 1").click();
     await expect(page.getByText("Bruno Lima")).toBeVisible();
-    await expect(page.getByText("Atrasado — previsto 06/11/2026")).toBeVisible();
+    await expect(page.getByText("Atrasado · previsto 06/11")).toBeVisible();
   });
 
   test("marcar como enviado grava a data e a situação", async ({ page }) => {
@@ -119,5 +119,30 @@ test.describe("Envios de hoje", () => {
     expect(duracao).toBeLessThan(0.001);
     await page.getByRole("button", { name: "Marcar como enviado" }).click();
     await expect(page.getByText("Bruno Lima")).toHaveCount(0);
+  });
+
+  test("a barra de progresso conta o envio e a fila vazia mostra Fila em dia", async ({ page }) => {
+    await page.goto("/hoje");
+    const barra = page.getByRole("region", { name: "Progresso do dia" });
+    await expect(barra).toContainText(/\d+ de \d+ envios feitos/);
+    const texto = (await barra.getByText(/envios feitos/).textContent()) ?? "";
+    const [, feitos, total] = /(\d+) de (\d+)/.exec(texto)!;
+    await page.getByRole("tab", { name: /^WhatsApp 1/ }).click();
+    await page.getByRole("button", { name: "Marcar como enviado" }).click();
+    await expect(barra).toContainText(`${Number(feitos) + 1} de ${total} envios feitos`);
+    await expect(page.getByText("Fila em dia")).toBeVisible();
+    await expect(page.getByText("Nada na fila de WhatsApp 1 para esta data.")).toBeVisible();
+  });
+
+  test("os campos do lead ficam recolhidos até faltar dado para a mensagem", async ({ page }) => {
+    await page.goto("/hoje");
+    const cartao = page.getByRole("article", { name: "Ana Souza" });
+    await expect(cartao.getByText(/A mensagem usa empresa, área e cargo/)).toBeVisible();
+    await expect(cartao.getByLabel("Cargo na empresa")).toHaveCount(0);
+    await cartao.getByRole("button", { name: "Completar dados" }).click();
+    await expect(cartao.getByLabel("Cargo na empresa")).toBeVisible();
+    // Lead com todos os dados não mostra a faixa.
+    await page.getByRole("tab", { name: /^WhatsApp 1/ }).click();
+    await expect(page.getByRole("button", { name: "Completar dados" })).toHaveCount(0);
   });
 });

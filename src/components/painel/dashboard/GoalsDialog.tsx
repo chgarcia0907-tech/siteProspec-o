@@ -63,7 +63,7 @@ export function GoalsDialog({ data, onClose }: { data: DashData; onClose: () => 
 
         {data.options.groups.length > 0 && (
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Por grupo</h3>
+            <h3 className="text-dense font-semibold">Por grupo</h3>
             {data.options.groups.map((gr) => (
               <GoalForm
                 key={gr.id}
@@ -77,7 +77,7 @@ export function GoalsDialog({ data, onClose }: { data: DashData; onClose: () => 
         )}
 
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold">Exceções por hunter</h3>
+          <h3 className="text-dense font-semibold">Exceções por hunter</h3>
           {hunterGoals.map((g) => (
             <GoalForm
               key={g.id}
@@ -166,11 +166,11 @@ function GoalForm({
   }
 
   return (
-    <fieldset className="rounded-md border p-3" aria-label={`Metas: ${title}`}>
-      <legend className="px-1 text-sm font-medium">{title}</legend>
+    <fieldset className="rounded-lg border bg-surface-inset p-4" aria-label={`Metas: ${title}`}>
+      <legend className="px-1 text-dense font-medium">{title}</legend>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {FIELDS.map((f) => (
-          <label key={f.key} className="space-y-1 text-xs text-muted-foreground">
+          <label key={f.key} className="space-y-1 text-caption text-muted-foreground">
             <span>{f.label}</span>
             <Input
               inputMode="decimal"

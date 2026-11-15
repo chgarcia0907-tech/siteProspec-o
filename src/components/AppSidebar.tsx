@@ -24,7 +24,7 @@ export function AppSidebar({
 }: {
   email: string;
   isAdmin: boolean;
-  /** Envios previstos para hoje (soma das filas); `undefined` enquanto carrega. */
+  /** Leads com envio pendente hoje; `undefined` enquanto carrega. */
   pendingToday: number | undefined;
   onSignOut: () => void;
 }) {

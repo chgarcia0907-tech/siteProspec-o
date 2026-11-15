@@ -61,7 +61,7 @@ function Mini({
   const rows = data.map((r) => ({ semana: r.semana, value: r[metric] }));
   return (
     <figure>
-      <figcaption className="mb-1 text-xs font-medium">{title}</figcaption>
+      <figcaption className="mb-1 text-caption font-medium">{title}</figcaption>
       <ChartContainer config={CONFIG[metric]} className="aspect-auto h-40 w-full">
         {kind === "bar" ? (
           <BarChart data={rows} margin={{ left: -20, right: 4, top: 4 }}>
@@ -101,10 +101,12 @@ export function Coortes({ d }: { d: Dash }) {
       hint="Conversão sem misturar contatos novos e antigos. “parcial” = ainda não passaram 14/28 dias do fim da semana."
     >
       {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum LinkedIn 1 nas últimas 12 semanas.</p>
+        <p className="text-dense text-muted-foreground">
+          Nenhum LinkedIn 1 nas últimas 12 semanas.
+        </p>
       ) : (
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs text-muted-foreground">
+        <table className="w-full text-dense">
+          <thead className="text-left text-caption text-muted-foreground">
             <tr>
               <th className="py-1">Semana</th>
               <th className="py-1 text-right">LinkedIn 1</th>
@@ -133,7 +135,7 @@ export function Coortes({ d }: { d: Dash }) {
 function Rate({ n, of, mature }: { n: number; of: number; mature: boolean }) {
   return (
     <td className={cn("py-1 text-right tabular-nums", !mature && "text-muted-foreground")}>
-      {pctText(pct(n, of))} <span className="text-xs">({n})</span>
+      {pctText(pct(n, of))} <span className="text-caption">({n})</span>
       {!mature && <span className="ml-1 text-caption">parcial</span>}
     </td>
   );
@@ -142,30 +144,28 @@ function Rate({ n, of, mature }: { n: number; of: number; mature: boolean }) {
 /** Lista do que precisa de ação hoje, mais urgente primeiro. */
 export function Alertas({ d }: { d: Dash }) {
   return (
-    <Section title={`Alertas (${d.alerts.length})`} hint="O que precisa de ação hoje.">
+    <Section
+      title={`Quem precisa de ajuda (${d.alerts.length})`}
+      hint="O que precisa de ação hoje."
+    >
       {d.alerts.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nada pendente. 🎉</p>
+        <p className="text-dense text-muted-foreground">Ninguém precisa de ajuda agora.</p>
       ) : (
-        <ul className="space-y-1.5 text-sm">
+        <ul className="divide-y">
           {d.alerts.map((a, i) => (
-            <li key={i} className="flex items-start gap-2">
-              {a.level === "alta" ? (
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive-text" />
-              ) : (
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-              )}
+            <li key={i} className="flex items-start gap-3 py-2 text-dense first:pt-0 last:pb-0">
+              <span
+                className={cn(
+                  "mt-px shrink-0 rounded-sm px-1.5 py-0.5 text-caption font-bold uppercase",
+                  a.level === "alta"
+                    ? "bg-destructive-soft text-destructive-text"
+                    : "bg-warning-soft text-warning-text",
+                )}
+              >
+                {a.level === "alta" ? "Alta" : "Média"}
+              </span>
               <span>
-                <span
-                  className={cn(
-                    "mr-1 rounded px-1 text-caption font-medium",
-                    a.level === "alta"
-                      ? "bg-destructive/10 text-destructive-text"
-                      : "bg-warning-soft text-warning-text",
-                  )}
-                >
-                  {a.level === "alta" ? "Alta" : "Média"}
-                </span>
-                {a.hunter && <strong>{a.hunter}: </strong>}
+                {a.hunter && <strong className="text-heading">{a.hunter}: </strong>}
                 {a.text}
               </span>
             </li>

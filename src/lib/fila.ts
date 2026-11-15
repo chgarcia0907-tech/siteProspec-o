@@ -49,6 +49,34 @@ export function buildQueues(
   return result;
 }
 
+export type DayProgress = {
+  /** Etapas enviadas no dia `ref` (um contato pode contar mais de uma vez). */
+  done: number;
+  /** Leads com envio pendente nas filas do dia (cada lead conta uma vez). */
+  pending: number;
+  /** Dos leads pendentes, os que têm algum envio atrasado. */
+  late: number;
+  total: number;
+};
+
+/**
+ * Progresso do dia `ref`: o que já foi enviado nesse dia e quantos leads ainda esperam envio.
+ * Um lead atrasado pode estar em mais de uma fila (as etapas seguintes vencem em cadeia), mas
+ * conta uma vez: ao enviar a etapa mais cedo, as outras saem da fila e o total não encolhe.
+ */
+export function dayProgress(contacts: Contact[], queues: Queues, ref: string): DayProgress {
+  let done = 0;
+  for (const c of contacts)
+    for (const s of STEPS) if ((c[s.sentField] as string | null)?.slice(0, 10) === ref) done++;
+  const pending = new Set<string>();
+  const late = new Set<string>();
+  for (const item of Object.values(queues).flat()) {
+    pending.add(item.contact.id);
+    if (item.late) late.add(item.contact.id);
+  }
+  return { done, pending: pending.size, late: late.size, total: done + pending.size };
+}
+
 /**
  * O que falta no lead para gerar a mensagem da etapa (null = pode gerar).
  * No LinkedIn 1 a área e o cargo são exigidos; com o texto do modelo (`body`),
