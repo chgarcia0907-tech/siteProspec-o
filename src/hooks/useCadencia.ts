@@ -214,21 +214,6 @@ export function useSaveGender() {
   });
 }
 
-export function useCompetitionSettings() {
-  return useQuery({
-    queryKey: ["competition_settings"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("competition_settings")
-        .select("start_date, end_date")
-        .eq("id", 1)
-        .maybeSingle();
-      if (error) throw error;
-      return data ?? { start_date: "2026-10-01", end_date: null };
-    },
-  });
-}
-
 export type HolidayRow = { date: string; name: string };
 
 export function useHolidayList() {

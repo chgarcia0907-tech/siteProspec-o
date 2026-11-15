@@ -10,7 +10,7 @@ import { STEPS } from "@/lib/cadencia";
 import { missingSteps } from "@/lib/empresas";
 import { sectorSave, sectorUsage } from "@/lib/setores.functions";
 import { cn, errorMessage } from "@/lib/utils";
-import type { Ask } from "../useConfirm";
+import type { Ask } from "@/components/useConfirm";
 import { SectorEditor } from "./SectorEditor";
 
 /** Aba "Setores e cadências": ramos de atuação das empresas e as mensagens de cada um. */

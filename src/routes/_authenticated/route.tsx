@@ -21,7 +21,6 @@ const NAV = [
   { to: "/contatos", label: "Contatos" },
   { to: "/importar", label: "Importar conexões" },
   { to: "/modelos", label: "Modelos" },
-  { to: "/ranking", label: "Ranking" },
   { to: "/configuracoes", label: "Configurações" },
 ] as const;
 

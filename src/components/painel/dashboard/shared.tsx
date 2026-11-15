@@ -11,7 +11,7 @@ export function Section({
   className,
 }: {
   title: string;
-  hint?: string;
+  hint?: string | undefined;
   children: ReactNode;
   className?: string;
 }) {

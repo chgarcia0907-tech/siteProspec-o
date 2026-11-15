@@ -73,4 +73,38 @@ test.describe("Contatos", () => {
     await page.getByRole("checkbox", { name: /Selecionar todos os contatos do filtro/ }).click();
     await expect(page.getByText("68 selecionados")).toBeVisible();
   });
+
+  test("descartar em lote pede confirmação", async ({ page }) => {
+    await page.goto("/contatos");
+    await page.locator("main tbody tr").first().getByRole("checkbox").first().click();
+    await page.getByRole("button", { name: "Marcar como descartado" }).click();
+    const dialog = page.getByRole("alertdialog");
+    await expect(dialog).toContainText("Descartar 1 contato?");
+    await dialog.getByRole("button", { name: "Cancelar" }).click();
+    expect(await mutations()).toEqual([]);
+
+    await page.getByRole("button", { name: "Marcar como descartado" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Descartar" }).click();
+    await expect(page.getByText("Contato descartado")).toBeVisible();
+    const [m] = await mutations();
+    expect(m).toMatchObject({ method: "PATCH", table: "contacts" });
+    expect(JSON.parse(m!.body)).toEqual({ status: "descartado" });
+  });
+
+  test("desfazer uma etapa do funil pede confirmação", async ({ page }) => {
+    await page.goto("/contatos");
+    // O nome fica num campo editável, então a linha é achada pelo valor do campo.
+    const row = page
+      .locator("main tbody tr")
+      .filter({ has: page.locator('input[value="Fábio Neves"]') });
+    await row.getByRole("button", { name: "Avançar no funil" }).click();
+    await page.getByRole("button", { name: "Desfazer Lead" }).click();
+    const dialog = page.getByRole("alertdialog");
+    await expect(dialog).toContainText("Desfazer Lead?");
+    await dialog.getByRole("button", { name: "Desfazer" }).click();
+    await expect.poll(async () => (await mutations()).length).toBe(1);
+    const [m] = await mutations();
+    expect(m).toMatchObject({ method: "PATCH", table: "contacts" });
+    expect(JSON.parse(m!.body)).toMatchObject({ lead_em: null });
+  });
 });
