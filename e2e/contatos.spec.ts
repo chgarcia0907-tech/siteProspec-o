@@ -34,6 +34,32 @@ test.describe("Contatos", () => {
     expect(JSON.parse((await mutations())[0]!.body)).toEqual({ company: "Nova Empresa" });
   });
 
+  test("filtra os contatos sem empresa ou sem área", async ({ page }) => {
+    await page.goto("/contatos");
+    const pend = page.getByRole("combobox", { name: "Pendências" });
+    await pend.selectOption({ label: "Sem área" });
+    await expect(page.getByText("3 contatos ·")).toBeVisible();
+    await pend.selectOption({ label: "Sem empresa" });
+    await expect(page.getByText("1 contatos ·")).toBeVisible();
+    await expect(page.locator("main tbody tr").first()).toContainText("Diretora de Operações");
+  });
+
+  test("preenche empresa e área vazias a partir do headline", async ({ page }) => {
+    await page.goto("/contatos");
+    await page.getByRole("button", { name: "Preencher empresa e área (1)" }).click();
+    await expect(page.getByText("1 com a empresa tirada do headline")).toBeVisible();
+    await page.getByRole("button", { name: "Preencher", exact: true }).click();
+    await expect(page.getByText("1 contatos completados")).toBeVisible();
+    const [m] = await mutations();
+    expect(m).toMatchObject({ method: "PATCH", table: "contacts" });
+    expect(m!.query).toMatch(/id=in\./);
+    expect(JSON.parse(m!.body)).toEqual({
+      company: "Alfa",
+      company_gender: "feminino",
+      sector: "Operações",
+    });
+  });
+
   test("pagina listas grandes e o selecionar todos vale para o filtro inteiro", async ({
     page,
   }) => {

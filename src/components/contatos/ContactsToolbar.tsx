@@ -7,19 +7,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { ReactNode } from "react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { STATUS_LABEL } from "@/lib/cadencia";
-import { CONTACT_STATUSES, type StatusFilter } from "@/lib/contatos";
+import {
+  CONTACT_STATUSES,
+  MISSING_LABEL,
+  type MissingFilter,
+  type StatusFilter,
+} from "@/lib/contatos";
 
 const PLANILHA_URL =
   "https://docs.google.com/spreadsheets/d/1M25CO9Y4NqPjGdCi3P1hNWNglWZ3Jf7EDVIl_k9JLj0/edit";
 
-/** Título, busca, filtro de situação, link da planilha e exportação. */
+/** Título, busca, filtros de situação e pendência, link da planilha, ações e exportação. */
 export function ContactsToolbar({
   count,
   search,
   onSearch,
   status,
   onStatus,
+  missing,
+  onMissing,
+  actions,
   onExport,
 }: {
   count: number;
@@ -27,6 +37,10 @@ export function ContactsToolbar({
   onSearch: (v: string) => void;
   status: StatusFilter;
   onStatus: (v: StatusFilter) => void;
+  missing: MissingFilter;
+  onMissing: (v: MissingFilter) => void;
+  /** Botões extras (ex.: preenchimento automático). */
+  actions?: ReactNode;
   onExport: () => void;
 }) {
   return (
@@ -57,6 +71,19 @@ export function ContactsToolbar({
             ))}
           </SelectContent>
         </Select>
+        <NativeSelect
+          aria-label="Pendências"
+          className="w-48"
+          value={missing}
+          onChange={(e) => onMissing(e.target.value as MissingFilter)}
+        >
+          {(Object.keys(MISSING_LABEL) as MissingFilter[]).map((m) => (
+            <option key={m} value={m}>
+              {MISSING_LABEL[m]}
+            </option>
+          ))}
+        </NativeSelect>
+        {actions}
         <div className="flex flex-col items-end leading-tight">
           <a
             href={PLANILHA_URL}

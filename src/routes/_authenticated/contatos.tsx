@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AutoFillButton } from "@/components/contatos/AutoFillButton";
 import { BulkActions } from "@/components/contatos/BulkActions";
 import { ContactsTable } from "@/components/contatos/ContactsTable";
 import { ContactsToolbar } from "@/components/contatos/ContactsToolbar";
@@ -18,6 +19,7 @@ import {
   contactsCsvRows,
   filterContacts,
   withSyncedStatus,
+  type MissingFilter,
   type StatusFilter,
 } from "@/lib/contatos";
 import { downloadCsv } from "@/lib/download";
@@ -54,13 +56,14 @@ function Contatos() {
   const selection = useSelection();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
+  const [missing, setMissing] = useState<MissingFilter>("todos");
   const [page, setPage] = useState(0);
   // A busca filtra milhares de contatos: o campo responde na hora e a tabela acompanha em seguida.
   const deferredSearch = useDeferredValue(search);
 
   const rows = useMemo(
-    () => filterContacts(contacts ?? [], deferredSearch, statusFilter),
-    [contacts, deferredSearch, statusFilter],
+    () => filterContacts(contacts ?? [], deferredSearch, statusFilter, missing),
+    [contacts, deferredSearch, statusFilter, missing],
   );
   const paged = paginate(rows, page, PAGE_SIZE);
   const save = (contact: Contact, patch: Partial<Contact>) =>
@@ -80,6 +83,12 @@ function Contatos() {
           setStatusFilter(v);
           setPage(0);
         }}
+        missing={missing}
+        onMissing={(v) => {
+          setMissing(v);
+          setPage(0);
+        }}
+        actions={<AutoFillButton contacts={contacts ?? []} companies={companies ?? []} />}
         onExport={() =>
           downloadCsv(`contatos-${todayISO()}.csv`, contactsCsvRows(rows, offsets, holidays))
         }
