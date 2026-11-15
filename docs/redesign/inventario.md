@@ -7,10 +7,34 @@ código e nas capturas de tela.
 **Capturas de tela:** ficam em `docs/redesign/screenshots/desktop/` e
 `docs/redesign/screenshots/celular/` (largura de um Pixel 7), com os mesmos nomes nas duas pastas:
 `00-inicio`, `01-entrar`, `02-hoje`, `03-contatos`, `04-empresas`, `05-importar`, `06-modelos`,
-`07-ranking`, `08-configuracoes`, `09-painel-indicadores`, `10-painel-hunters`,
+`08-configuracoes`, `09-painel-indicadores`, `10-painel-hunters`,
 `11-painel-periodos`, `12-painel-setores`, `13-painel-competicao` e `14-painel-busca` (`.png`). As
 capturas mostram as telas com dados; os **estados vazios não aparecem nelas** e estão descritos só
 no texto.
+
+## Mudanças depois do inventário
+
+Feitas antes do redesign (frente A e decisões do produto). O texto abaixo ainda descreve o
+estado do commit `8fb06c0`; onde ele conflitar com esta lista, vale a lista. As capturas de tela
+já mostram o estado novo.
+
+- **Ranking só para o administrador.** O item "Ranking" saiu do menu. Placar, regulamento e
+  atividade (`CompetitionBoard` + `ActivityBoard`) ficam na aba **Competição** do painel, no
+  lugar da tabela resumida que repetia o placar. `/ranking` redireciona para
+  `/painel?aba=competicao`; a aba do painel agora fica na URL (`?aba=`).
+- **Período da competição só no painel.** Saiu da Área do administrador em `/configuracoes`
+  (que agora tem só exclusão de contatos e feriados).
+- **Confirmações.** Descartar em lote (Contatos), desfazer etapa do funil e remover feriado
+  passam pelo diálogo padrão `useConfirm` (agora em `src/components/useConfirm.tsx`).
+- **Filtro de situação** em Contatos usa a situação calculada, a mesma do selo.
+- **Envios de hoje** mostra "Carregando a fila…" (e um aviso de erro) em vez de "Nada na fila"
+  enquanto os contatos carregam.
+- **Empresas:** plural certo ("1 empresa") e "Carregando os setores…" enquanto carregam.
+- **Painel no celular:** a barra de abas quebra em linhas; todas as abas são alcançáveis.
+- **Modo escuro removido:** saíram os tokens `.dark` e a variante `dark:`. Só há tema claro.
+
+Continuam para o redesign: navegação no celular, listas longas sem paginação (painel, prévia do
+Importar, membros do período), cores iguais de `success` e `whatsapp` e a responsividade geral.
 
 ---
 
