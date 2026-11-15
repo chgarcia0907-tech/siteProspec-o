@@ -30,6 +30,10 @@ test.describe("Painel · Indicadores", () => {
     await expect(late).toContainText("5 d úteis");
     const origem = page.getByRole("region", { name: "Etapa que gerou a AT" });
     await expect(origem.locator("li", { hasText: "WhatsApp 1" })).toContainText("(100%)");
+    // A AT do João veio do WhatsApp 1: canal de entrada WhatsApp.
+    const canal = page.getByRole("region", { name: "Canal de entrada" });
+    await expect(canal.getByRole("row", { name: /^WhatsApp/ })).toContainText("1 (100%)");
+    await expect(page.getByRole("region", { name: "Mensagens que geram reunião" })).toBeVisible();
   });
 
   test("filtros de intervalo e de grupo recalculam os números", async ({ page }) => {

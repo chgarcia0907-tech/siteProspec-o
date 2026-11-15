@@ -33,6 +33,8 @@ const blank = {
   connected_at: null,
   step1_date: null,
   respondeu_em: null,
+  resposta_etapa: null,
+  resposta_modelo: null,
   sent1_at: null,
   sent2_at: null,
   sent3_at: null,

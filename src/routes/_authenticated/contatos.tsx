@@ -5,6 +5,7 @@ import { AutoFillButton } from "@/components/contatos/AutoFillButton";
 import { BulkActions } from "@/components/contatos/BulkActions";
 import { ContactsTable } from "@/components/contatos/ContactsTable";
 import { ContactsToolbar } from "@/components/contatos/ContactsToolbar";
+import { useResponseOrigin } from "@/components/RespostaOrigem";
 import { TablePagination } from "@/components/TablePagination";
 import {
   useCompanies,
@@ -54,6 +55,7 @@ function Contatos() {
   const offsets = settings ?? DEFAULT_OFFSETS;
   const update = useUpdateContact();
   const selection = useSelection();
+  const origin = useResponseOrigin();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
   const [missing, setMissing] = useState<MissingFilter>("todos");
@@ -103,8 +105,9 @@ function Contatos() {
         companies={companies ?? []}
         selection={selection}
         onPatch={(c, changes) => save(c, withSyncedStatus(c, changes))}
-        onStatus={(c, status) => save(c, { status })}
+        onStatus={(c, status) => origin.guard(c, { status }, (p) => save(c, p))}
       />
+      {origin.dialog}
       <TablePagination paged={paged} onPage={setPage} noun="contatos" />
     </div>
   );

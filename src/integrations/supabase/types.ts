@@ -123,6 +123,8 @@ export type Database = {
           proposta_em: string | null;
           proposta_registrado_em: string | null;
           respondeu_em: string | null;
+          resposta_etapa: number | null;
+          resposta_modelo: string | null;
           sector: string;
           sent1_at: string | null;
           sent2_at: string | null;
@@ -157,6 +159,8 @@ export type Database = {
           proposta_em?: string | null;
           proposta_registrado_em?: string | null;
           respondeu_em?: string | null;
+          resposta_etapa?: number | null;
+          resposta_modelo?: string | null;
           sector?: string;
           sent1_at?: string | null;
           sent2_at?: string | null;
@@ -191,6 +195,8 @@ export type Database = {
           proposta_em?: string | null;
           proposta_registrado_em?: string | null;
           respondeu_em?: string | null;
+          resposta_etapa?: number | null;
+          resposta_modelo?: string | null;
           sector?: string;
           sent1_at?: string | null;
           sent2_at?: string | null;
