@@ -28,7 +28,8 @@ export function ConfirmDialog({ pending, onClose }: { pending: Pending; onClose:
         <AlertDialogHeader>
           <AlertDialogTitle>{pending?.title}</AlertDialogTitle>
           <AlertDialogDescription>
-            {pending?.desc} Essa ação não pode ser desfeita.
+            {pending?.desc}
+            {pending?.reversible ? "" : " Essa ação não pode ser desfeita."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {pending?.word && (

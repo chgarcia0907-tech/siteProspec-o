@@ -12,6 +12,7 @@ import {
   type Contact,
 } from "@/lib/cadencia";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/useConfirm";
 
 const COLORS = [
   "bg-linkedin-soft text-linkedin",
@@ -45,71 +46,82 @@ export function FunnelControl({
 }) {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(todayISO());
+  const { ask, dialog } = useConfirm();
   const idx = funnelIndex(contact);
   const next = FUNNEL[idx + 1];
   return (
-    <Popover
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-        if (o) setDate(todayISO());
-      }}
-    >
-      <PopoverTrigger asChild>
-        <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
-          Avançar no funil
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-72 space-y-3" align="end">
-        <div className="text-xs text-muted-foreground">
-          Etapa atual:{" "}
-          {idx >= 0
-            ? `${FUNNEL[idx]!.label} (${formatBR(contact[FUNNEL[idx]!.field])})`
-            : "nenhuma"}
-        </div>
-        {next ? (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">
-              Próxima: {next.label} (+{next.points} pts)
-            </p>
-            <Input
-              type="date"
-              aria-label="Data da etapa"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="h-8"
-            />
+    <>
+      <Popover
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (o) setDate(todayISO());
+        }}
+      >
+        <PopoverTrigger asChild>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
+            Avançar no funil
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 space-y-3" align="end">
+          <div className="text-xs text-muted-foreground">
+            Etapa atual:{" "}
+            {idx >= 0
+              ? `${FUNNEL[idx]!.label} (${formatBR(contact[FUNNEL[idx]!.field])})`
+              : "nenhuma"}
+          </div>
+          {next ? (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">
+                Próxima: {next.label} (+{next.points} pts)
+              </p>
+              <Input
+                type="date"
+                aria-label="Data da etapa"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="h-8"
+              />
+              <Button
+                size="sm"
+                className="w-full"
+                disabled={!date}
+                onClick={() => {
+                  onPatch(advancePatch(contact, idx + 1, date));
+                  setOpen(false);
+                }}
+              >
+                Marcar {next.label}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm font-medium text-success">Projeto vendido — funil completo.</p>
+          )}
+          {idx >= 0 && (
             <Button
               size="sm"
-              className="w-full"
-              disabled={!date}
+              variant="ghost"
+              className="w-full text-xs text-destructive"
               onClick={() => {
-                onPatch(advancePatch(contact, idx + 1, date));
                 setOpen(false);
+                ask({
+                  title: `Desfazer ${FUNNEL[idx]!.label}?`,
+                  desc: `${contact.name} volta para a etapa anterior do funil e os pontos dessa etapa saem do placar.`,
+                  action: "Desfazer",
+                  reversible: true,
+                  run: async () => {
+                    const p = undoPatch(contact);
+                    if (p) onPatch(p);
+                  },
+                });
               }}
             >
-              Marcar {next.label}
+              Desfazer {FUNNEL[idx]!.label}
             </Button>
-          </div>
-        ) : (
-          <p className="text-sm font-medium text-success">Projeto vendido — funil completo.</p>
-        )}
-        {idx >= 0 && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="w-full text-xs text-destructive"
-            onClick={() => {
-              if (!confirm(`Desfazer "${FUNNEL[idx]!.label}" de ${contact.name}?`)) return;
-              const p = undoPatch(contact);
-              if (p) onPatch(p);
-              setOpen(false);
-            }}
-          >
-            Desfazer {FUNNEL[idx]!.label}
-          </Button>
-        )}
-      </PopoverContent>
-    </Popover>
+          )}
+        </PopoverContent>
+      </Popover>
+      {dialog}
+    </>
   );
 }

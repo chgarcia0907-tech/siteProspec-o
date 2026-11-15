@@ -61,8 +61,9 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   `ranking.ts`), com testes ao lado (`*.test.ts`). Lógica que dá para testar não fica em
   componente.
 - Hooks compartilhados: `useCadencia` (dados do hunter), `usePainel` (dados do admin),
-  `useSelection` (seleção por checkbox). No painel, ações destrutivas passam por
-  `useConfirm` (`ask({ title, desc, word?, run })`).
+  `useSelection` (seleção por checkbox). Ações destrutivas passam por `useConfirm`
+  (`src/components/useConfirm.tsx`: `ask({ title, desc, word?, action?, reversible?, run })`),
+  nunca pelo `confirm()` do navegador.
 - Etapas da cadência vêm de `STEPS` e etapas do funil de `FUNNEL` (ambos em `cadencia.ts`):
   colunas, rótulos, pontos e CSVs derivam dessas listas; não repita os campos à mão.
 - Selects simples usam `NativeSelect`; erros em toast usam `errorMessage` (`src/lib/utils.ts`).

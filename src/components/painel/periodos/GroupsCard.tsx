@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { OverviewPeriod } from "@/hooks/usePainel";
 import { deleteGroupOrSub, saveGroup, saveSubgroup } from "@/lib/periodos.functions";
-import type { Ask } from "../useConfirm";
+import type { Ask } from "@/components/useConfirm";
 import { usePeriodActions, type PeriodScope } from "./shared";
 
 /** Grupos e subgrupos do período: criar e excluir. */
