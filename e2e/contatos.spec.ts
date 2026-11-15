@@ -91,6 +91,29 @@ test.describe("Contatos", () => {
     expect(JSON.parse(m!.body)).toEqual({ status: "descartado" });
   });
 
+  test("marcar 'respondeu' pergunta qual mensagem gerou a resposta", async ({ page }) => {
+    await page.goto("/contatos");
+    const row = page
+      .locator("main tbody tr")
+      .filter({ has: page.locator('input[value="Bruno Lima"]') });
+    const responder = async () => {
+      await row.getByRole("combobox").filter({ hasText: "Em cadência" }).click();
+      await page.getByRole("option", { name: "Respondeu" }).click();
+    };
+    const origem = page.getByRole("dialog", { name: "Qual mensagem gerou a resposta?" });
+    // Cancelar não grava a resposta.
+    await responder();
+    await origem.getByRole("button", { name: "Cancelar" }).click();
+    await expect(origem).toBeHidden();
+    expect(await mutations()).toEqual([]);
+    await responder();
+    await origem.getByLabel(/Outro canal/).check();
+    await origem.getByRole("button", { name: "Salvar" }).click();
+    await expect.poll(async () => (await mutations()).length).toBe(1);
+    const [m] = await mutations();
+    expect(JSON.parse(m!.body)).toEqual({ status: "respondeu", resposta_etapa: 0 });
+  });
+
   test("desfazer uma etapa do funil pede confirmação", async ({ page }) => {
     await page.goto("/contatos");
     // O nome fica num campo editável, então a linha é achada pelo valor do campo.

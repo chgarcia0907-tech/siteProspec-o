@@ -4,16 +4,19 @@
 // (atScoreDate, stageScoreDate), então os números batem com Envios de hoje e com o ranking.
 import {
   DEFAULT_OFFSETS,
+  ENTRY_CHANNEL_LABEL,
   FUNNEL,
   STEPS,
   addDaysISO,
   computedStatus,
+  entryChannel,
   isActive,
   isBusinessDay,
   onlyDigits,
   plannedDates,
   type Channel,
   type Contact,
+  type EntryChannel,
   type FunnelField,
   type FunnelRegisteredField,
   type Holidays,
@@ -37,6 +40,8 @@ export type DashContact = Pick<
   | "created_at"
   | "step1_date"
   | "respondeu_em"
+  | "resposta_etapa"
+  | "resposta_modelo"
   | StepDef["sentField"]
   | FunnelField
   | FunnelRegisteredField
@@ -55,6 +60,8 @@ export const DASH_CONTACT_COLUMNS = [
   "created_at",
   "step1_date",
   "respondeu_em",
+  "resposta_etapa",
+  "resposta_modelo",
   ...STEPS.map((s) => s.sentField),
   ...FUNNEL.flatMap((f) => [f.field, f.registeredField]),
 ].join(", ");
@@ -86,6 +93,16 @@ export type DashGoal = {
 };
 export type ChannelFilter = "todos" | Channel;
 
+/**
+ * Códigos dos modelos de mensagem por etapa: o padrão (`message_templates`) e os dos setores
+ * que têm mensagem própria naquela etapa (`sector_templates` com texto). Mesma escolha da fila
+ * de envios (`pickTemplate`) e do trigger que carimba `contacts.resposta_modelo`.
+ */
+export type TemplateCodes = {
+  defaults: Partial<Record<number, string>>;
+  sectors: Record<string, Partial<Record<number, string>>>;
+};
+
 export type DashInput = {
   contacts: readonly DashContact[];
   companies: readonly DashCompany[];
@@ -103,6 +120,7 @@ export type DashInput = {
   /** Só contatos e empresas de empresas deste setor. */
   sectorId?: string | null;
   goals?: readonly DashGoal[];
+  templateCodes?: TemplateCodes;
 };
 
 /* --------------------------------- Saída --------------------------------- */
@@ -206,6 +224,12 @@ export type Dashboard = {
   funnel: { label: string; count: number }[];
   atOrigin: { label: string; count: number }[];
   respOrigin: { label: string; count: number }[];
+  /** Respostas e ATs do intervalo cuja mensagem de origem o hunter informou. */
+  declaredOrigin: { responses: number; ats: number };
+  /** Canal de entrada das respostas e ATs do intervalo (LinkedIn, WhatsApp, outro canal). */
+  entryChannels: { channel: EntryChannel; label: string; responses: number; ats: number }[];
+  /** Mensagens enviadas no intervalo e quantas geraram resposta e AT (em qualquer data). */
+  messages: MessageRow[];
   /** Dias úteis médios entre o LinkedIn 1 e a resposta, para respostas no intervalo. */
   responseTime: { avg: number | null; n: number };
   /** Contatos marcados como "respondeu" antes de existir a data da resposta. */
@@ -226,7 +250,27 @@ export type Dashboard = {
   alerts: Alert[];
 };
 
+export type MessageRow = {
+  step: string;
+  /** Código do modelo (ou "Setor <nome>" / "Padrão" quando o modelo não tem código). */
+  code: string;
+  sent: number;
+  responses: number;
+  ats: number;
+};
+
 /* -------------------------------- Auxiliares ------------------------------ */
+
+/** Código do modelo em uso na etapa para um setor: o do setor, senão o padrão. */
+export function templateCode(
+  codes: TemplateCodes | undefined,
+  step: number,
+  sector: { id: string; name: string } | null,
+): string {
+  const own = sector ? codes?.sectors[sector.id]?.[step] : undefined;
+  if (own !== undefined) return own.trim() || `Setor ${sector!.name}`;
+  return codes?.defaults[step]?.trim() || "Padrão";
+}
 
 const day = (v: string | null | undefined) => (v ? v.slice(0, 10) : null);
 const spDay = (ts: string) =>
@@ -406,6 +450,11 @@ export function computeDashboard(input: DashInput): Dashboard {
   const atOrigin = [0, ...STEPS.map(() => 0)]; // 0 = antes do LinkedIn 1
   const respOrigin = [0, ...STEPS.map(() => 0)];
   const respTime = { sum: 0, n: 0 };
+  const declaredOrigin = { responses: 0, ats: 0 };
+  const channelAgg = new Map<EntryChannel, { responses: number; ats: number }>(
+    (["linkedin", "whatsapp", "outro"] as const).map((ch) => [ch, { responses: 0, ats: 0 }]),
+  );
+  const messageAgg = new Map<string, MessageRow>();
   let undatedResponses = 0;
   const pace = STEPS.slice(1).map(() => ({ real: 0, planned: 0, n: 0 }));
   const sectorAgg = new Map<string, Breakdown>();
@@ -535,20 +584,28 @@ export function computeDashboard(input: DashInput): Dashboard {
     }
     if (inR(l1, prev.from, prev.to)) kp.prev.l1++;
     if (inR(sent[STEPS.length - 1]!, from, to)) r.finished++;
+    // Mensagem que gerou a resposta/AT: a informada pelo hunter; sem ela, a última mensagem
+    // enviada até a data (0 = nenhuma mensagem da cadência: outro canal).
+    const resp = responseDate(c);
+    const declared = c.resposta_etapa;
+    const atFrom = at ? (declared ?? originOf(sent, at)) : null;
+    const respFrom = resp ? (declared ?? originOf(sent, resp)) : null;
     if (inR(at, from, to)) {
       r.ats++;
       kp.cur.ats++;
-      // Etapa que gerou a AT: última mensagem enviada até o registro da AT.
-      atOrigin[originOf(sent, at!)]!++;
+      atOrigin[atFrom!]!++;
+      channelAgg.get(entryChannel(atFrom!))!.ats++;
+      if (declared != null) declaredOrigin.ats++;
     }
     if (inR(at, prev.from, prev.to)) kp.prev.ats++;
 
     // Respostas: quando, depois de qual mensagem e quanto tempo depois do LinkedIn 1.
-    const resp = responseDate(c);
     if (inR(resp, from, to)) {
       r.responses++;
       kp.cur.respostas++;
-      respOrigin[originOf(sent, resp!)]!++;
+      respOrigin[respFrom!]!++;
+      channelAgg.get(entryChannel(respFrom!))!.responses++;
+      if (declared != null) declaredOrigin.responses++;
       if (l1 && resp! >= l1) {
         respTime.sum += businessDaysBetween(l1, resp!, holidays);
         respTime.n++;
@@ -567,6 +624,25 @@ export function computeDashboard(input: DashInput): Dashboard {
 
     // Conversão por setor da empresa e por área do contato.
     const co = c.company_id ? companyById.get(c.company_id) : undefined;
+
+    // Mensagens enviadas no intervalo e quantas geraram resposta/AT (em qualquer data).
+    for (const s of steps) {
+      if (!inR(sent[s.n - 1], from, to)) continue;
+      const code =
+        declared === s.n && c.resposta_modelo
+          ? c.resposta_modelo
+          : templateCode(
+              input.templateCodes,
+              s.n,
+              co ? { id: co.sector_id, name: sectorName.get(co.sector_id) ?? "" } : null,
+            );
+      const key = `${s.n}|${code}`;
+      const m = messageAgg.get(key) ?? { step: s.label, code, sent: 0, responses: 0, ats: 0 };
+      messageAgg.set(key, m);
+      m.sent++;
+      if (respFrom === s.n) m.responses++;
+      if (atFrom === s.n) m.ats++;
+    }
     const sectorKey = co
       ? (sectorName.get(co.sector_id) ?? "Setor removido")
       : "Sem empresa cadastrada";
@@ -793,13 +869,25 @@ export function computeDashboard(input: DashInput): Dashboard {
     },
     funnel: FUNNEL.map((f, i) => ({ label: f.label, count: funnel[i]! })),
     atOrigin: [
-      { label: "Antes do LinkedIn 1", count: atOrigin[0]! },
+      { label: ENTRY_CHANNEL_LABEL.outro, count: atOrigin[0]! },
       ...STEPS.map((s, i) => ({ label: s.label, count: atOrigin[i + 1]! })),
     ],
     respOrigin: [
-      { label: "Antes do LinkedIn 1", count: respOrigin[0]! },
+      { label: ENTRY_CHANNEL_LABEL.outro, count: respOrigin[0]! },
       ...STEPS.map((s, i) => ({ label: s.label, count: respOrigin[i + 1]! })),
     ],
+    declaredOrigin,
+    entryChannels: [...channelAgg].map(([channel, v]) => ({
+      channel,
+      label: ENTRY_CHANNEL_LABEL[channel],
+      ...v,
+    })),
+    messages: [...messageAgg.values()].sort(
+      (a, b) =>
+        b.ats / b.sent - a.ats / a.sent ||
+        b.responses / b.sent - a.responses / a.sent ||
+        b.sent - a.sent,
+    ),
     responseTime: {
       avg: respTime.n ? Math.round((respTime.sum / respTime.n) * 10) / 10 : null,
       n: respTime.n,

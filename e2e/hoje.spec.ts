@@ -43,15 +43,26 @@ test.describe("Envios de hoje", () => {
     expect(await mutations()).toEqual([]);
   });
 
-  test("avançar no funil marca a AT com data e registro", async ({ page }) => {
+  test("avançar no funil marca a AT com data, registro e a mensagem que gerou", async ({
+    page,
+  }) => {
     await page.goto("/hoje");
     await page.getByRole("tab", { name: /^WhatsApp 1/ }).click();
     await page.getByRole("button", { name: "Avançar no funil" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Marcar AT marcada" }).click();
+    // Só grava depois que o hunter diz qual mensagem o lead respondeu.
+    const origem = page.getByRole("dialog", { name: "Qual mensagem gerou a resposta?" });
+    await expect(origem.getByRole("radio")).toHaveCount(2); // LinkedIn 1 (o único enviado) e outro canal
+    const salvar = origem.getByRole("button", { name: "Salvar" });
+    await expect(salvar).toBeDisabled();
+    expect(await mutations()).toEqual([]);
+    await origem.getByLabel(/LinkedIn 1/).check();
+    await salvar.click();
     await expect(page.getByText("Funil atualizado")).toBeVisible();
     const body = JSON.parse((await mutations())[0]!.body);
     expect(body.at_marcada_em).toBe(TODAY);
     expect(body.at_registrado_em).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(body.resposta_etapa).toBe(1);
   });
 
   test("mostra que está carregando em vez de fila vazia", async ({ page }) => {
