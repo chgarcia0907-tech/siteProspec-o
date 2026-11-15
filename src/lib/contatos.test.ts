@@ -41,6 +41,20 @@ describe("contatos", () => {
     expect(filterContacts(list, "", "descartado").map((x) => x.id)).toEqual(["2"]);
   });
 
+  it("filtra contatos sem empresa ou sem área", () => {
+    const list = [
+      c({ id: "1", company: "", company_id: null, sector: "RH" }),
+      c({ id: "2", company: "Beta", company_id: null, sector: "" }),
+      c({ id: "3", company: "Delta", company_id: "d", sector: "" }),
+      c({ id: "4", company: "Gama", company_id: null, sector: "RH" }),
+    ];
+    const ids = (m: "todos" | "empresa" | "area") =>
+      filterContacts(list, "", "todos", m).map((x) => x.id);
+    expect(ids("empresa")).toEqual(["1"]);
+    expect(ids("area")).toEqual(["2", "3"]);
+    expect(ids("todos")).toEqual(["1", "2", "3", "4"]);
+  });
+
   it("acrescenta a situação só quando ela muda", () => {
     expect(withSyncedStatus(c({}), { sent1_at: "2026-11-12" })).toEqual({
       sent1_at: "2026-11-12",

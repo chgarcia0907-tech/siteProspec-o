@@ -89,6 +89,12 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   hoje, `pickTemplate` (`fila.ts`) usa a mensagem do setor da empresa e cai no modelo padrão
   (`message_templates`) quando a etapa não tem mensagem própria. Setor com empresas não é excluído, só
   desativado.
+- Preenchimento automático de empresa e área: regras puras em `src/lib/enriquecimento.ts`
+  (`companyFromHeadline`, `areaFromTitle`, `autoFillPatch`), sem IA e sem serviço externo. Valem na
+  importação (empresa cadastrada citada no headline vira `company_id`; senão o nome do headline vai
+  para `contacts.company`) e no botão "Preencher empresa e área" de Contatos. Só preenchem campos
+  vazios e, na dúvida, deixam em branco; CEO, sócio e financeiro ficam sem área de propósito. Ao
+  ajustar uma regra, acrescente o caso real em `enriquecimento.test.ts`.
 - Indicadores do painel (aba "Indicadores", a primeira do /painel): cálculo puro em
   `src/lib/dashboard.ts` (`computeDashboard`), carregado com service role em `painelDashboard`
   (`painel.functions.ts`, has_role antes). Reaproveita `plannedDates`/`isActive`/`computedStatus` e
