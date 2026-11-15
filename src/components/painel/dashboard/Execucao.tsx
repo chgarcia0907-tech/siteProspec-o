@@ -7,7 +7,16 @@ import { Section } from "./shared";
 import { dm, num, pctText, type Dash } from "./format";
 
 type SortKey =
-  "hunter" | "total" | "noPrazo" | "late" | "idle" | "started" | "inProgress" | "ats" | "conv";
+  | "hunter"
+  | "total"
+  | "noPrazo"
+  | "late"
+  | "idle"
+  | "started"
+  | "inProgress"
+  | "ats"
+  | "responses"
+  | "conv";
 const SORT: Record<SortKey, (r: HunterRow) => number | string> = {
   hunter: (r) => r.hunter,
   total: (r) => r.total,
@@ -17,6 +26,7 @@ const SORT: Record<SortKey, (r: HunterRow) => number | string> = {
   started: (r) => r.started,
   inProgress: (r) => r.inProgress,
   ats: (r) => r.ats,
+  responses: (r) => r.responses,
   conv: (r) => pct(r.ats, r.l1) ?? -1,
 };
 
@@ -42,7 +52,7 @@ export function Execucao({ d }: { d: Dash }) {
       </button>
     </th>
   );
-  const cols = d.steps.length + 10;
+  const cols = d.steps.length + 11;
 
   return (
     <Section
@@ -66,6 +76,7 @@ export function Execucao({ d }: { d: Dash }) {
               {th("started", "Iniciadas", "LinkedIn 1 no intervalo")}
               {th("inProgress", "Em cadência")}
               <th className="p-2 text-right">Aguardando</th>
+              {th("responses", "Respostas")}
               {th("ats", "ATs")}
               {th("conv", "Conversão", "ATs ÷ LinkedIn 1 no intervalo")}
               <th className="p-2 text-right" title="Descartados entre as cadências iniciadas">
@@ -152,6 +163,7 @@ export function Execucao({ d }: { d: Dash }) {
                     <td className="p-2 text-right tabular-nums">{num(r.started)}</td>
                     <td className="p-2 text-right tabular-nums">{num(r.inProgress)}</td>
                     <td className="p-2 text-right tabular-nums">{num(r.waiting)}</td>
+                    <td className="p-2 text-right tabular-nums">{num(r.responses)}</td>
                     <td className="p-2 text-right font-semibold tabular-nums">{num(r.ats)}</td>
                     <td className="p-2 text-right tabular-nums">{pctText(pct(r.ats, r.l1))}</td>
                     <td className="p-2 text-right tabular-nums">

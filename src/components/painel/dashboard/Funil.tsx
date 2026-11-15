@@ -26,19 +26,56 @@ export function Funil({ d }: { d: Dash }) {
 
 /** Em que etapa da cadência o contato estava quando a AT foi registrada. */
 export function OrigemAt({ d }: { d: Dash }) {
-  const total = d.atOrigin.reduce((n, o) => n + o.count, 0);
   return (
-    <Section
+    <Origem
       title="Etapa que gerou a AT"
       hint="Última mensagem enviada antes do registro da AT. Mostra se as etapas finais da cadência trazem reunião."
-    >
+      items={d.atOrigin}
+      empty="Nenhuma AT no intervalo."
+    />
+  );
+}
+
+/** Em que etapa o contato estava quando respondeu, e quanto tempo levou desde o LinkedIn 1. */
+export function OrigemResposta({ d }: { d: Dash }) {
+  const t = d.responseTime;
+  return (
+    <Origem
+      title="Etapa que gerou a resposta"
+      hint={`Última mensagem enviada antes da resposta (sem data de resposta, vale o registro da AT).${
+        t.avg === null ? "" : ` Resposta chega em média ${num(t.avg)} dias úteis após o LinkedIn 1.`
+      }${
+        d.undatedResponses
+          ? ` ${num(d.undatedResponses)} respostas marcadas antes de existir a data ficam fora.`
+          : ""
+      }`}
+      items={d.respOrigin}
+      empty="Nenhuma resposta no intervalo."
+    />
+  );
+}
+
+function Origem({
+  title,
+  hint,
+  items,
+  empty,
+}: {
+  title: string;
+  hint: string;
+  items: { label: string; count: number }[];
+  empty: string;
+}) {
+  const total = items.reduce((n, o) => n + o.count, 0);
+  return (
+    <Section title={title} hint={hint}>
       <BarList
-        items={d.atOrigin.map((o) => ({
+        items={items.map((o) => ({
           label: o.label,
           value: o.count,
           ...(total ? { note: `(${pctText(pct(o.count, total))})` } : {}),
         }))}
-        empty="Nenhuma AT no intervalo."
+        empty={empty}
       />
     </Section>
   );

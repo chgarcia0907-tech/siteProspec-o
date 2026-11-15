@@ -4,9 +4,14 @@ import {
   businessDaysBetween,
   computeDashboard,
   deltaPct,
+  onTimeProgress,
+  parseGoalNumber,
   pct,
   presetRange,
   previousRange,
+  resolveGoal,
+  responseDate,
+  volumeProgress,
   type DashContact,
   type DashInput,
 } from "./dashboard";
@@ -27,6 +32,7 @@ const blank: DashContact = {
   status: "aguardando",
   created_at: "2026-11-01T12:00:00Z",
   step1_date: null,
+  respondeu_em: null,
   sent1_at: null,
   sent2_at: null,
   sent3_at: null,
@@ -169,6 +175,21 @@ describe("indicadores", () => {
     expect(d.hunters.find((h) => h.hunter_id === H2)!.total).toBe(0);
   });
 
+  it("etapa depois de uma etapa atrasada não conta como devida", () => {
+    // LinkedIn 1 em 05/11 e WhatsApp 1 (previsto 06/11) parado: LinkedIn 2, WhatsApp 2 e
+    // LinkedIn 3 caem (pela previsão) dentro do intervalo, mas não podem sair antes do WhatsApp 1.
+    const late = ct({
+      id: "z",
+      status: "em_cadencia",
+      step1_date: "2026-11-05",
+      sent1_at: "2026-11-05",
+    });
+    const r = computeDashboard({ ...input, contacts: [late] }).hunters.find(
+      (h) => h.hunter_id === H1,
+    )!;
+    expect({ due: r.due, onTime: r.onTime, late: r.late }).toEqual({ due: 0, onTime: 0, late: 1 });
+  });
+
   it("mede o ritmo real entre etapas contra o configurado", () => {
     expect(d.pace[0]).toEqual({ from: "LinkedIn 1", to: "WhatsApp 1", real: 1, planned: 1, n: 1 });
     expect(d.pace[1]!.n).toBe(0);
@@ -206,6 +227,7 @@ describe("indicadores", () => {
       envios: 2,
       l1: 1,
       ats: 1,
+      respostas: 1,
       importados: 1,
     });
     expect(d.cohorts.at(-2)).toMatchObject({
@@ -269,4 +291,185 @@ describe("atalhos de intervalo", () => {
   it("mês com 31 dias e virada de ano", () => {
     expect(presetRange("mes", "2026-12-31")).toEqual({ from: "2026-12-01", to: "2026-12-31" });
   });
+});
+
+describe("respostas", () => {
+  const resp = [
+    // Respondeu na quarta depois do LinkedIn 1 de segunda (2 dias úteis).
+    ct({
+      id: "r1",
+      status: "respondeu",
+      step1_date: "2026-11-09",
+      sent1_at: "2026-11-09",
+      respondeu_em: "2026-11-11T15:00:00Z",
+    }),
+    // AT sem "respondeu": a resposta conta no registro da AT.
+    ct({
+      id: "r2",
+      step1_date: "2026-11-09",
+      sent1_at: "2026-11-09",
+      sent2_at: "2026-11-10",
+      at_marcada_em: "2026-11-20",
+      at_registrado_em: "2026-11-12T13:00:00Z",
+    }),
+    // Marcado como respondeu antes de existir a data: fica fora das contagens por período.
+    ct({ id: "r3", status: "respondeu", step1_date: "2026-10-01", sent1_at: "2026-10-01" }),
+  ];
+  const d = computeDashboard({ ...input, contacts: resp });
+
+  it("data da resposta: a marcada, senão o registro da AT", () => {
+    expect(responseDate(resp[0]!)).toBe("2026-11-11");
+    expect(responseDate(resp[1]!)).toBe("2026-11-12");
+    expect(responseDate(resp[2]!)).toBeNull();
+  });
+
+  it("conta respostas, tempo até a resposta e a etapa que gerou", () => {
+    expect(d.kpis.respostas).toEqual({ value: 2, prev: 0 });
+    expect(d.hunters[0]!.responses).toBe(2);
+    expect(d.responseTime).toEqual({ avg: 2.5, n: 2 });
+    expect(d.respOrigin.filter((o) => o.count)).toEqual([
+      { label: "LinkedIn 1", count: 1 },
+      { label: "WhatsApp 1", count: 1 },
+    ]);
+    expect(d.undatedResponses).toBe(1);
+    expect(d.cohorts.at(-1)).toMatchObject({ inicio: "2026-11-09", l1: 2, resp14: 2, at14: 1 });
+  });
+});
+
+describe("metas", () => {
+  it("vale a meta do hunter, senão a do grupo, senão a da equipe, campo a campo", () => {
+    const goals = [
+      {
+        user_id: null,
+        group_id: null,
+        envios_dia: 10,
+        l1_semana: 5,
+        ats_semana: 1,
+        no_prazo_pct: 80,
+      },
+      {
+        user_id: null,
+        group_id: "g1",
+        envios_dia: null,
+        l1_semana: 8,
+        ats_semana: null,
+        no_prazo_pct: null,
+      },
+      {
+        user_id: H1,
+        group_id: null,
+        envios_dia: 20,
+        l1_semana: null,
+        ats_semana: null,
+        no_prazo_pct: null,
+      },
+    ];
+    expect(resolveGoal(goals, H1, "g1")).toEqual({
+      envios_dia: 20,
+      l1_semana: 8,
+      ats_semana: 1,
+      no_prazo_pct: 80,
+    });
+    expect(resolveGoal(goals, H2, null)).toEqual({
+      envios_dia: 10,
+      l1_semana: 5,
+      ats_semana: 1,
+      no_prazo_pct: 80,
+    });
+    expect(resolveGoal([], H1, null).envios_dia).toBeNull();
+  });
+
+  it("semáforo: meta batida, perto (70%+) ou abaixo", () => {
+    expect(volumeProgress(10, 10).status).toBe("ok");
+    expect(volumeProgress(7, 10)).toEqual({ real: 7, target: 10, pct: 70, status: "atencao" });
+    expect(volumeProgress(6, 10).status).toBe("abaixo");
+    expect(onTimeProgress(8, 10, 80).status).toBe("ok");
+    expect(onTimeProgress(7, 10, 80).status).toBe("atencao");
+    expect(onTimeProgress(6, 10, 80).status).toBe("abaixo");
+  });
+
+  // Seg a qui (4 dias úteis) da semana de 09/11: meta diária × 4 e semanal × 4/5.
+  const d = computeDashboard({
+    ...input,
+    hunters: [
+      { ...input.hunters[0]!, groupId: "g1" },
+      { ...input.hunters[1]!, groupId: null },
+    ],
+    goals: [
+      {
+        user_id: null,
+        group_id: null,
+        envios_dia: 1,
+        l1_semana: null,
+        ats_semana: 5,
+        no_prazo_pct: 80,
+      },
+      {
+        user_id: null,
+        group_id: "g1",
+        envios_dia: null,
+        l1_semana: 5,
+        ats_semana: null,
+        no_prazo_pct: null,
+      },
+      {
+        user_id: H1,
+        group_id: null,
+        envios_dia: 2,
+        l1_semana: null,
+        ats_semana: null,
+        no_prazo_pct: null,
+      },
+    ],
+  });
+  const h1 = d.hunters.find((h) => h.hunter_id === H1)!;
+  const h2 = d.hunters.find((h) => h.hunter_id === H2)!;
+
+  it("converte as metas para o intervalo e compara por hunter", () => {
+    expect(d.goals.elapsedDays).toBe(4);
+    expect(d.goals.partial).toBe(true);
+    expect(h1.goals.envios).toEqual({ real: 2, target: 8, pct: 25, status: "abaixo" });
+    expect(h1.goals.l1).toEqual({ real: 1, target: 4, pct: 25, status: "abaixo" });
+    expect(h1.goals.ats).toEqual({ real: 1, target: 4, pct: 25, status: "abaixo" });
+    expect(h1.goals.noPrazo).toEqual({ real: 66.7, target: 80, pct: 83, status: "abaixo" });
+    expect(h2.goals.l1).toBeNull();
+    expect(h2.goals.noPrazo).toBeNull(); // nada previsto no intervalo
+  });
+
+  it("soma a equipe e conta quem bate cada meta", () => {
+    expect(d.goals.team.envios).toEqual({ real: 2, target: 12, pct: 17, status: "abaixo" });
+    expect(d.goals.onTarget.envios).toEqual({ ok: 0, total: 2 });
+    expect(d.goals.onTarget.l1).toEqual({ ok: 0, total: 1 });
+    expect(d.alerts.map((a) => a.text)).toContain("abaixo da meta de ATs: 1 de 4 (25%)");
+  });
+
+  it("meta de envios não vale com filtro de canal", () => {
+    const w = computeDashboard({
+      ...input,
+      channel: "whatsapp",
+      goals: [
+        {
+          user_id: null,
+          group_id: null,
+          envios_dia: 1,
+          l1_semana: null,
+          ats_semana: null,
+          no_prazo_pct: null,
+        },
+      ],
+    });
+    expect(w.hunters[0]!.goals.envios).toBeNull();
+  });
+});
+
+describe("campo de meta", () => {
+  it.each([
+    ["", null],
+    ["  ", null],
+    ["20", 20],
+    ["1,5", 1.5],
+    ["0.5", 0.5],
+    ["-2", undefined],
+    ["dez", undefined],
+  ] as const)("%j", (text, value) => expect(parseGoalNumber(text)).toBe(value));
 });
