@@ -5,7 +5,13 @@ import { BulkActions } from "@/components/contatos/BulkActions";
 import { ContactsTable } from "@/components/contatos/ContactsTable";
 import { ContactsToolbar } from "@/components/contatos/ContactsToolbar";
 import { TablePagination } from "@/components/TablePagination";
-import { useContacts, useHolidays, useSettings, useUpdateContact } from "@/hooks/useCadencia";
+import {
+  useCompanies,
+  useContacts,
+  useHolidays,
+  useSettings,
+  useUpdateContact,
+} from "@/hooks/useCadencia";
 import { useSelection } from "@/hooks/useSelection";
 import { DEFAULT_OFFSETS, todayISO, type Contact } from "@/lib/cadencia";
 import {
@@ -42,6 +48,7 @@ function Contatos() {
   const { data: contacts, isLoading } = useContacts();
   const { data: settings } = useSettings();
   const holidays = useHolidays();
+  const { data: companies } = useCompanies();
   const offsets = settings ?? DEFAULT_OFFSETS;
   const update = useUpdateContact();
   const selection = useSelection();
@@ -84,6 +91,7 @@ function Contatos() {
         isLoading={isLoading}
         offsets={offsets}
         holidays={holidays}
+        companies={companies ?? []}
         selection={selection}
         onPatch={(c, changes) => save(c, withSyncedStatus(c, changes))}
         onStatus={(c, status) => save(c, { status })}
