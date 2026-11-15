@@ -43,7 +43,7 @@ export function Execucao({ d }: { d: Dash }) {
   const th = (key: SortKey, label: string, title?: string) => (
     <th className="p-2 text-right first:text-left">
       <button
-        className="inline-flex items-center gap-0.5 hover:text-foreground"
+        className="inline-flex items-center gap-0.5 hover:text-heading"
         title={title}
         onClick={() => setSort((s) => ({ key, desc: s.key === key ? !s.desc : key !== "hunter" }))}
       >
@@ -59,9 +59,9 @@ export function Execucao({ d }: { d: Dash }) {
       title="Execução da cadência por hunter"
       hint="Envios no intervalo por etapa. “No prazo” = etapas previstas no intervalo que saíram até a data prevista. Clique no hunter para ver os atrasados."
     >
-      <div className="overflow-x-auto rounded-md border">
-        <table className="table-dense w-full text-sm">
-          <thead className="bg-muted/50 text-xs text-muted-foreground">
+      <div className="overflow-x-auto rounded-xl border">
+        <table className="table-dense w-full text-dense">
+          <thead className="bg-surface-inset text-caption text-muted-foreground">
             <tr>
               {th("hunter", "Hunter")}
               {d.steps.map((s) => (
@@ -171,7 +171,7 @@ export function Execucao({ d }: { d: Dash }) {
                     </td>
                   </tr>
                   {expanded && (
-                    <tr className="bg-muted/30">
+                    <tr className="bg-surface-inset">
                       <td colSpan={cols} className="p-3">
                         <LateList r={r} />
                       </td>
@@ -183,7 +183,7 @@ export function Execucao({ d }: { d: Dash }) {
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">
+      <p className="mt-2 text-caption text-muted-foreground">
         Atrasados por faixa de dias úteis: 1–2 / 3–5 / mais de 5. “Último envio” conta dias úteis
         até hoje.
       </p>
@@ -192,14 +192,14 @@ export function Execucao({ d }: { d: Dash }) {
 }
 
 function LateList({ r }: { r: HunterRow }) {
-  if (!r.late) return <p className="text-sm text-muted-foreground">Nenhum envio atrasado.</p>;
+  if (!r.late) return <p className="text-dense text-muted-foreground">Nenhum envio atrasado.</p>;
   return (
     <div className="space-y-1">
-      <p className="text-xs font-medium">
+      <p className="text-caption font-medium">
         {r.late} contatos atrasados
         {r.late > r.lateList.length ? ` (mostrando os ${r.lateList.length} mais antigos)` : ""}
       </p>
-      <table className="w-full text-xs">
+      <table className="w-full text-caption">
         <thead className="text-left text-muted-foreground">
           <tr>
             <th className="py-1 pr-2">Contato</th>
@@ -247,10 +247,10 @@ export function Heatmap({ d }: { d: Dash }) {
       hint="Quanto mais escuro, mais mensagens. Linha clara = hunter parado."
     >
       {max === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhum envio no intervalo.</p>
+        <p className="text-dense text-muted-foreground">Nenhum envio no intervalo.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="text-xs" aria-label="Envios por hunter e data">
+          <table className="text-caption" aria-label="Envios por hunter e data">
             <thead>
               <tr>
                 <th className="pr-2 text-left font-normal text-muted-foreground">Hunter</th>
@@ -277,15 +277,15 @@ export function Heatmap({ d }: { d: Dash }) {
                         className={cn(
                           "flex h-7 w-9 items-center justify-center rounded-sm tabular-nums",
                           !v
-                            ? "bg-muted text-muted-foreground"
+                            ? "bg-divider text-muted-foreground"
                             : v / max > 0.5
                               ? "text-white"
-                              : "text-foreground",
+                              : "text-heading",
                         )}
                         style={
                           v
                             ? {
-                                backgroundColor: `color-mix(in oklch, var(--chart-1) ${30 + (70 * v) / max}%, var(--muted))`,
+                                backgroundColor: `color-mix(in oklch, var(--chart-1) ${30 + (70 * v) / max}%, var(--surface-inset))`,
                               }
                             : undefined
                         }
@@ -312,8 +312,8 @@ export function Ritmo({ d }: { d: Dash }) {
       title="Ritmo entre etapas"
       hint="Média de dias úteis entre uma etapa e a seguinte, para envios feitos no intervalo."
     >
-      <table className="w-full text-sm">
-        <thead className="text-left text-xs text-muted-foreground">
+      <table className="w-full text-dense">
+        <thead className="text-left text-caption text-muted-foreground">
           <tr>
             <th className="py-1">Passagem</th>
             <th className="py-1 text-right">Real</th>

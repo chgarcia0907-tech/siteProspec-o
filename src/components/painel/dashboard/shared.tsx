@@ -9,19 +9,25 @@ export function Section({
   hint,
   children,
   className,
+  action,
 }: {
   title: string;
   hint?: string | undefined;
   children: ReactNode;
   className?: string;
+  /** Ação no canto do cabeçalho (ex.: "Configurar metas"). */
+  action?: ReactNode;
 }) {
   return (
     <Card className={className} role="region" aria-label={title}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm">{title}</CardTitle>
-        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 p-5 pb-3">
+        <div className="space-y-1">
+          <CardTitle>{title}</CardTitle>
+          {hint && <p className="text-dense text-muted-foreground">{hint}</p>}
+        </div>
+        {action}
       </CardHeader>
-      <CardContent>{children}</CardContent>
+      <CardContent className="p-5 pt-0">{children}</CardContent>
     </Card>
   );
 }
@@ -35,23 +41,23 @@ export function BarList({
   empty?: string;
 }) {
   const max = Math.max(0, ...items.map((i) => i.value));
-  if (!max) return <p className="text-sm text-muted-foreground">{empty}</p>;
+  if (!max) return <p className="text-dense text-muted-foreground">{empty}</p>;
   return (
-    <ul className="space-y-1.5">
+    <ul className="space-y-2">
       {items.map((i) => (
-        <li key={i.label} className="grid grid-cols-[9rem_1fr_auto] items-center gap-2 text-sm">
+        <li key={i.label} className="grid grid-cols-[9rem_1fr_auto] items-center gap-3 text-dense">
           <span className="truncate text-muted-foreground" title={i.label}>
             {i.label}
           </span>
-          <span className="h-3 rounded-sm bg-muted" aria-hidden>
+          <span className="h-2 rounded-full bg-divider" aria-hidden>
             <span
-              className="block h-3 rounded-sm bg-chart-1"
+              className="block h-2 rounded-full bg-primary"
               style={{ width: `${(i.value / max) * 100}%` }}
             />
           </span>
-          <span className="min-w-[4.5rem] text-right tabular-nums">
+          <span className="min-w-[4.5rem] text-right text-heading tabular-nums">
             {num(i.value)}
-            {i.note && <span className="ml-1 text-xs text-muted-foreground">{i.note}</span>}
+            {i.note && <span className="ml-1 text-caption text-muted-foreground">{i.note}</span>}
           </span>
         </li>
       ))}

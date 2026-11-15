@@ -105,10 +105,10 @@ export function ConversaoPor({
   return (
     <Section title={title} hint={hint}>
       {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Sem LinkedIn 1 nem ATs no intervalo.</p>
+        <p className="text-dense text-muted-foreground">Sem LinkedIn 1 nem ATs no intervalo.</p>
       ) : (
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs text-muted-foreground">
+        <table className="w-full text-dense">
+          <thead className="text-left text-caption text-muted-foreground">
             <tr>
               <th className="py-1">{label}</th>
               <th className="py-1 text-right">LinkedIn 1</th>
@@ -172,10 +172,10 @@ export function Abastecimento({ d }: { d: Dash }) {
     >
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {items.map((i) => (
-          <div key={i.label} className="rounded-md border p-2" title={i.hint}>
-            <dt className="text-xs text-muted-foreground">{i.label}</dt>
+          <div key={i.label} className="rounded-lg border bg-surface-inset p-3" title={i.hint}>
+            <dt className="text-caption text-muted-foreground">{i.label}</dt>
             <dd
-              className={`text-lg font-semibold tabular-nums ${i.bad ? "text-destructive-text" : ""}`}
+              className={`font-display text-section font-bold tabular-nums ${i.bad ? "text-destructive-text" : "text-heading"}`}
             >
               {i.value}
             </dd>
@@ -196,10 +196,10 @@ export function CanalEntrada({ d }: { d: Dash }) {
       hint="Canal da mensagem que gerou a resposta ou a AT. Outro canal: ligação, e-mail, indicação ou resposta antes do LinkedIn 1."
     >
       {resp + ats === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhuma resposta nem AT no intervalo.</p>
+        <p className="text-dense text-muted-foreground">Nenhuma resposta nem AT no intervalo.</p>
       ) : (
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs text-muted-foreground">
+        <table className="w-full text-dense">
+          <thead className="text-left text-caption text-muted-foreground">
             <tr>
               <th className="py-1">Canal</th>
               <th className="py-1 text-right">Respostas</th>
@@ -212,13 +212,13 @@ export function CanalEntrada({ d }: { d: Dash }) {
                 <td className="py-1">{c.label}</td>
                 <td className="py-1 text-right tabular-nums">
                   {num(c.responses)}{" "}
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-caption text-muted-foreground">
                     ({pctText(pct(c.responses, resp))})
                   </span>
                 </td>
                 <td className="py-1 text-right font-medium tabular-nums">
                   {num(c.ats)}{" "}
-                  <span className="text-xs font-normal text-muted-foreground">
+                  <span className="text-caption font-normal text-muted-foreground">
                     ({pctText(pct(c.ats, ats))})
                   </span>
                 </td>
@@ -239,11 +239,11 @@ export function Mensagens({ d }: { d: Dash }) {
       hint="Mensagens enviadas no intervalo e quantas o lead respondeu ou viraram AT (mesmo depois do intervalo). Ordenado pela taxa de AT: o melhor CTA fica no topo. Modelos editados depois do envio contam com o código atual."
     >
       {d.messages.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhuma mensagem enviada no intervalo.</p>
+        <p className="text-dense text-muted-foreground">Nenhuma mensagem enviada no intervalo.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-left text-xs text-muted-foreground">
+          <table className="w-full text-dense">
+            <thead className="text-left text-caption text-muted-foreground">
               <tr>
                 <th className="py-1">Etapa</th>
                 <th className="py-1">Modelo</th>

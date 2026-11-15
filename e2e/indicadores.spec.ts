@@ -28,6 +28,8 @@ test.describe("Painel · Indicadores", () => {
     const late = page.getByRole("row", { name: /^Karen Luz/ });
     await expect(late).toContainText("WhatsApp 1");
     await expect(late).toContainText("5 d úteis");
+    // A origem fica na aba "Origem" do Detalhamento.
+    await page.getByRole("tab", { name: "Origem" }).click();
     const origem = page.getByRole("region", { name: "Etapa que gerou a AT" });
     await expect(origem.locator("li", { hasText: "WhatsApp 1" })).toContainText("(100%)");
     // A AT do João veio do WhatsApp 1: canal de entrada WhatsApp.
@@ -110,5 +112,35 @@ test.describe("Painel · Indicadores", () => {
       user_id: U2,
       group_id: null,
     });
+  });
+
+  test("responde primeiro se a equipe está no ritmo e deixa o detalhe em abas", async ({
+    page,
+  }) => {
+    await page.goto("/painel");
+    await expect(
+      page.getByRole("heading", { name: "A equipe está no ritmo desta semana?" }),
+    ).toBeVisible();
+    await expect(page.getByRole("region", { name: /^Quem precisa de ajuda/ })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Metas da semana" })).toBeVisible();
+    // Cada aba do Detalhamento mostra o seu bloco.
+    const abas: [string, string | RegExp][] = [
+      ["Execução por hunter", "Execução da cadência por hunter"],
+      ["Envios por dia", /^Envios por (dia|semana)/],
+      ["Ritmo", "Ritmo entre etapas"],
+      ["Funil", "Funil no intervalo"],
+      ["Origem", "Canal de entrada"],
+      ["Conversão", "Conversão por setor da empresa"],
+      ["Tendência", "Tendência das últimas 12 semanas"],
+      ["Abastecimento", "Abastecimento e qualidade dos dados"],
+    ];
+    for (const [aba, bloco] of abas) {
+      await page.getByRole("tab", { name: aba, exact: true }).click();
+      await expect(page.getByRole("region", { name: bloco })).toBeVisible();
+    }
+    // Fora da semana atual, a pergunta e as metas deixam de falar em "semana".
+    await page.getByRole("button", { name: "Últimos 30 dias" }).click();
+    await expect(page.getByRole("heading", { name: "A equipe está no ritmo?" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Metas do intervalo" })).toBeVisible();
   });
 });
