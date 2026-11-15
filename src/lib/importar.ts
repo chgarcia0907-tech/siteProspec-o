@@ -1,0 +1,73 @@
+// Regras da tela de importação: linhas da pré-visualização e o que vai para o banco.
+import {
+  jobTitleFromHeadline,
+  normalizeKey,
+  type CompanyGender,
+  type ParsedContact,
+} from "./cadencia";
+import type { Company } from "./empresas";
+import { areaFromTitle, suggestCompany, type Area } from "./enriquecimento";
+
+export type ImportRow = ParsedContact & {
+  key: string;
+  /** Já cadastrado (ou repetido no próprio texto colado). */
+  duplicate: boolean;
+  /** Fora do filtro de data (antes da data escolhida ou sem data). */
+  filteredOut: boolean;
+  noDate: boolean;
+  /** Empresa cadastrada citada no headline. */
+  suggested: string | null;
+  /** Empresa em texto, tirada do headline, quando não há empresa cadastrada citada. */
+  companyText: { company: string; company_gender: CompanyGender } | null;
+  job_title: string;
+  area: Area | null;
+};
+
+/**
+ * Linhas da pré-visualização: marca repetidos (já cadastrados ou duplicados no texto) e os fora
+ * do filtro de data, e sugere empresa e área pelo headline.
+ */
+export function buildImportRows(
+  parsed: readonly ParsedContact[],
+  existingKeys: ReadonlySet<string>,
+  fromDate: string,
+  companies: readonly Pick<Company, "id" | "name">[],
+): ImportRow[] {
+  const seen = new Set<string>();
+  return parsed.map((p) => {
+    const key = normalizeKey(p.name, p.headline);
+    const duplicate = existingKeys.has(key) || seen.has(key);
+    seen.add(key);
+    const noDate = fromDate !== "" && !p.connected_at;
+    const filteredOut =
+      noDate || (fromDate !== "" && !!p.connected_at && p.connected_at < fromDate);
+    const guess = suggestCompany(p.headline, companies);
+    const suggested = guess && "company_id" in guess ? guess.company_id : null;
+    const companyText = guess && "company" in guess ? guess : null;
+    const job_title = jobTitleFromHeadline(p.headline);
+    const area = areaFromTitle(job_title, p.headline);
+    return { ...p, key, duplicate, filteredOut, noDate, suggested, companyText, job_title, area };
+  });
+}
+
+/** Linhas que entram na importação: novas e dentro do filtro de data. */
+export const importable = (rows: readonly ImportRow[]) =>
+  rows.filter((r) => !r.duplicate && !r.filteredOut);
+
+/**
+ * Contato a gravar. `companyId` é a empresa escolhida (cadastrada); sem ela, vai a empresa em
+ * texto do headline, se houver.
+ */
+export function importPayload(r: ImportRow, companyId: string | null) {
+  return {
+    name: r.name,
+    headline: r.headline,
+    job_title: r.job_title,
+    connected_at: r.connected_at,
+    company_id: companyId,
+    ...(!companyId && r.companyText
+      ? { company: r.companyText.company, company_gender: r.companyText.company_gender }
+      : {}),
+    ...(r.area ? { sector: r.area } : {}),
+  };
+}

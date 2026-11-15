@@ -22,4 +22,23 @@ test.describe("Configurações", () => {
     await expect(page.getByRole("button", { name: "Excluir contatos" })).toBeVisible();
     await expect(page.getByText("Período da competição")).toHaveCount(0);
   });
+
+  test("salva o nome na plataforma e os intervalos da cadência", async ({ page }) => {
+    await page.goto("/configuracoes");
+    const nome = page.getByLabel("Nome na plataforma");
+    await expect(nome).not.toHaveValue("");
+    await nome.fill("Hunter Um Silva");
+    await page.getByRole("button", { name: "Salvar" }).first().click();
+    await expect(page.getByText("Nome salvo")).toBeVisible();
+
+    await page.locator("#o2").fill("2");
+    await page.getByRole("button", { name: "Salvar" }).nth(2).click();
+    await expect(page.getByText("Intervalos salvos")).toBeVisible();
+
+    const writes = await mutations();
+    const perfil = writes.find((m) => m.table === "profiles");
+    expect(JSON.parse(perfil!.body)).toMatchObject({ display_name: "Hunter Um Silva" });
+    const intervalos = writes.find((m) => m.table === "settings");
+    expect(JSON.parse(intervalos!.body)).toMatchObject({ offset2: 2 });
+  });
 });

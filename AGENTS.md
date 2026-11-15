@@ -54,11 +54,12 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 ## Organização do código
 
 - Rotas em `src/routes/` são finas: estado da tela e composição. Componentes de uma tela ficam
-  em `src/components/<tela>/` (`contatos`, `empresas`, `hoje`, `ranking`, `painel`); componentes usados em
+  em `src/components/<tela>/` (`configuracoes`, `contatos`, `empresas`, `hoje`, `importar`, `ranking`,
+  `painel`); componentes usados em
   mais de uma tela ficam na raiz de `src/components/` (ex.: `SectorSelect`, `InlineInput`,
   `Funnel`); `src/components/ui/` é o shadcn/ui.
 - Regras puras de cada tela ficam em `src/lib/<tela>.ts` (`contatos.ts`, `empresas.ts`, `fila.ts`,
-  `ranking.ts`), com testes ao lado (`*.test.ts`). Lógica que dá para testar não fica em
+  `importar.ts`, `ranking.ts`), com testes ao lado (`*.test.ts`). Lógica que dá para testar não fica em
   componente.
 - Hooks compartilhados: `useCadencia` (dados do hunter), `usePainel` (dados do admin),
   `useSelection` (seleção por checkbox). Ações destrutivas passam por `useConfirm`
