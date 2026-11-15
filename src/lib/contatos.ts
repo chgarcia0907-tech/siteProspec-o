@@ -30,7 +30,10 @@ export const MISSING_LABEL: Record<MissingFilter, string> = {
 export const hasNoCompany = (c: Pick<Contact, "company_id" | "company">) =>
   !c.company_id && !c.company.trim();
 
-/** Filtra por situação, por pendência e por nome/empresa, sem diferenciar acentos e maiúsculas. */
+/**
+ * Filtra por situação, por pendência e por nome/empresa, sem diferenciar acentos e maiúsculas.
+ * A situação é a calculada (`computedStatus`), a mesma que o selo da tabela mostra.
+ */
 export function filterContacts(
   contacts: Contact[],
   search: string,
@@ -39,7 +42,7 @@ export function filterContacts(
 ): Contact[] {
   const term = fold(search).trim();
   return contacts.filter((c) => {
-    if (status !== "todos" && c.status !== status) return false;
+    if (status !== "todos" && computedStatus(c) !== status) return false;
     if (missing === "empresa" && !hasNoCompany(c)) return false;
     if (missing === "area" && c.sector.trim()) return false;
     return !term || fold(`${c.name} ${c.company}`).includes(term);
