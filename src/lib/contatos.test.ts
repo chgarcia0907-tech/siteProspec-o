@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_OFFSETS, type Contact } from "./cadencia";
-import { CONTACT_STATUSES, contactsCsvRows, filterContacts, withSyncedStatus } from "./contatos";
+import {
+  CONTACT_STATUSES,
+  cadenceMarks,
+  contactsCsvRows,
+  filterContacts,
+  nextSend,
+  withSyncedStatus,
+} from "./contatos";
 
 const c = (over: Partial<Contact>) =>
   ({
@@ -90,5 +97,53 @@ describe("contatos", () => {
     expect(header!.slice(5, 7)).toEqual(["LinkedIn 1 prevista", "LinkedIn 1 enviada"]);
     expect(row!.slice(5, 9)).toEqual(["09/11/2026", "09/11/2026", "10/11/2026", "—"]);
     expect(row!.at(-1)).toBe("Em cadência");
+  });
+});
+
+describe("próximo envio e marcadores da cadência", () => {
+  const hoje = "2026-11-12"; // quinta
+  const sem = new Set<string>();
+
+  it("aponta a primeira etapa não enviada, com a data prevista", () => {
+    const x = c({ status: "em_cadencia", step1_date: "2026-11-10", sent1_at: "2026-11-10" });
+    const n = nextSend(x, DEFAULT_OFFSETS, sem, hoje)!;
+    expect(n.step.n).toBe(2);
+    expect(n.date).toBe("2026-11-11");
+    expect(n.late).toBe(true);
+    expect(cadenceMarks(x, n)).toEqual(["enviada", "atrasada", "futura", "futura", "futura"]);
+  });
+
+  it("no prazo é a próxima; LinkedIn 1 sem data fica sem data e não atrasa", () => {
+    const noPrazo = c({ status: "em_cadencia", step1_date: hoje, sent1_at: hoje });
+    expect(cadenceMarks(noPrazo, nextSend(noPrazo, DEFAULT_OFFSETS, sem, hoje))).toEqual([
+      "enviada",
+      "proxima",
+      "futura",
+      "futura",
+      "futura",
+    ]);
+    const semData = nextSend(c({}), DEFAULT_OFFSETS, sem, hoje)!;
+    expect(semData).toMatchObject({ date: null, late: false });
+    expect(semData.step.n).toBe(1);
+  });
+
+  it("não há próximo envio para quem respondeu, descartou, marcou AT ou concluiu", () => {
+    const enviados = {
+      step1_date: "2026-11-02",
+      sent1_at: "2026-11-02",
+      sent2_at: "2026-11-03",
+      sent3_at: "2026-11-04",
+      sent4_at: "2026-11-05",
+      sent5_at: "2026-11-06",
+    };
+    for (const x of [
+      c({ status: "respondeu", step1_date: hoje }),
+      c({ status: "descartado", step1_date: hoje }),
+      c({ status: "em_cadencia", step1_date: hoje, at_marcada_em: hoje }),
+      c({ status: "concluido", ...enviados }),
+    ])
+      expect(nextSend(x, DEFAULT_OFFSETS, sem, hoje)).toBeNull();
+    const concluido = c({ status: "concluido", ...enviados });
+    expect(cadenceMarks(concluido, null)).toEqual(Array(5).fill("enviada"));
   });
 });
