@@ -155,7 +155,10 @@ export function plannedDates(
   return out;
 }
 
-export function computedStatus(c: Contact): ContactStatus {
+/** Campos que definem a situação calculada do contato. */
+export type StatusInput = Pick<Contact, "status" | "step1_date" | StepDef["sentField"]>;
+
+export function computedStatus(c: StatusInput): ContactStatus {
   if (c.status === "respondeu" || c.status === "descartado") return c.status;
   const allSent = STEPS.every((s) => c[s.sentField]);
   if (allSent) return "concluido";
@@ -163,7 +166,7 @@ export function computedStatus(c: Contact): ContactStatus {
   return "aguardando";
 }
 
-export function isActive(c: Contact): boolean {
+export function isActive(c: Pick<Contact, "at_marcada_em" | "status">): boolean {
   if (c.at_marcada_em) return false; // AT marcada tira o contato das filas
   return c.status !== "respondeu" && c.status !== "descartado";
 }

@@ -89,3 +89,10 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   hoje, `pickTemplate` (`fila.ts`) usa a mensagem do setor da empresa e cai no modelo padrão
   (`message_templates`) quando a etapa não tem mensagem própria. Setor com empresas não é excluído, só
   desativado.
+- Indicadores do painel (aba "Indicadores", a primeira do /painel): cálculo puro em
+  `src/lib/dashboard.ts` (`computeDashboard`), carregado com service role em `painelDashboard`
+  (`painel.functions.ts`, has_role antes). Reaproveita `plannedDates`/`isActive`/`computedStatus` e
+  `atScoreDate`/`stageScoreDate`, então envios, atrasados e funil batem com Envios de hoje e com o
+  placar. O "hoje" vem do navegador (fuso SP) para servidor e tela concordarem. Componentes em
+  `src/components/painel/dashboard/`. Limites conhecidos: `sentN_at` é o dia em que a etapa foi
+  marcada (sem histórico) e "respondeu" não tem data; metas ainda não existem.

@@ -4,6 +4,8 @@ import { FUNNEL, STEPS } from "./cadencia";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Tables } from "@/integrations/supabase/types";
+import type { DashContact } from "./dashboard";
+import type { PageResult } from "./fetch-all";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
@@ -202,4 +204,160 @@ export const painelSetPeriod = createServerFn({ method: "POST" })
     });
     if (error) throw new Error("Falha ao salvar");
     return { ok: true as const };
+  });
+
+/**
+ * Indicadores do painel (aba "Indicadores"). Carrega com service role e calcula com
+ * `computeDashboard` (`dashboard.ts`); o cliente recebe só os números e as listas de atrasados.
+ * `today` vem do navegador (fuso de São Paulo) para o "hoje" ser o mesmo da tela.
+ * Grupo e subgrupo são os do período escolhido (padrão: o ativo).
+ */
+export const painelDashboard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        from: isoDay,
+        to: isoDay,
+        today: isoDay,
+        periodId: z.string().uuid().nullable(),
+        groupId: z.string().uuid().nullable(),
+        subgroupId: z.string().uuid().nullable(),
+        hunterId: z.string().uuid().nullable(),
+        sectorId: z.string().uuid().nullable(),
+        channel: z.enum(["todos", "linkedin", "whatsapp"]),
+      })
+      .refine((v) => v.from <= v.to, "O início deve vir antes do fim")
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { fetchAll } = await import("./fetch-all");
+    const { adminIds } = await import("./competition.server");
+    const { computeDashboard, DASH_CONTACT_COLUMNS } = await import("./dashboard");
+
+    const [profiles, admins, periods, groups, subgroups, members, sectors, templates] =
+      await Promise.all([
+        fetchAll((a, b) =>
+          db.from("profiles").select("id, display_name, email").order("id").range(a, b),
+        ),
+        adminIds(db),
+        db.from("periods").select("id, name, status, kind, started_at, closed_at"),
+        db.from("groups").select("id, name, period_id").order("name"),
+        db.from("subgroups").select("id, name, group_id").order("name"),
+        fetchAll((a, b) =>
+          db
+            .from("period_members")
+            .select("period_id, user_id, group_id, subgroup_id")
+            .order("id")
+            .range(a, b),
+        ),
+        db.from("sectors").select("id, name, active, sort"),
+        db.from("sector_templates").select("sector_id, step, body"),
+      ]);
+
+    const allPeriods = (periods.data ?? []).sort((a, b) => (a.started_at < b.started_at ? 1 : -1));
+    const period =
+      allPeriods.find((p) => p.id === data.periodId) ??
+      allPeriods.find((p) => p.status === "active") ??
+      null;
+    const pGroups = (groups.data ?? []).filter((g) => g.period_id === period?.id);
+    const pGroupIds = new Set(pGroups.map((g) => g.id));
+    const pSubgroups = (subgroups.data ?? []).filter((s) => pGroupIds.has(s.group_id));
+    const gname = new Map(pGroups.map((g) => [g.id, g.name]));
+    const sname = new Map(pSubgroups.map((s) => [s.id, s.name]));
+    const mem = new Map(
+      members.filter((m) => m.period_id === period?.id).map((m) => [m.user_id, m]),
+    );
+
+    const everyone = profiles
+      .filter((p) => !admins.has(p.id))
+      .map((p) => {
+        const m = mem.get(p.id);
+        return {
+          id: p.id,
+          name: p.display_name?.trim() || p.email || "Hunter",
+          grupo: (m?.group_id && gname.get(m.group_id)) || "",
+          subgrupo: (m?.subgroup_id && sname.get(m.subgroup_id)) || "",
+          groupId: m?.group_id ?? null,
+          subgroupId: m?.subgroup_id ?? null,
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    const hunters = everyone.filter(
+      (h) =>
+        (!data.groupId || h.groupId === data.groupId) &&
+        (!data.subgroupId || h.subgroupId === data.subgroupId) &&
+        (!data.hunterId || h.id === data.hunterId),
+    );
+    const ids = hunters.map((h) => h.id);
+    const filtered = hunters.length !== everyone.length;
+
+    const [contacts, companies, settings, holidays] = await Promise.all([
+      ids.length === 0
+        ? Promise.resolve([] as DashContact[])
+        : fetchAll((a, b) => {
+            let q = db.from("contacts").select(DASH_CONTACT_COLUMNS);
+            if (filtered) q = q.in("user_id", ids);
+            // select montado a partir de STEPS/FUNNEL: o tipo da linha é declarado aqui.
+            return q.order("id").range(a, b) as unknown as PageResult<DashContact>;
+          }),
+      fetchAll((a, b) =>
+        db
+          .from("companies")
+          .select("id, user_id, name, sector_id, week_start")
+          .order("id")
+          .range(a, b),
+      ),
+      fetchAll((a, b) =>
+        db
+          .from("settings")
+          .select("user_id, offset1, offset2, offset3, offset4, offset5")
+          .order("user_id")
+          .range(a, b),
+      ),
+      db.from("holidays").select("date"),
+    ]);
+
+    const sectorSteps: Record<string, number[]> = {};
+    for (const t of templates.data ?? [])
+      if (t.body.trim()) (sectorSteps[t.sector_id] ??= []).push(t.step);
+
+    const dashboard = computeDashboard({
+      contacts,
+      companies,
+      sectors: sectors.data ?? [],
+      sectorSteps,
+      hunters,
+      offsets: Object.fromEntries(settings.map(({ user_id, ...o }) => [user_id, o])),
+      holidays: new Set((holidays.data ?? []).map((h) => h.date)),
+      from: data.from,
+      to: data.to,
+      today: data.today,
+      channel: data.channel,
+      sectorId: data.sectorId,
+    });
+
+    const spDay = (ts: string) =>
+      new Date(ts).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+    return {
+      dashboard,
+      periodId: period?.id ?? null,
+      options: {
+        periods: allPeriods.map((p) => ({
+          id: p.id,
+          name: p.name,
+          active: p.status === "active",
+          start: spDay(p.started_at),
+          end: p.closed_at ? spDay(p.closed_at) : null,
+        })),
+        groups: pGroups.map((g) => ({ id: g.id, name: g.name })),
+        subgroups: pSubgroups.map((s) => ({ id: s.id, name: s.name, groupId: s.group_id })),
+        hunters: everyone.map((h) => ({ id: h.id, name: h.name, groupId: h.groupId })),
+        sectors: (sectors.data ?? [])
+          .sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name, "pt-BR"))
+          .map((s) => ({ id: s.id, name: s.name })),
+      },
+    };
   });

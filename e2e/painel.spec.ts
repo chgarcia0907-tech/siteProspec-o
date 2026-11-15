@@ -3,6 +3,7 @@ import { expect, mutations, test } from "./helpers";
 test.describe("Painel do administrador", () => {
   test("lista hunters e contatos de cada um", async ({ page }) => {
     await page.goto("/painel");
+    await page.getByRole("tab", { name: "Hunters" }).click();
     await expect(page.getByText("Hunters · 11 contatos no total")).toBeVisible();
     await page.getByRole("button", { name: /Hunter Um/ }).click();
     await expect(
@@ -12,6 +13,7 @@ test.describe("Painel do administrador", () => {
 
   test("ação destrutiva exige digitar a palavra de confirmação", async ({ page }) => {
     await page.goto("/painel");
+    await page.getByRole("tab", { name: "Hunters" }).click();
     await page.getByRole("button", { name: /Hunter Um/ }).click();
     await page.getByRole("button", { name: "Limpar todos deste hunter" }).click();
     const dialog = page.getByRole("alertdialog");
@@ -25,6 +27,7 @@ test.describe("Painel do administrador", () => {
 
   test("excluir um contato apaga só ele", async ({ page }) => {
     await page.goto("/painel");
+    await page.getByRole("tab", { name: "Hunters" }).click();
     await page.getByRole("button", { name: /Hunter Um/ }).click();
     await page
       .getByRole("row", { name: /Ana Souza/ })
