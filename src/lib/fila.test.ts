@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_OFFSETS, STEPS, type Contact } from "./cadencia";
-import { buildQueues, markSentPatch, missingForMessage } from "./fila";
+import { buildQueues, dayProgress, markSentPatch, missingForMessage } from "./fila";
 
 let id = 0;
 const c = (over: Partial<Contact>) =>
@@ -85,5 +85,42 @@ describe("mensagem e envio", () => {
       step1_date: REF,
       status: "em_cadencia",
     });
+  });
+});
+
+describe("progresso do dia", () => {
+  const ref = "2026-11-12";
+  const base = [
+    // enviou LinkedIn 1 e WhatsApp 1 hoje: 2 feitos
+    c({ id: "a", step1_date: ref, sent1_at: ref, sent2_at: ref, status: "em_cadencia" }),
+    // enviado ontem: não conta como feito hoje; WhatsApp 1 vence hoje
+    c({ id: "b", step1_date: "2026-11-11", sent1_at: "2026-11-11", status: "em_cadencia" }),
+    // nunca começou: entra na fila do LinkedIn 1 sem data
+    c({ id: "d" }),
+    // WhatsApp 1 previsto para 10/11 e não enviado: atrasado, e as etapas seguintes vencem em cadeia
+    c({ id: "e", step1_date: "2026-11-09", sent1_at: "2026-11-09", status: "em_cadencia" }),
+  ];
+
+  it("soma os envios do dia e conta cada lead pendente uma vez", () => {
+    const queues = buildQueues(base, DEFAULT_OFFSETS, new Set(), ref);
+    const itensDoE = Object.values(queues)
+      .flat()
+      .filter((i) => i.contact.id === "e").length;
+    expect(itensDoE).toBeGreaterThan(1); // "e" está em mais de uma fila...
+    // ...mas conta uma vez: pendentes "b", "d" e "e", com "e" atrasado.
+    expect(dayProgress(base, queues, ref)).toEqual({ done: 2, pending: 3, late: 1, total: 5 });
+  });
+
+  it("enviar a etapa atrasada aumenta os feitos sem encolher o total", () => {
+    const antes = dayProgress(base, buildQueues(base, DEFAULT_OFFSETS, new Set(), ref), ref);
+    const depois = base.map((x) => (x.id === "e" ? { ...x, sent2_at: ref } : x));
+    const p = dayProgress(depois, buildQueues(depois, DEFAULT_OFFSETS, new Set(), ref), ref);
+    expect(p.done).toBe(antes.done + 1);
+    expect(p.total).toBe(antes.total);
+  });
+
+  it("sem contatos, tudo zero", () => {
+    const queues = buildQueues([], DEFAULT_OFFSETS, new Set(), ref);
+    expect(dayProgress([], queues, ref)).toEqual({ done: 0, pending: 0, late: 0, total: 0 });
   });
 });
