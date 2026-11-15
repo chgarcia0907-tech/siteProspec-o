@@ -118,6 +118,10 @@ export function useSaveMessageName() {
   });
 }
 
+/**
+ * Atualiza um contato de forma otimista: a lista em cache muda na hora (ex.: o cartão sai da
+ * fila ao marcar o envio) e volta ao estado anterior se a gravação falhar.
+ */
 export function useUpdateContact() {
   const qc = useQueryClient();
   return useMutation({
@@ -125,7 +129,18 @@ export function useUpdateContact() {
       const { error } = await supabase.from("contacts").update(patch).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["contacts"] }),
+    onMutate: async ({ id, patch }) => {
+      await qc.cancelQueries({ queryKey: ["contacts"] });
+      const previous = qc.getQueryData<Contact[]>(["contacts"]);
+      qc.setQueryData<Contact[]>(["contacts"], (list) =>
+        list?.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+      );
+      return { previous };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.previous) qc.setQueryData(["contacts"], ctx.previous);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["contacts"] }),
   });
 }
 
