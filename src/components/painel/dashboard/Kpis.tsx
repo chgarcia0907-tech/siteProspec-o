@@ -12,8 +12,6 @@ export function Kpis({ d }: { d: Dash }) {
     <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
       <Tile label="ATs marcadas" kpi={k.ats} highlight />
       <Tile label="Respostas" kpi={k.respostas} />
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
-      <Tile label="ATs marcadas" kpi={k.ats} highlight />
       <Tile label="Mensagens enviadas" kpi={k.envios} />
       <Tile label="LinkedIn" kpi={k.linkedin} />
       <Tile label="WhatsApp" kpi={k.whatsapp} />

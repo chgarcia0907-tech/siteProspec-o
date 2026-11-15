@@ -9,8 +9,6 @@ import { Filters, type DashFilters } from "./Filters";
 import { Abastecimento, ConversaoPor, Funil, OrigemAt, OrigemResposta } from "./Funil";
 import { Kpis } from "./Kpis";
 import { Metas } from "./Metas";
-import { Abastecimento, ConversaoPor, Funil, OrigemAt } from "./Funil";
-import { Kpis } from "./Kpis";
 import { Alertas, Coortes, Tendencia } from "./Tendencia";
 
 /** Aba "Indicadores" do painel: execução da cadência, funil e tendência da equipe. */
@@ -66,8 +64,6 @@ export function IndicadoresTab() {
           <div className="grid gap-4 lg:grid-cols-3">
             <Funil d={d} />
             <OrigemResposta d={d} />
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Funil d={d} />
             <OrigemAt d={d} />
           </div>
           <div className="grid gap-4 lg:grid-cols-2">

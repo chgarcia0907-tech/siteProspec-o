@@ -238,7 +238,6 @@ export const painelDashboard = createServerFn({ method: "POST" })
     const { computeDashboard, DASH_CONTACT_COLUMNS } = await import("./dashboard");
 
     const [profiles, admins, periods, groups, subgroups, members, sectors, templates, goals] =
-    const [profiles, admins, periods, groups, subgroups, members, sectors, templates] =
       await Promise.all([
         fetchAll((a, b) =>
           db.from("profiles").select("id, display_name, email").order("id").range(a, b),

@@ -12,9 +12,6 @@ import {
   resolveGoal,
   responseDate,
   volumeProgress,
-  pct,
-  presetRange,
-  previousRange,
   type DashContact,
   type DashInput,
 } from "./dashboard";

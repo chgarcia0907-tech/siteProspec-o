@@ -67,8 +67,6 @@ function PainelAdmin() {
       >
         {/* Quebra em linhas no celular, para todas as abas ficarem ao alcance do toque. */}
         <TabsList className="h-auto flex-wrap justify-start">
-      <Tabs defaultValue="indicadores">
-        <TabsList>
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
           <TabsTrigger value="hunters">Hunters</TabsTrigger>
           <TabsTrigger value="periodos">Períodos e grupos</TabsTrigger>
