@@ -15,6 +15,8 @@ tela a tela, em PRs pequenos que vão para o `main` funcionando. A lógica não 
 
 - [`briefing-claude-design.md`](briefing-claude-design.md): o pedido de design, em ordem de
   prioridade, com as restrições. **Comece por ele.**
+- [`../../motion-audits/cadencia-outbound-2026-11-15.html`](../../motion-audits/cadencia-outbound-2026-11-15.html):
+  auditoria de movimento (abra no navegador; tem demos).
 - [`inventario.md`](inventario.md): objetivo, dados, ações, estados e problemas de UX de cada
   tela, componentes compartilhados, tokens atuais e as regras que o redesign não pode quebrar.
 - [`screenshots/`](screenshots/): todas as telas em `desktop/` (1440 px) e `celular/`
