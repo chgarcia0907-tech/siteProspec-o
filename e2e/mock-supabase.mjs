@@ -117,6 +117,11 @@ http
           query: decodeURIComponent(url.search),
           body: raw,
         });
+        // PATCH altera as linhas filtradas, como o banco faria; assim o refetch vê a mudança.
+        if (req.method === "PATCH" && db[table]) {
+          const patch = JSON.parse(raw || "{}");
+          for (const r of filterRows(db[table], url.searchParams)) Object.assign(r, patch);
+        }
         return send(res, 201, []);
       }
       // RLS simplificado: com a chave pública, o hunter logado só vê os próprios contatos.

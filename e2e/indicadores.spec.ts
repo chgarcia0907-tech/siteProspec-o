@@ -90,7 +90,8 @@ test.describe("Painel · Indicadores", () => {
     const dois = page.getByRole("group", { name: "Metas: Hunter Dois" });
     await expect(dois.getByLabel("ATs por semana (Hunter Dois)")).toHaveAttribute(
       "placeholder",
-      "herda: 1",
+      // Herda a meta da equipe que acabou de ser salva (1,5), não a original.
+      "herda: 1,5",
     );
     await dois.getByLabel("ATs por semana (Hunter Dois)").fill("2");
     await dois.getByRole("button", { name: "Salvar" }).click();
