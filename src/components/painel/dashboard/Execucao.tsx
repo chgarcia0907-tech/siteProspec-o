@@ -17,6 +17,7 @@ type SortKey =
   | "ats"
   | "responses"
   | "conv";
+  "hunter" | "total" | "noPrazo" | "late" | "idle" | "started" | "inProgress" | "ats" | "conv";
 const SORT: Record<SortKey, (r: HunterRow) => number | string> = {
   hunter: (r) => r.hunter,
   total: (r) => r.total,
@@ -53,6 +54,7 @@ export function Execucao({ d }: { d: Dash }) {
     </th>
   );
   const cols = d.steps.length + 11;
+  const cols = d.steps.length + 10;
 
   return (
     <Section

@@ -2,6 +2,7 @@ import { expect, mutations, test } from "./helpers";
 
 const U2 = "22222222-2222-4222-8222-222222222222";
 const GOAL_EQUIPE = "14141414-0000-4000-8000-000000000001";
+import { expect, test } from "./helpers";
 
 // Hoje é 12/11/2026 (quinta). Na semana de 09 a 15/11 ninguém enviou mensagem; a única AT
 // registrada é a do João (Hunter Dois, depois do WhatsApp 1). Bruno, Diego e Karen estão atrasados.

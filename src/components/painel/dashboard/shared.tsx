@@ -12,6 +12,7 @@ export function Section({
 }: {
   title: string;
   hint?: string | undefined;
+  hint?: string;
   children: ReactNode;
   className?: string;
 }) {

@@ -71,11 +71,20 @@ function Origem({
     <Section title={title} hint={hint}>
       <BarList
         items={items.map((o) => ({
+  const total = d.atOrigin.reduce((n, o) => n + o.count, 0);
+  return (
+    <Section
+      title="Etapa que gerou a AT"
+      hint="Última mensagem enviada antes do registro da AT. Mostra se as etapas finais da cadência trazem reunião."
+    >
+      <BarList
+        items={d.atOrigin.map((o) => ({
           label: o.label,
           value: o.count,
           ...(total ? { note: `(${pctText(pct(o.count, total))})` } : {}),
         }))}
         empty={empty}
+        empty="Nenhuma AT no intervalo."
       />
     </Section>
   );

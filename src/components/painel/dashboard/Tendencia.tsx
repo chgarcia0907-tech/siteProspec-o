@@ -12,6 +12,7 @@ import { Section } from "./shared";
 import { dm, num, pctText, type Dash } from "./format";
 
 type Metric = "envios" | "respostas" | "ats" | "importados" | "conversao";
+type Metric = "envios" | "ats" | "importados" | "conversao";
 const CONFIG: Record<Metric, ChartConfig> = {
   envios: { value: { label: "Mensagens", color: "var(--chart-1)" } },
   ats: { value: { label: "ATs", color: "var(--chart-1)" } },
@@ -41,6 +42,10 @@ export function Tendencia({ d }: { d: Dash }) {
         <Mini title="ATs marcadas" metric="ats" data={data} kind="bar" />
         <Mini title="Conversão LinkedIn 1 → AT (%)" metric="conversao" data={data} kind="line" />
         <Mini title="Respostas" metric="respostas" data={data} kind="bar" />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Mini title="Mensagens enviadas" metric="envios" data={data} kind="bar" />
+        <Mini title="ATs marcadas" metric="ats" data={data} kind="bar" />
+        <Mini title="Conversão LinkedIn 1 → AT (%)" metric="conversao" data={data} kind="line" />
         <Mini title="Contatos importados" metric="importados" data={data} kind="bar" />
       </div>
     </Section>

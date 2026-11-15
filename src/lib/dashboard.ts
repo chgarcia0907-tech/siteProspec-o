@@ -84,6 +84,7 @@ export type DashGoal = {
   ats_semana: number | null;
   no_prazo_pct: number | null;
 };
+export type DashHunter = { id: string; name: string; grupo: string; subgrupo: string };
 export type ChannelFilter = "todos" | Channel;
 
 export type DashInput = {
@@ -153,6 +154,9 @@ export type GoalMetric = "envios" | "l1" | "ats" | "noPrazo";
 export type GoalStatus = "ok" | "atencao" | "abaixo";
 export type GoalProgress = { real: number; target: number; pct: number; status: GoalStatus };
 export type GoalSet = Record<GoalMetric, GoalProgress | null>;
+  discarded: number;
+  heat: number[];
+};
 export type Breakdown = { name: string; l1: number; ats: number };
 export type WeekPoint = {
   inicio: string;
@@ -393,6 +397,8 @@ export function computeDashboard(input: DashInput): Dashboard {
         discarded: 0,
         heat: buckets.map(() => 0),
         goals: NO_GOALS,
+        discarded: 0,
+        heat: buckets.map(() => 0),
       },
     ]),
   );
@@ -400,6 +406,8 @@ export function computeDashboard(input: DashInput): Dashboard {
   const kp = {
     cur: { ats: 0, respostas: 0, envios: 0, linkedin: 0, whatsapp: 0, l1: 0, importados: 0 },
     prev: { ats: 0, respostas: 0, envios: 0, linkedin: 0, whatsapp: 0, l1: 0, importados: 0 },
+    cur: { ats: 0, envios: 0, linkedin: 0, whatsapp: 0, l1: 0, importados: 0 },
+    prev: { ats: 0, envios: 0, linkedin: 0, whatsapp: 0, l1: 0, importados: 0 },
   };
   const supply = { waiting: 0, noPhone: 0, noCompany: 0, noArea: 0 };
   const funnel = FUNNEL.map(() => 0);
@@ -416,6 +424,7 @@ export function computeDashboard(input: DashInput): Dashboard {
   );
   const trend = new Map<string, WeekPoint>(
     weeks.map((w) => [w, { inicio: w, envios: 0, l1: 0, ats: 0, respostas: 0, importados: 0 }]),
+    weeks.map((w) => [w, { inicio: w, envios: 0, l1: 0, ats: 0, importados: 0 }]),
   );
   const cohorts = new Map<string, Cohort>(
     weeks.map((w) => [
@@ -556,6 +565,13 @@ export function computeDashboard(input: DashInput): Dashboard {
     }
     if (inR(resp, prev.from, prev.to)) kp.prev.respostas++;
     if (c.status === "respondeu" && !c.respondeu_em && !at) undatedResponses++;
+      let origin = 0;
+      STEPS.forEach((_, i) => {
+        if (sent[i] && sent[i]! <= at!) origin = i + 1;
+      });
+      atOrigin[origin]!++;
+    }
+    if (inR(at, prev.from, prev.to)) kp.prev.ats++;
     if (inR(imported, from, to)) kp.cur.importados++;
     if (inR(imported, prev.from, prev.to)) kp.prev.importados++;
 
@@ -602,6 +618,9 @@ export function computeDashboard(input: DashInput): Dashboard {
     }
     if (tw(at)) tw(at)!.ats++;
     if (tw(resp)) tw(resp)!.respostas++;
+      }
+    }
+    if (tw(at)) tw(at)!.ats++;
     if (tw(imported)) tw(imported)!.importados++;
   }
 

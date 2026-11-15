@@ -122,3 +122,5 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   (`resolveGoal`). Metas diárias/semanais viram metas do intervalo pelos dias úteis já passados;
   semáforo: na meta ≥ 100%, perto ≥ 70% (no prazo: até 10 pontos abaixo). Escrita por
   `painelSaveGoal`/`painelDeleteGoal` (`painel.functions.ts`, has_role antes).
+  `src/components/painel/dashboard/`. Limites conhecidos: `sentN_at` é o dia em que a etapa foi
+  marcada (sem histórico) e "respondeu" não tem data; metas ainda não existem.
