@@ -66,12 +66,12 @@
   --color-warning-soft: var(--warning-soft);
   --color-warning-border: var(--warning-border);
 
-  /* Gráficos */
-  --color-chart-1: var(--primary);
-  --color-chart-2: var(--whatsapp);
-  --color-chart-3: var(--warning);
-  --color-chart-4: var(--success);
-  --color-chart-5: var(--destructive);
+  /* Gráficos (as variáveis --chart-N também são lidas direto pelo recharts e pelo mapa de envios) */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
   /* Tipografia (tamanho / altura de linha). text-card-title e não text-card, que é cor. */
   --font-display: "Host Grotesk", ui-sans-serif, system-ui, sans-serif;
@@ -136,6 +136,12 @@
   --warning-text: #ffcc80;
   --warning-soft: color-mix(in oklab, #ffb74d 14%, transparent);
   --warning-border: color-mix(in oklab, #ffb74d 45%, transparent);
+
+  --chart-1: #8ab8f2;
+  --chart-2: #03dac6;
+  --chart-3: #ffb74d;
+  --chart-4: #a5d6a7;
+  --chart-5: #cf6679;
 }
 
 @layer base {
