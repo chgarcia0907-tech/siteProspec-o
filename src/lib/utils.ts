@@ -1,5 +1,18 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+/**
+ * O tailwind-merge precisa conhecer a escala tipográfica do design system (src/styles.css):
+ * sem isso, ele trata `text-dense` ou `text-kpi` como cor e os descarta quando a mesma lista
+ * tem `text-heading`.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      text: ["title", "section", "card-title", "body", "dense", "caption", "kpi"],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
