@@ -28,6 +28,16 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   Escopos comuns: `cadencia`, `funil`, `ranking`, `painel`, `periodos`, `planilha`,
   `empresas`, `auth`, `db`, `ui`, `deps`.
 
+## Redesign do frontend (em andamento)
+
+- Plano, inventário das telas e screenshots do "antes" ficam em `docs/redesign/`.
+- O redesign troca só a apresentação: `src/routes/`, `src/components/` e os tokens em
+  `src/styles.css`. Não mexa em `src/lib/`, `src/hooks/` nem em `*.functions.ts`/`*.server.ts`;
+  se a tela nova precisar de outro dado ou regra, isso vai num PR separado, com teste.
+- Uma tela por PR, com as screenshots de antes e depois (`bun run screenshots` regenera
+  `docs/redesign/screenshots/`). Os testes em `e2e/*.spec.ts` são a rede de segurança: texto
+  ou botão mudado de propósito se ajusta no teste do mesmo PR.
+
 ## Banco de dados (Supabase, projeto próprio)
 
 - Migrações ficam só em `supabase/migrations/` (formato do Supabase CLI). Crie com
