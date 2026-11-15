@@ -5,7 +5,7 @@ import { CompanySelect } from "@/components/CompanySelect";
 import { useCompanies, useContacts, useImportContacts } from "@/hooks/useCadencia";
 import { formatBR, normalizeKey, parseLinkedInConnections } from "@/lib/cadencia";
 import { jobTitleFromHeadline } from "@/lib/cadencia";
-import { matchCompany } from "@/lib/empresas";
+import { areaFromTitle, suggestCompany } from "@/lib/enriquecimento";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,8 +64,13 @@ function Importar() {
       const noDate = fromDate !== "" && !p.connected_at;
       const filteredOut =
         noDate || (fromDate !== "" && !!p.connected_at && p.connected_at < fromDate);
-      const suggested = matchCompany(p.headline, companies ?? [])?.id ?? null;
-      return { ...p, key, duplicate, filteredOut, noDate, suggested };
+      // Empresa e área sugeridas pelo headline (o hunter ainda pode trocar a empresa aqui).
+      const guess = suggestCompany(p.headline, companies ?? []);
+      const suggested = guess && "company_id" in guess ? guess.company_id : null;
+      const companyText = guess && "company" in guess ? guess : null;
+      const job_title = jobTitleFromHeadline(p.headline);
+      const area = areaFromTitle(job_title, p.headline);
+      return { ...p, key, duplicate, filteredOut, noDate, suggested, companyText, job_title, area };
     });
   }, [parsed, existing, fromDate, companies]);
   const companyOf = (r: { key: string; suggested: string | null }) =>
@@ -78,7 +83,8 @@ function Importar() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Importar conexões</h1>
         <p className="text-sm text-muted-foreground">
-          Copie a página de conexões do LinkedIn (Ctrl+A, Ctrl+C) e cole abaixo.
+          Copie a página de conexões do LinkedIn (Ctrl+A, Ctrl+C) e cole abaixo. Empresa e área são
+          sugeridas pelo headline; o que não der para descobrir fica em branco.
         </p>
       </div>
 
@@ -124,13 +130,23 @@ function Importar() {
               disabled={toImport.length === 0 || importMutation.isPending}
               onClick={() =>
                 importMutation.mutate(
-                  toImport.map((r) => ({
-                    name: r.name,
-                    headline: r.headline,
-                    job_title: jobTitleFromHeadline(r.headline),
-                    connected_at: r.connected_at,
-                    company_id: companyOf(r),
-                  })),
+                  toImport.map((r) => {
+                    const company_id = companyOf(r);
+                    return {
+                      name: r.name,
+                      headline: r.headline,
+                      job_title: r.job_title,
+                      connected_at: r.connected_at,
+                      company_id,
+                      ...(!company_id && r.companyText
+                        ? {
+                            company: r.companyText.company,
+                            company_gender: r.companyText.company_gender,
+                          }
+                        : {}),
+                      ...(r.area ? { sector: r.area } : {}),
+                    };
+                  }),
                   {
                     onSuccess: (n) => {
                       toast.success(`${n} contatos importados`);
@@ -154,7 +170,8 @@ function Importar() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Cargo/Headline</TableHead>
                     <TableHead>Conexão</TableHead>
-                    {!!companies?.length && <TableHead>Empresa</TableHead>}
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>Área</TableHead>
                     <TableHead>Situação</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -166,19 +183,29 @@ function Importar() {
                         {r.headline || "—"}
                       </TableCell>
                       <TableCell>{formatBR(r.connected_at)}</TableCell>
-                      {!!companies?.length && (
-                        <TableCell>
-                          {!r.duplicate && !r.filteredOut && (
-                            <CompanySelect
-                              companies={companies}
-                              value={companyOf(r)}
-                              onChange={(id) => setChosen((m) => ({ ...m, [r.key]: id }))}
-                              emptyLabel="Sem empresa"
-                              className="w-44"
-                            />
-                          )}
-                        </TableCell>
-                      )}
+                      <TableCell>
+                        {!r.duplicate && !r.filteredOut && (
+                          <>
+                            {!!companies?.length && (
+                              <CompanySelect
+                                companies={companies}
+                                value={companyOf(r)}
+                                onChange={(id) => setChosen((m) => ({ ...m, [r.key]: id }))}
+                                emptyLabel="Sem empresa cadastrada"
+                                className="w-44"
+                              />
+                            )}
+                            {!companyOf(r) && (
+                              <span className="block text-xs text-muted-foreground">
+                                {r.companyText ? `${r.companyText.company} (do headline)` : "—"}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                        {!r.duplicate && !r.filteredOut ? (r.area ?? "—") : ""}
+                      </TableCell>
                       <TableCell>
                         {r.duplicate ? (
                           <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
