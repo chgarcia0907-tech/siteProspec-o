@@ -74,7 +74,7 @@ function Configuracoes() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Nome na plataforma</CardTitle>
-          <CardDescription>Exibido no ranking e relatórios da equipe.</CardDescription>
+          <CardDescription>Exibido nos relatórios da equipe.</CardDescription>
         </CardHeader>
         <CardContent className="flex gap-2">
           <Input
