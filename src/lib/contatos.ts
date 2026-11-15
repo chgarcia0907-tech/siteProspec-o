@@ -18,15 +18,30 @@ export type StatusFilter = "todos" | ContactStatus;
 
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-/** Filtra por situação e por nome/empresa, sem diferenciar acentos e maiúsculas. */
+/** Contatos com dado faltando, para completar a empresa ou a área. */
+export type MissingFilter = "todos" | "empresa" | "area";
+
+export const MISSING_LABEL: Record<MissingFilter, string> = {
+  todos: "Com ou sem pendência",
+  empresa: "Sem empresa",
+  area: "Sem área",
+};
+
+export const hasNoCompany = (c: Pick<Contact, "company_id" | "company">) =>
+  !c.company_id && !c.company.trim();
+
+/** Filtra por situação, por pendência e por nome/empresa, sem diferenciar acentos e maiúsculas. */
 export function filterContacts(
   contacts: Contact[],
   search: string,
   status: StatusFilter,
+  missing: MissingFilter = "todos",
 ): Contact[] {
   const term = fold(search).trim();
   return contacts.filter((c) => {
     if (status !== "todos" && c.status !== status) return false;
+    if (missing === "empresa" && !hasNoCompany(c)) return false;
+    if (missing === "area" && c.sector.trim()) return false;
     return !term || fold(`${c.name} ${c.company}`).includes(term);
   });
 }
