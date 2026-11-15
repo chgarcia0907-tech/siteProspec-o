@@ -47,7 +47,7 @@ function Empresas() {
           hoje.
         </p>
       </div>
-      <CompanyForm sectors={sectors ?? []} existing={companies ?? []} />
+      <CompanyForm sectors={sectors} existing={companies ?? []} />
       <CompanyList
         companies={companies ?? []}
         sectors={sectors ?? []}
