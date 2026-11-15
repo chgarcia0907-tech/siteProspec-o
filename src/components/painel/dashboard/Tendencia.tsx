@@ -134,7 +134,7 @@ function Rate({ n, of, mature }: { n: number; of: number; mature: boolean }) {
   return (
     <td className={cn("py-1 text-right tabular-nums", !mature && "text-muted-foreground")}>
       {pctText(pct(n, of))} <span className="text-xs">({n})</span>
-      {!mature && <span className="ml-1 text-[11px]">parcial</span>}
+      {!mature && <span className="ml-1 text-caption">parcial</span>}
     </td>
   );
 }
@@ -150,17 +150,17 @@ export function Alertas({ d }: { d: Dash }) {
           {d.alerts.map((a, i) => (
             <li key={i} className="flex items-start gap-2">
               {a.level === "alta" ? (
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive-text" />
               ) : (
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
               )}
               <span>
                 <span
                   className={cn(
-                    "mr-1 rounded px-1 text-[11px] font-medium",
+                    "mr-1 rounded px-1 text-caption font-medium",
                     a.level === "alta"
-                      ? "bg-destructive/10 text-destructive"
-                      : "bg-warning-soft text-warning",
+                      ? "bg-destructive/10 text-destructive-text"
+                      : "bg-warning-soft text-warning-text",
                   )}
                 >
                   {a.level === "alta" ? "Alta" : "Média"}

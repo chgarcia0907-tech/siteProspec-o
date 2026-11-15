@@ -68,7 +68,7 @@ export function HunterActions({
       <Button
         size="sm"
         variant="ghost"
-        className="ml-auto text-destructive"
+        className="ml-auto text-destructive-text"
         disabled={hunter.total > 0}
         title={hunter.total > 0 ? "Transfira ou exclua os contatos antes" : ""}
         onClick={() =>

@@ -40,7 +40,7 @@ export function IndicadoresTab() {
     <div className="space-y-4">
       <Filters value={shown} onChange={setFilters} options={q.data?.options} today={today} />
       {q.isError && (
-        <p className="text-sm text-destructive">Não foi possível carregar os indicadores.</p>
+        <p className="text-sm text-destructive-text">Não foi possível carregar os indicadores.</p>
       )}
       {!d ? (
         !q.isError && <p className="text-sm text-muted-foreground">Carregando indicadores…</p>

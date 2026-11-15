@@ -93,7 +93,7 @@ export function ContactsToolbar({
           >
             Abrir planilha
           </a>
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-caption text-muted-foreground">
             atualiza automaticamente, com atraso de até 1 hora
           </span>
         </div>

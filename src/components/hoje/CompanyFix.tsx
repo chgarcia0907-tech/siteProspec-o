@@ -22,7 +22,7 @@ export function CompanyFix({
         if (v.trim()) onSave(v, g);
       }}
     >
-      <span className="text-xs font-medium text-warning">Preencha a empresa deste lead</span>
+      <span className="text-xs font-medium text-warning-text">Preencha a empresa deste lead</span>
       <Input
         autoFocus
         aria-label="Empresa do lead"

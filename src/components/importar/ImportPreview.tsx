@@ -104,18 +104,18 @@ export function ImportPreview({
 function RowStatus({ row }: { row: ImportRow }) {
   if (row.duplicate)
     return (
-      <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+      <span className="rounded-full bg-muted px-2 py-0.5 text-caption font-medium text-muted-foreground">
         Já cadastrado
       </span>
     );
   if (row.filteredOut)
     return (
-      <span className="rounded-full bg-warning-soft px-2 py-0.5 text-[11px] font-medium text-warning">
+      <span className="rounded-full bg-warning-soft px-2 py-0.5 text-caption font-semibold text-warning-text">
         {row.noDate ? "Sem data — fora do filtro" : "Antes da data escolhida"}
       </span>
     );
   return (
-    <span className="rounded-full bg-whatsapp-soft px-2 py-0.5 text-[11px] font-medium text-whatsapp">
+    <span className="rounded-full bg-whatsapp-soft px-2 py-0.5 text-caption font-medium text-whatsapp">
       Novo
     </span>
   );

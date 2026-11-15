@@ -165,7 +165,9 @@ export function Abastecimento({ d }: { d: Dash }) {
         {items.map((i) => (
           <div key={i.label} className="rounded-md border p-2" title={i.hint}>
             <dt className="text-xs text-muted-foreground">{i.label}</dt>
-            <dd className={`text-lg font-semibold tabular-nums ${i.bad ? "text-destructive" : ""}`}>
+            <dd
+              className={`text-lg font-semibold tabular-nums ${i.bad ? "text-destructive-text" : ""}`}
+            >
               {i.value}
             </dd>
           </div>

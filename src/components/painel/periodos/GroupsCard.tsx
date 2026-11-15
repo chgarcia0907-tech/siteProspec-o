@@ -47,7 +47,7 @@ export function GroupsCard({
               <Button
                 size="sm"
                 variant="ghost"
-                className="ml-auto h-7 text-destructive"
+                className="ml-auto h-7 text-destructive-text"
                 onClick={() =>
                   ask({
                     title: `Excluir grupo "${gr.name}"`,
@@ -69,7 +69,7 @@ export function GroupsCard({
                   {sg.name}
                   <button
                     aria-label={`Excluir subgrupo ${sg.name}`}
-                    className="text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground hover:text-destructive-text"
                     onClick={() =>
                       ask({
                         title: `Excluir subgrupo "${sg.name}"`,

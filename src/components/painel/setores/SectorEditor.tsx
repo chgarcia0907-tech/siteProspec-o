@@ -144,7 +144,7 @@ export function SectorEditor({
           <Button
             size="sm"
             variant="ghost"
-            className="ml-auto text-destructive"
+            className="ml-auto text-destructive-text"
             disabled={busy}
             onClick={() =>
               companies > 0

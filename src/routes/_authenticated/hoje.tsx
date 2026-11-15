@@ -67,7 +67,7 @@ function Hoje() {
           {STEPS.map((step) => (
             <TabsTrigger key={step.n} value={String(step.n)} className="gap-2">
               {step.label}
-              <span className="rounded-full bg-muted px-1.5 text-[11px] font-semibold">
+              <span className="rounded-full bg-muted px-1.5 text-caption font-semibold">
                 {isPending ? "…" : queues[step.n].length}
               </span>
             </TabsTrigger>

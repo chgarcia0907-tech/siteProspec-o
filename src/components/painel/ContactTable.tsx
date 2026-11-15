@@ -105,7 +105,7 @@ export function ContactTable({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-destructive"
+                    className="text-destructive-text"
                     onClick={() =>
                       ask({
                         title: "Excluir contato",

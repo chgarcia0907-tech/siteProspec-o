@@ -73,7 +73,7 @@ export function LeadFields({
             />
             {contact.headline && (
               <p
-                className="mt-0.5 w-52 truncate text-[11px] text-muted-foreground"
+                className="mt-0.5 w-52 truncate text-caption text-muted-foreground"
                 title={contact.headline}
               >
                 {contact.headline}

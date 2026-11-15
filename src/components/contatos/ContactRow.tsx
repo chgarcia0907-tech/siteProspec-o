@@ -79,7 +79,7 @@ export function ContactRow({
         />
         {c.headline && (
           <p
-            className="mt-0.5 max-w-[240px] truncate text-[11px] text-muted-foreground"
+            className="mt-0.5 max-w-[240px] truncate text-caption text-muted-foreground"
             title={c.headline}
           >
             {c.headline}
