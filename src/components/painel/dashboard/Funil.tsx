@@ -24,25 +24,34 @@ export function Funil({ d }: { d: Dash }) {
   );
 }
 
-/** Em que etapa da cadência o contato estava quando a AT foi registrada. */
+const declaredText = (declared: number, total: number) =>
+  ` Informada pelo hunter em ${num(declared)} de ${num(total)}; nas demais vale a última mensagem enviada antes.`;
+
+/** Mensagem da cadência que gerou a AT. */
 export function OrigemAt({ d }: { d: Dash }) {
+  const total = d.atOrigin.reduce((n, o) => n + o.count, 0);
   return (
     <Origem
       title="Etapa que gerou a AT"
-      hint="Última mensagem enviada antes do registro da AT. Mostra se as etapas finais da cadência trazem reunião."
+      hint={`Mensagem que o lead respondeu antes da AT. Mostra se as etapas finais da cadência trazem reunião.${
+        total ? declaredText(d.declaredOrigin.ats, total) : ""
+      }`}
       items={d.atOrigin}
       empty="Nenhuma AT no intervalo."
     />
   );
 }
 
-/** Em que etapa o contato estava quando respondeu, e quanto tempo levou desde o LinkedIn 1. */
+/** Mensagem que gerou a resposta, e quanto tempo levou desde o LinkedIn 1. */
 export function OrigemResposta({ d }: { d: Dash }) {
   const t = d.responseTime;
+  const total = d.respOrigin.reduce((n, o) => n + o.count, 0);
   return (
     <Origem
       title="Etapa que gerou a resposta"
-      hint={`Última mensagem enviada antes da resposta (sem data de resposta, vale o registro da AT).${
+      hint={`Mensagem que o lead respondeu (sem data de resposta, vale o registro da AT).${
+        total ? declaredText(d.declaredOrigin.responses, total) : ""
+      }${
         t.avg === null ? "" : ` Resposta chega em média ${num(t.avg)} dias úteis após o LinkedIn 1.`
       }${
         d.undatedResponses
@@ -171,6 +180,98 @@ export function Abastecimento({ d }: { d: Dash }) {
           </div>
         ))}
       </dl>
+    </Section>
+  );
+}
+
+/** Canal de entrada: por qual canal vieram as respostas e as ATs do intervalo. */
+export function CanalEntrada({ d }: { d: Dash }) {
+  const resp = d.entryChannels.reduce((n, c) => n + c.responses, 0);
+  const ats = d.entryChannels.reduce((n, c) => n + c.ats, 0);
+  return (
+    <Section
+      title="Canal de entrada"
+      hint="Canal da mensagem que gerou a resposta ou a AT. Outro canal: ligação, e-mail, indicação ou resposta antes do LinkedIn 1."
+    >
+      {resp + ats === 0 ? (
+        <p className="text-sm text-muted-foreground">Nenhuma resposta nem AT no intervalo.</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead className="text-left text-xs text-muted-foreground">
+            <tr>
+              <th className="py-1">Canal</th>
+              <th className="py-1 text-right">Respostas</th>
+              <th className="py-1 text-right">ATs</th>
+            </tr>
+          </thead>
+          <tbody>
+            {d.entryChannels.map((c) => (
+              <tr key={c.channel} className="border-t">
+                <td className="py-1">{c.label}</td>
+                <td className="py-1 text-right tabular-nums">
+                  {num(c.responses)}{" "}
+                  <span className="text-xs text-muted-foreground">
+                    ({pctText(pct(c.responses, resp))})
+                  </span>
+                </td>
+                <td className="py-1 text-right font-medium tabular-nums">
+                  {num(c.ats)}{" "}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    ({pctText(pct(c.ats, ats))})
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Section>
+  );
+}
+
+/** Desempenho de cada mensagem (etapa + modelo): qual CTA mais gera resposta e reunião. */
+export function Mensagens({ d }: { d: Dash }) {
+  return (
+    <Section
+      title="Mensagens que geram reunião"
+      hint="Mensagens enviadas no intervalo e quantas o lead respondeu ou viraram AT (mesmo depois do intervalo). Ordenado pela taxa de AT: o melhor CTA fica no topo. Modelos editados depois do envio contam com o código atual."
+    >
+      {d.messages.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Nenhuma mensagem enviada no intervalo.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-left text-xs text-muted-foreground">
+              <tr>
+                <th className="py-1">Etapa</th>
+                <th className="py-1">Modelo</th>
+                <th className="py-1 text-right">Enviadas</th>
+                <th className="py-1 text-right">Respostas</th>
+                <th className="py-1 text-right">Taxa de resposta</th>
+                <th className="py-1 text-right">ATs</th>
+                <th className="py-1 text-right">Taxa de AT</th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.messages.map((m) => (
+                <tr key={`${m.step}|${m.code}`} className="border-t">
+                  <td className="py-1 whitespace-nowrap">{m.step}</td>
+                  <td className="py-1">{m.code}</td>
+                  <td className="py-1 text-right tabular-nums">{num(m.sent)}</td>
+                  <td className="py-1 text-right tabular-nums">{num(m.responses)}</td>
+                  <td className="py-1 text-right tabular-nums">
+                    {pctText(pct(m.responses, m.sent))}
+                  </td>
+                  <td className="py-1 text-right font-medium tabular-nums">{num(m.ats)}</td>
+                  <td className="py-1 text-right font-medium tabular-nums">
+                    {pctText(pct(m.ats, m.sent))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </Section>
   );
 }

@@ -118,6 +118,14 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   (descartar depois mantém a data; voltar para uma situação de cadência apaga). O painel usa
   `responseDate` (`dashboard.ts`): essa data, senão o registro da AT. Respostas marcadas antes da
   coluna existir ficam sem data e fora das contagens por período.
+- Mensagem que gerou a resposta: ao marcar "respondeu" ou a AT (`needsResponseOrigin` em
+  `cadencia.ts`), o hunter escolhe a etapa (`contacts.resposta_etapa`, 1–5; 0 = outro canal) num
+  diálogo obrigatório (`useResponseOrigin`, `src/components/RespostaOrigem.tsx`) e pode trocá-la
+  depois no "Avançar no funil". Um trigger carimba `resposta_modelo` com o código do modelo em uso
+  (o do setor, senão o padrão; mesma escolha de `pickTemplate`). O painel usa a etapa informada e,
+  sem ela, a última mensagem enviada antes; daí saem "Canal de entrada" e "Mensagens que geram
+  reunião" (`entryChannels`/`messages` em `dashboard.ts`). Limite: envios antigos contam com o
+  código atual do modelo.
 - Metas: tabela `goals` (só service role), uma linha por escopo — equipe (sem `user_id` e
   `group_id`), grupo ou hunter —, com herança campo a campo hunter → grupo → equipe
   (`resolveGoal`). Metas diárias/semanais viram metas do intervalo pelos dias úteis já passados;

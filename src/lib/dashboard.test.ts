@@ -11,6 +11,7 @@ import {
   previousRange,
   resolveGoal,
   responseDate,
+  templateCode,
   volumeProgress,
   type DashContact,
   type DashInput,
@@ -33,6 +34,8 @@ const blank: DashContact = {
   created_at: "2026-11-01T12:00:00Z",
   step1_date: null,
   respondeu_em: null,
+  resposta_etapa: null,
+  resposta_modelo: null,
   sent1_at: null,
   sent2_at: null,
   sent3_at: null,
@@ -333,6 +336,81 @@ describe("respostas", () => {
     ]);
     expect(d.undatedResponses).toBe(1);
     expect(d.cohorts.at(-1)).toMatchObject({ inicio: "2026-11-09", l1: 2, resp14: 2, at14: 1 });
+  });
+});
+
+describe("mensagem que gerou a resposta", () => {
+  const codes = { defaults: { 1: "L1", 2: "W1" }, sectors: { [S1]: { 2: "W1-varejo", 3: "" } } };
+  const contacts = [
+    // Hunter informou que o lead respondeu ao LinkedIn 1, apesar do WhatsApp 1 enviado depois.
+    ct({
+      id: "m1",
+      company_id: CO1,
+      status: "respondeu",
+      step1_date: "2026-11-09",
+      sent1_at: "2026-11-09",
+      sent2_at: "2026-11-10",
+      respondeu_em: "2026-11-11T15:00:00Z",
+      resposta_etapa: 1,
+      resposta_modelo: "L1-antigo",
+    }),
+    // AT sem origem informada: vale a última mensagem enviada antes (WhatsApp 1 do setor).
+    ct({
+      id: "m2",
+      company_id: CO1,
+      step1_date: "2026-11-09",
+      sent1_at: "2026-11-09",
+      sent2_at: "2026-11-10",
+      at_marcada_em: "2026-11-20",
+      at_registrado_em: "2026-11-12T13:00:00Z",
+    }),
+    // AT vinda de uma ligação (outro canal), sem empresa: modelo padrão nos envios.
+    ct({
+      id: "m3",
+      step1_date: "2026-11-09",
+      sent1_at: "2026-11-09",
+      at_marcada_em: "2026-11-20",
+      at_registrado_em: "2026-11-12T13:00:00Z",
+      resposta_etapa: 0,
+    }),
+  ];
+  const d = computeDashboard({ ...input, contacts, templateCodes: codes });
+
+  it("usa a origem informada e, sem ela, a última mensagem enviada", () => {
+    expect(d.respOrigin.filter((o) => o.count)).toEqual([
+      { label: "Outro canal", count: 1 },
+      { label: "LinkedIn 1", count: 1 },
+      { label: "WhatsApp 1", count: 1 },
+    ]);
+    expect(d.atOrigin.filter((o) => o.count)).toEqual([
+      { label: "Outro canal", count: 1 },
+      { label: "WhatsApp 1", count: 1 },
+    ]);
+    expect(d.declaredOrigin).toEqual({ responses: 2, ats: 1 });
+  });
+
+  it("agrupa respostas e ATs por canal de entrada", () => {
+    expect(d.entryChannels).toEqual([
+      { channel: "linkedin", label: "LinkedIn", responses: 1, ats: 0 },
+      { channel: "whatsapp", label: "WhatsApp", responses: 1, ats: 1 },
+      { channel: "outro", label: "Outro canal", responses: 1, ats: 1 },
+    ]);
+  });
+
+  it("mede cada mensagem pelo modelo, com o código carimbado na resposta", () => {
+    expect(d.messages).toEqual([
+      { step: "WhatsApp 1", code: "W1-varejo", sent: 2, responses: 1, ats: 1 },
+      { step: "LinkedIn 1", code: "L1-antigo", sent: 1, responses: 1, ats: 0 },
+      { step: "LinkedIn 1", code: "L1", sent: 2, responses: 0, ats: 0 },
+    ]);
+  });
+
+  it("código do modelo: o do setor, senão o padrão; sem código, o nome", () => {
+    const varejo = { id: S1, name: "Varejo" };
+    expect(templateCode(codes, 2, varejo)).toBe("W1-varejo");
+    expect(templateCode(codes, 3, varejo)).toBe("Setor Varejo");
+    expect(templateCode(codes, 1, varejo)).toBe("L1");
+    expect(templateCode(codes, 4, null)).toBe("Padrão");
   });
 });
 

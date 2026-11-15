@@ -13,6 +13,7 @@ import {
 } from "@/lib/cadencia";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/components/useConfirm";
+import { ResponseOriginSelect, useResponseOrigin } from "@/components/RespostaOrigem";
 
 const COLORS = [
   "bg-linkedin-soft text-linkedin",
@@ -47,6 +48,7 @@ export function FunnelControl({
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState(todayISO());
   const { ask, dialog } = useConfirm();
+  const origin = useResponseOrigin();
   const idx = funnelIndex(contact);
   const next = FUNNEL[idx + 1];
   return (
@@ -87,8 +89,8 @@ export function FunnelControl({
                 className="w-full"
                 disabled={!date}
                 onClick={() => {
-                  onPatch(advancePatch(contact, idx + 1, date));
                   setOpen(false);
+                  origin.guard(contact, advancePatch(contact, idx + 1, date), onPatch);
                 }}
               >
                 Marcar {next.label}
@@ -97,6 +99,7 @@ export function FunnelControl({
           ) : (
             <p className="text-sm font-medium text-success">Projeto vendido — funil completo.</p>
           )}
+          <ResponseOriginSelect contact={contact} onPatch={onPatch} />
           {idx >= 0 && (
             <Button
               size="sm"
@@ -122,6 +125,7 @@ export function FunnelControl({
         </PopoverContent>
       </Popover>
       {dialog}
+      {origin.dialog}
     </>
   );
 }

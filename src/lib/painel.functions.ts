@@ -4,7 +4,7 @@ import { FUNNEL, STEPS } from "./cadencia";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database, Tables } from "@/integrations/supabase/types";
-import type { DashContact } from "./dashboard";
+import type { DashContact, TemplateCodes } from "./dashboard";
 import type { PageResult } from "./fetch-all";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
@@ -237,28 +237,39 @@ export const painelDashboard = createServerFn({ method: "POST" })
     const { adminIds } = await import("./competition.server");
     const { computeDashboard, DASH_CONTACT_COLUMNS } = await import("./dashboard");
 
-    const [profiles, admins, periods, groups, subgroups, members, sectors, templates, goals] =
-      await Promise.all([
-        fetchAll((a, b) =>
-          db.from("profiles").select("id, display_name, email").order("id").range(a, b),
-        ),
-        adminIds(db),
-        db.from("periods").select("id, name, status, kind, started_at, closed_at"),
-        db.from("groups").select("id, name, period_id").order("name"),
-        db.from("subgroups").select("id, name, group_id").order("name"),
-        fetchAll((a, b) =>
-          db
-            .from("period_members")
-            .select("period_id, user_id, group_id, subgroup_id")
-            .order("id")
-            .range(a, b),
-        ),
-        db.from("sectors").select("id, name, active, sort"),
-        db.from("sector_templates").select("sector_id, step, body"),
+    const [
+      profiles,
+      admins,
+      periods,
+      groups,
+      subgroups,
+      members,
+      sectors,
+      templates,
+      goals,
+      defaults,
+    ] = await Promise.all([
+      fetchAll((a, b) =>
+        db.from("profiles").select("id, display_name, email").order("id").range(a, b),
+      ),
+      adminIds(db),
+      db.from("periods").select("id, name, status, kind, started_at, closed_at"),
+      db.from("groups").select("id, name, period_id").order("name"),
+      db.from("subgroups").select("id, name, group_id").order("name"),
+      fetchAll((a, b) =>
         db
-          .from("goals")
-          .select("id, user_id, group_id, envios_dia, l1_semana, ats_semana, no_prazo_pct"),
-      ]);
+          .from("period_members")
+          .select("period_id, user_id, group_id, subgroup_id")
+          .order("id")
+          .range(a, b),
+      ),
+      db.from("sectors").select("id, name, active, sort"),
+      db.from("sector_templates").select("sector_id, step, code, body"),
+      db
+        .from("goals")
+        .select("id, user_id, group_id, envios_dia, l1_semana, ats_semana, no_prazo_pct"),
+      db.from("message_templates").select("step, code, body"),
+    ]);
 
     const allPeriods = (periods.data ?? []).sort((a, b) => (a.started_at < b.started_at ? 1 : -1));
     const period =
@@ -324,8 +335,13 @@ export const painelDashboard = createServerFn({ method: "POST" })
     ]);
 
     const sectorSteps: Record<string, number[]> = {};
+    const templateCodes: TemplateCodes = { defaults: {}, sectors: {} };
     for (const t of templates.data ?? [])
-      if (t.body.trim()) (sectorSteps[t.sector_id] ??= []).push(t.step);
+      if (t.body.trim()) {
+        (sectorSteps[t.sector_id] ??= []).push(t.step);
+        (templateCodes.sectors[t.sector_id] ??= {})[t.step] = t.code;
+      }
+    for (const t of defaults.data ?? []) if (t.body.trim()) templateCodes.defaults[t.step] = t.code;
 
     const dashboard = computeDashboard({
       contacts,
@@ -341,6 +357,7 @@ export const painelDashboard = createServerFn({ method: "POST" })
       channel: data.channel,
       sectorId: data.sectorId,
       goals: goals.data ?? [],
+      templateCodes,
     });
 
     const spDay = (ts: string) =>

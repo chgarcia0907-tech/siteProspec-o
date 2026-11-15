@@ -2,8 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   FUNNEL,
   FUNNEL_MAX_POINTS,
+  OUTRO_CANAL,
   advancePatch,
+  entryChannel,
   funnelIndex,
+  needsResponseOrigin,
+  responseOriginChoices,
+  responseOriginLabel,
   undoPatch,
   type Contact,
 } from "./cadencia";
@@ -107,5 +112,41 @@ describe("pontuação derivada do funil", () => {
     const row = r.rows[0]!;
     expect(row.pontos_funil).toBe(FUNNEL_MAX_POINTS);
     for (const f of FUNNEL) expect(row[f.countKey]).toBe(1);
+  });
+});
+
+describe("mensagem que gerou a resposta", () => {
+  const sem = { status: "em_cadencia", at_marcada_em: null, resposta_etapa: null } as const;
+
+  it("pede a origem ao marcar 'respondeu' ou a primeira AT", () => {
+    expect(needsResponseOrigin(sem, { status: "respondeu" })).toBe(true);
+    expect(needsResponseOrigin(sem, advancePatch(contato(), 0, "2026-11-12"))).toBe(true);
+  });
+
+  it("não pede quando a origem já foi informada ou vem junto", () => {
+    expect(needsResponseOrigin({ ...sem, resposta_etapa: 2 }, { status: "respondeu" })).toBe(false);
+    expect(needsResponseOrigin(sem, { status: "respondeu", resposta_etapa: 0 })).toBe(false);
+  });
+
+  it("não pede para etapas seguintes do funil nem para outras situações", () => {
+    const comAt = { ...sem, at_marcada_em: "2026-11-10" };
+    expect(needsResponseOrigin(comAt, { lead_em: "2026-11-12" })).toBe(false);
+    expect(needsResponseOrigin(sem, { status: "descartado" })).toBe(false);
+    expect(needsResponseOrigin({ ...sem, status: "respondeu" }, { status: "respondeu" })).toBe(
+      false,
+    );
+  });
+
+  it("oferece só as etapas enviadas, da mais recente para a primeira", () => {
+    const c = contato({ sent1_at: "2026-11-02", sent2_at: "2026-11-03", sent3_at: null });
+    expect(responseOriginChoices(c).map((s) => s.label)).toEqual(["WhatsApp 1", "LinkedIn 1"]);
+  });
+
+  it("canal e rótulo saem de STEPS; 0 é outro canal", () => {
+    expect(entryChannel(2)).toBe("whatsapp");
+    expect(entryChannel(5)).toBe("linkedin");
+    expect(entryChannel(OUTRO_CANAL)).toBe("outro");
+    expect(responseOriginLabel(3)).toBe("LinkedIn 2");
+    expect(responseOriginLabel(OUTRO_CANAL)).toBe("Outro canal");
   });
 });
