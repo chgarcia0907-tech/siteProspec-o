@@ -11,6 +11,7 @@ const S1 = "cccccccc-0000-4000-8000-000000000001";
 export const SETOR_VAREJO = "12121212-0000-4000-8000-000000000001";
 const SETOR_SAUDE = "12121212-0000-4000-8000-000000000002";
 const EMPRESA_DELTA = "13131313-0000-4000-8000-000000000001";
+export const GOAL_EQUIPE = "14141414-0000-4000-8000-000000000001";
 
 export const USER = {
   id: U1,
@@ -31,6 +32,7 @@ const blank = {
   job_title: "",
   connected_at: null,
   step1_date: null,
+  respondeu_em: null,
   sent1_at: null,
   sent2_at: null,
   sent3_at: null,
@@ -343,6 +345,18 @@ export function initialDb() {
           primeiro_at: { hunter: "Hunter Um", data: "2026-10-08" },
         },
         frozen_at: "2026-10-26T20:00:00Z",
+      },
+    ],
+    // Meta da equipe: 5 mensagens por dia útil, 1 AT por semana e 80% no prazo.
+    goals: [
+      {
+        id: GOAL_EQUIPE,
+        user_id: null,
+        group_id: null,
+        envios_dia: 5,
+        l1_semana: null,
+        ats_semana: 1,
+        no_prazo_pct: 80,
       },
     ],
     competition_settings: [{ id: 1, start_date: "2026-10-01", end_date: null }],

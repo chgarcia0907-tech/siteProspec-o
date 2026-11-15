@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { adminAddHoliday, adminRemoveHoliday } from "@/lib/admin.functions";
+import { useConfirm } from "@/components/useConfirm";
 import { useHolidayList } from "@/hooks/useCadencia";
 import { formatBR } from "@/lib/cadencia";
 
@@ -26,6 +27,7 @@ export function HolidaysAdmin({
   const [date, setDate] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const { ask, dialog } = useConfirm();
 
   const byYear = useMemo(() => {
     const m = new Map<string, { date: string; name: string }[]>();
@@ -101,7 +103,18 @@ export function HolidaysAdmin({
                   aria-label={`Remover ${h.name}`}
                   disabled={busy}
                   onClick={() =>
-                    run(() => remove({ data: { password, date: h.date } }), "Feriado removido")
+                    ask({
+                      title: `Remover o feriado ${h.name}?`,
+                      desc: `${formatBR(h.date)} volta a contar como dia útil e as datas previstas da cadência são recalculadas.`,
+                      action: "Remover",
+                      reversible: true,
+                      run: async () => {
+                        await run(
+                          () => remove({ data: { password, date: h.date } }),
+                          "Feriado removido",
+                        );
+                      },
+                    })
                   }
                 >
                   <X className="h-4 w-4" />
@@ -111,6 +124,7 @@ export function HolidaysAdmin({
           </ul>
         </div>
       ))}
+      {dialog}
     </div>
   );
 }

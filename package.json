@@ -12,10 +12,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "VITE_SUPABASE_URL=http://127.0.0.1:54399 VITE_SUPABASE_PUBLISHABLE_KEY=anon-key vite build && playwright test",
+    "screenshots": "SCREENSHOTS=1 bun run e2e",
     "format": "prettier --write .",
     "db:new": "npx -y supabase@2 migration new",
     "db:push": "npx -y supabase@2 db push",
-    "db:types": "npx -y supabase@2 gen types typescript --linked --schema public > src/integrations/supabase/types.ts"
+    "db:types": "npx -y supabase@2 gen types typescript --linked --schema public > src/integrations/supabase/types.ts && prettier --write src/integrations/supabase/types.ts"
   },
   "overrides": {
     "rolldown": "1.2.1"

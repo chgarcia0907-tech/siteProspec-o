@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { useOverview } from "@/hooks/usePainel";
-import type { Ask } from "../useConfirm";
+import type { Ask } from "@/components/useConfirm";
 import { NewPeriodButton } from "./NewPeriodButton";
 import { PeriodDetail } from "./PeriodDetail";
 

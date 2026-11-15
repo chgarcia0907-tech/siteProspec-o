@@ -14,7 +14,7 @@ import { STEPS, renderTemplate } from "@/lib/cadencia";
 import type { Sector, SectorTemplates, TemplateText } from "@/lib/empresas";
 import { sectorDelete, sectorSave, sectorSaveCadence } from "@/lib/setores.functions";
 import { errorMessage } from "@/lib/utils";
-import type { Ask } from "../useConfirm";
+import type { Ask } from "@/components/useConfirm";
 
 const TAGS =
   "[FIRST NAME], [EMPRESA], [NA_EMPRESA], [A_EMPRESA], [DA_EMPRESA], [CARGO], [DOR_DO_SETOR], [NOME], [CONSULTOR], [OBRIGADO], [JANELA], [SAUDACAO]";

@@ -28,6 +28,16 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   Escopos comuns: `cadencia`, `funil`, `ranking`, `painel`, `periodos`, `planilha`,
   `empresas`, `auth`, `db`, `ui`, `deps`.
 
+## Redesign do frontend (em andamento)
+
+- Plano, inventário das telas e screenshots do "antes" ficam em `docs/redesign/`.
+- O redesign troca só a apresentação: `src/routes/`, `src/components/` e os tokens em
+  `src/styles.css`. Não mexa em `src/lib/`, `src/hooks/` nem em `*.functions.ts`/`*.server.ts`;
+  se a tela nova precisar de outro dado ou regra, isso vai num PR separado, com teste.
+- Uma tela por PR, com as screenshots de antes e depois (`bun run screenshots` regenera
+  `docs/redesign/screenshots/`). Os testes em `e2e/*.spec.ts` são a rede de segurança: texto
+  ou botão mudado de propósito se ajusta no teste do mesmo PR.
+
 ## Banco de dados (Supabase, projeto próprio)
 
 - Migrações ficam só em `supabase/migrations/` (formato do Supabase CLI). Crie com
@@ -51,8 +61,9 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   `ranking.ts`), com testes ao lado (`*.test.ts`). Lógica que dá para testar não fica em
   componente.
 - Hooks compartilhados: `useCadencia` (dados do hunter), `usePainel` (dados do admin),
-  `useSelection` (seleção por checkbox). No painel, ações destrutivas passam por
-  `useConfirm` (`ask({ title, desc, word?, run })`).
+  `useSelection` (seleção por checkbox). Ações destrutivas passam por `useConfirm`
+  (`src/components/useConfirm.tsx`: `ask({ title, desc, word?, action?, reversible?, run })`),
+  nunca pelo `confirm()` do navegador.
 - Etapas da cadência vêm de `STEPS` e etapas do funil de `FUNNEL` (ambos em `cadencia.ts`):
   colunas, rótulos, pontos e CSVs derivam dessas listas; não repita os campos à mão.
 - Selects simples usam `NativeSelect`; erros em toast usam `errorMessage` (`src/lib/utils.ts`).
@@ -68,8 +79,8 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Regras de cadência, parser do LinkedIn e utilitários de data ficam em `src/lib/cadencia.ts` — uma única fonte de verdade reutilizada por todas as telas.
 - Acesso a dados via cliente Supabase do navegador em hooks React Query (`src/hooks/useCadencia.ts`), protegido por RLS por hunter; não usar server functions para CRUD simples.
 - Datas previstas são calculadas (nunca gravadas) por `plannedDates` em `cadencia.ts`, em dias úteis (sem fins de semana nem feriados da tabela `holidays`, carregada uma vez por tela/export e passada como Set) e encadeadas a partir do envio real (ou previsão) da etapa anterior; todas as telas, CSVs e o export usam essa função única.
-- Ranking usa a função SQL `public.ranking(date)` (SECURITY DEFINER) porque agrega dados de outros hunters, que o RLS esconde.
-- Exclusão de contatos e período da competição só via server functions em `src/lib/admin.functions.ts`, após validar ADMIN_PASSWORD (bloqueio em `admin_attempts`); hunters não têm DELETE em `contacts`.
+- Ranking é só do administrador: fica na aba "Competição" do /painel (`/ranking` redireciona para `/painel?aba=competicao`); `getCompetition` exige has_role e a função SQL `public.ranking(date)` (SECURITY DEFINER, porque agrega dados de outros hunters que o RLS esconde) devolve vazio para quem não é admin.
+- Exclusão de contatos e feriados só via server functions em `src/lib/admin.functions.ts`, após validar ADMIN_PASSWORD (bloqueio em `admin_attempts`); hunters não têm DELETE em `contacts`. O período da competição geral (`competition_settings`) só se edita no painel, aba "Competição" (`painelSetPeriod`, has_role).
 - Pontuação da competição: cálculo puro em `src/lib/competition.ts`, carregado com service role em `competition.server.ts`; o cliente recebe só totais.
 - Planilha: o Google Sheets puxa CSV via IMPORTDATA de `/api/public/planilha/*.csv` (token = secret SHEET_EXPORT_TOKEN); lógica em `src/lib/planilha.server.ts`, reaproveitando `cadencia.ts` e `competition.server.ts`.
 - Painel admin (/painel): papel em public.user_roles + has_role(); toda leitura/exclusão global via server functions em src/lib/painel.functions.ts que validam has_role antes de usar service role.
@@ -89,3 +100,25 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   hoje, `pickTemplate` (`fila.ts`) usa a mensagem do setor da empresa e cai no modelo padrão
   (`message_templates`) quando a etapa não tem mensagem própria. Setor com empresas não é excluído, só
   desativado.
+- Preenchimento automático de empresa e área: regras puras em `src/lib/enriquecimento.ts`
+  (`companyFromHeadline`, `areaFromTitle`, `autoFillPatch`), sem IA e sem serviço externo. Valem na
+  importação (empresa cadastrada citada no headline vira `company_id`; senão o nome do headline vai
+  para `contacts.company`) e no botão "Preencher empresa e área" de Contatos. Só preenchem campos
+  vazios e, na dúvida, deixam em branco; CEO, sócio e financeiro ficam sem área de propósito. Ao
+  ajustar uma regra, acrescente o caso real em `enriquecimento.test.ts`.
+- Indicadores do painel (aba "Indicadores", a primeira do /painel): cálculo puro em
+  `src/lib/dashboard.ts` (`computeDashboard`), carregado com service role em `painelDashboard`
+  (`painel.functions.ts`, has_role antes). Reaproveita `plannedDates`/`isActive`/`computedStatus` e
+  `atScoreDate`/`stageScoreDate`, então envios, atrasados e funil batem com Envios de hoje e com o
+  placar. O "hoje" vem do navegador (fuso SP) para servidor e tela concordarem. Componentes em
+  `src/components/painel/dashboard/`. Limite conhecido: `sentN_at` é o dia em que a etapa foi
+  marcada (sem histórico).
+- Respostas: `contacts.respondeu_em` é carimbado por trigger quando a situação vira "respondeu"
+  (descartar depois mantém a data; voltar para uma situação de cadência apaga). O painel usa
+  `responseDate` (`dashboard.ts`): essa data, senão o registro da AT. Respostas marcadas antes da
+  coluna existir ficam sem data e fora das contagens por período.
+- Metas: tabela `goals` (só service role), uma linha por escopo — equipe (sem `user_id` e
+  `group_id`), grupo ou hunter —, com herança campo a campo hunter → grupo → equipe
+  (`resolveGoal`). Metas diárias/semanais viram metas do intervalo pelos dias úteis já passados;
+  semáforo: na meta ≥ 100%, perto ≥ 70% (no prazo: até 10 pontos abaixo). Escrita por
+  `painelSaveGoal`/`painelDeleteGoal` (`painel.functions.ts`, has_role antes).

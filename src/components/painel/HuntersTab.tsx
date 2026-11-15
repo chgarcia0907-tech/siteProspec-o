@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDeleter, useHunters } from "@/hooks/usePainel";
 import { painelContacts } from "@/lib/painel.functions";
 import { cn } from "@/lib/utils";
-import type { Ask } from "./useConfirm";
+import type { Ask } from "@/components/useConfirm";
 import { ContactTable } from "./ContactTable";
 import { HunterActions } from "./HunterActions";
 

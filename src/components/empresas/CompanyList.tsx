@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import { CompanyGenderToggle } from "@/components/CompanyGender";
 import { IndustrySelect } from "@/components/IndustrySelect";
 import { InlineInput } from "@/components/InlineInput";
-import type { Ask } from "@/components/painel/useConfirm";
+import type { Ask } from "@/components/useConfirm";
 import { Button } from "@/components/ui/button";
 import { useDeleteCompany, useUpdateCompany } from "@/hooks/useCadencia";
 import { STEPS, formatBR } from "@/lib/cadencia";
@@ -54,7 +54,9 @@ export function CompanyList({
         <section key={week} className="space-y-2">
           <h2 className="text-sm font-semibold">
             Semana de {formatBR(week)} a {formatBR(weekEndISO(week))}{" "}
-            <span className="font-normal text-muted-foreground">· {list.length} empresas</span>
+            <span className="font-normal text-muted-foreground">
+              · {list.length} {list.length === 1 ? "empresa" : "empresas"}
+            </span>
           </h2>
           <div className="divide-y rounded-lg border bg-card">
             {list.map((c) => {

@@ -3,6 +3,7 @@ import { expect, mutations, test } from "./helpers";
 test.describe("Painel do administrador", () => {
   test("lista hunters e contatos de cada um", async ({ page }) => {
     await page.goto("/painel");
+    await page.getByRole("tab", { name: "Hunters" }).click();
     await expect(page.getByText("Hunters · 11 contatos no total")).toBeVisible();
     await page.getByRole("button", { name: /Hunter Um/ }).click();
     await expect(
@@ -12,6 +13,7 @@ test.describe("Painel do administrador", () => {
 
   test("ação destrutiva exige digitar a palavra de confirmação", async ({ page }) => {
     await page.goto("/painel");
+    await page.getByRole("tab", { name: "Hunters" }).click();
     await page.getByRole("button", { name: /Hunter Um/ }).click();
     await page.getByRole("button", { name: "Limpar todos deste hunter" }).click();
     const dialog = page.getByRole("alertdialog");
@@ -25,6 +27,7 @@ test.describe("Painel do administrador", () => {
 
   test("excluir um contato apaga só ele", async ({ page }) => {
     await page.goto("/painel");
+    await page.getByRole("tab", { name: "Hunters" }).click();
     await page.getByRole("button", { name: /Hunter Um/ }).click();
     await page
       .getByRole("row", { name: /Ana Souza/ })
@@ -42,5 +45,14 @@ test.describe("Painel do administrador", () => {
     await expect(page.getByText("1 membro aguardando alocação em grupo")).toBeVisible();
     await expect(page.getByRole("row", { name: /Hunter Um/ })).toContainText("Squad Azul");
     await expect(page.getByRole("row", { name: /Hunter Dois/ })).toContainText("Sem grupo");
+  });
+
+  test("no celular todas as abas ficam ao alcance do toque", async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 });
+    await page.goto("/painel");
+    await page.getByRole("tab", { name: "Busca geral" }).click();
+    await expect(
+      page.getByPlaceholder("Nome ou empresa (opcional com filtro de data)"),
+    ).toBeVisible();
   });
 });

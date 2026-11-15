@@ -12,7 +12,13 @@ export const getCompetition = createServerFn({ method: "GET" })
       .optional()
       .parse(d),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // O placar é só do administrador (aba "Competição" do painel).
+    const { data: admin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!admin) throw new Error("Acesso negado");
     const m = await import("./competition.server");
     if (data?.periodId && data.oficial) return m.loadSnapshot(data.periodId);
     return m.loadCompetition(data?.periodId ?? null);
@@ -57,36 +63,6 @@ export const adminDeleteContacts = createServerFn({ method: "POST" })
     const { count, error } = await q;
     if (error) throw new Error("Falha ao excluir contatos");
     return { status: "ok" as const, deleted: count ?? 0 };
-  });
-
-export const adminSetCompetition = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d) =>
-    z
-      .object({
-        password: pw,
-        start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-        end: z
-          .string()
-          .regex(/^\d{4}-\d{2}-\d{2}$/)
-          .nullable(),
-      })
-      .parse(d),
-  )
-  .handler(async ({ data, context }) => {
-    const { checkAdminPassword } = await import("./admin.server");
-    const check = await checkAdminPassword(context.userId, data.password);
-    if (check.status !== "ok") return check;
-    if (data.end && data.end < data.start) return { status: "invalid" as const };
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("competition_settings").upsert({
-      id: 1,
-      start_date: data.start,
-      end_date: data.end,
-      updated_at: new Date().toISOString(),
-    });
-    if (error) throw new Error("Falha ao salvar período");
-    return { status: "ok" as const };
   });
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_OFFSETS, type Contact, type Offsets } from "@/lib/cadencia";
 import type { Company, Sector, SectorTemplates } from "@/lib/empresas";
 import { sortSectors } from "@/lib/empresas";
+import { groupPatches } from "@/lib/enriquecimento";
 import { fetchAll } from "@/lib/fetch-all";
 
 export function useContacts() {
@@ -140,6 +141,35 @@ export function useUpdateContacts() {
   });
 }
 
+/**
+ * Grava alterações diferentes por contato (ex.: preenchimento automático). Alterações iguais
+ * viram uma só requisição; os grupos rodam em lotes para não abrir centenas de conexões.
+ */
+export function useBulkPatchContacts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (items: { id: string; patch: Partial<Contact> }[]): Promise<number> => {
+      const jobs = groupPatches(items).flatMap(({ ids, patch }) => {
+        const chunks: { ids: string[]; patch: Partial<Contact> }[] = [];
+        for (let i = 0; i < ids.length; i += 200)
+          chunks.push({ ids: ids.slice(i, i + 200), patch });
+        return chunks;
+      });
+      for (let i = 0; i < jobs.length; i += 6) {
+        const results = await Promise.all(
+          jobs
+            .slice(i, i + 6)
+            .map(({ ids, patch }) => supabase.from("contacts").update(patch).in("id", ids)),
+        );
+        const failed = results.find((r) => r.error);
+        if (failed?.error) throw failed.error;
+      }
+      return items.length;
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["contacts"] }),
+  });
+}
+
 export function useImportContacts() {
   const qc = useQueryClient();
   return useMutation({
@@ -150,6 +180,11 @@ export function useImportContacts() {
         job_title: string;
         connected_at: string | null;
         company_id: string | null;
+        /** Empresa em texto livre, quando não há empresa cadastrada vinculada. */
+        company?: string;
+        company_gender?: Contact["company_gender"];
+        /** Área do contato (TI, RH...). */
+        sector?: string;
       }[],
     ) => {
       const { data: auth } = await supabase.auth.getUser();
@@ -176,21 +211,6 @@ export function useSaveGender() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["profile"] }),
-  });
-}
-
-export function useCompetitionSettings() {
-  return useQuery({
-    queryKey: ["competition_settings"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("competition_settings")
-        .select("start_date, end_date")
-        .eq("id", 1)
-        .maybeSingle();
-      if (error) throw error;
-      return data ?? { start_date: "2026-10-01", end_date: null };
-    },
   });
 }
 
