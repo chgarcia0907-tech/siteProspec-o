@@ -2,7 +2,7 @@ import { toast } from "sonner";
 import { CompanyGenderToggle } from "@/components/CompanyGender";
 import { IndustrySelect } from "@/components/IndustrySelect";
 import { InlineInput } from "@/components/InlineInput";
-import type { Ask } from "@/components/painel/useConfirm";
+import type { Ask } from "@/components/useConfirm";
 import { Button } from "@/components/ui/button";
 import { useDeleteCompany, useUpdateCompany } from "@/hooks/useCadencia";
 import { STEPS, formatBR } from "@/lib/cadencia";

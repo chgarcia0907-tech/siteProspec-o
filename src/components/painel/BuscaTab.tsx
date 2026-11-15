@@ -8,7 +8,7 @@ import { useHunters } from "@/hooks/usePainel";
 import { addDaysISO, formatBR, spParts } from "@/lib/cadencia";
 import { mondayOf } from "@/lib/competition";
 import { painelContacts } from "@/lib/painel.functions";
-import type { Ask } from "./useConfirm";
+import type { Ask } from "@/components/useConfirm";
 import { ContactTable } from "./ContactTable";
 
 const WEEKS_BACK = 26;

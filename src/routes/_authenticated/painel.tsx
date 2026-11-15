@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BuscaTab } from "@/components/painel/BuscaTab";
 import { CompTab } from "@/components/painel/CompTab";
-import { useConfirm } from "@/components/painel/useConfirm";
+import { useConfirm } from "@/components/useConfirm";
 import { HuntersTab } from "@/components/painel/HuntersTab";
 import { IndicadoresTab } from "@/components/painel/dashboard/IndicadoresTab";
 import { PeriodosTab } from "@/components/painel/periodos/PeriodosTab";
