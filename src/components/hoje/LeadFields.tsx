@@ -22,11 +22,11 @@ export function LeadFields({
   const [cargo, setCargo] = useState(contact.job_title);
   const [nome, setNome] = useState(contact.name);
   return (
-    <div className="flex w-full flex-wrap items-center gap-2 border-t pt-2">
+    <div className="flex w-full flex-wrap items-center gap-2">
       <Input
         aria-label="Nome do lead"
         placeholder="Nome"
-        className="h-7 w-52 text-xs"
+        className="h-8 w-52"
         value={nome}
         onChange={(e) => setNome(e.target.value)}
         onBlur={() =>
@@ -41,11 +41,11 @@ export function LeadFields({
           value={contact.company_id}
           onChange={(id) => onPatch({ company_id: id })}
           emptyLabel="Vincular empresa…"
-          className={cn("w-48", !contact.company_id && "border-warning")}
+          className={cn("w-48", !contact.company_id && "border-warning-border")}
         />
       )}
       {!contact.company_id && (
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5 text-dense text-muted-foreground">
           {contact.company.trim() || "Empresa"}
           <CompanyGenderToggle
             value={contact.company_gender ?? "feminino"}
@@ -58,13 +58,13 @@ export function LeadFields({
           <SectorSelect
             value={contact.sector}
             onChange={(v) => onPatch({ sector: v })}
-            className={cn("h-7 w-48 text-xs", !contact.sector && "border-warning")}
+            className={cn("h-8 w-48", !contact.sector && "border-warning-border")}
           />
           <div className="flex flex-col">
             <Input
               aria-label="Cargo na empresa"
               placeholder="Cargo na empresa"
-              className={cn("h-7 w-52 text-xs", !contact.job_title.trim() && "border-warning")}
+              className={cn("h-8 w-52", !contact.job_title.trim() && "border-warning-border")}
               value={cargo}
               onChange={(e) => setCargo(e.target.value)}
               onBlur={() =>

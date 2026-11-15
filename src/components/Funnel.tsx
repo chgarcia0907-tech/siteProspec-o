@@ -62,7 +62,7 @@ export function FunnelControl({
         }}
       >
         <PopoverTrigger asChild>
-          <Button size="sm" variant="outline" className="h-7 px-2 text-xs">
+          <Button size="sm" variant="ghost">
             Avançar no funil
           </Button>
         </PopoverTrigger>
