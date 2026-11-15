@@ -1,4 +1,4 @@
-import { expect, mutations, test, TODAY } from "./helpers";
+import { expect, MOCK, mutations, test, TODAY } from "./helpers";
 
 test.describe("Envios de hoje", () => {
   test("monta uma fila por etapa, com atrasados destacados", async ({ page }) => {
@@ -52,5 +52,19 @@ test.describe("Envios de hoje", () => {
     const body = JSON.parse((await mutations())[0]!.body);
     expect(body.at_marcada_em).toBe(TODAY);
     expect(body.at_registrado_em).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  test("mostra que está carregando em vez de fila vazia", async ({ page }) => {
+    let release = () => {};
+    const held = new Promise<void>((r) => (release = r));
+    await page.route(`${MOCK}/rest/v1/contacts*`, async (route) => {
+      await held;
+      await route.continue();
+    });
+    await page.goto("/hoje");
+    await expect(page.getByText("Carregando a fila…")).toBeVisible();
+    await expect(page.getByText(/Nada na fila/)).toHaveCount(0);
+    release();
+    await expect(page.getByRole("tab", { name: /^LinkedIn 1/ })).toHaveText(/LinkedIn 1\s*2/);
   });
 });

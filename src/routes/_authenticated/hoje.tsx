@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { QueueList } from "@/components/hoje/QueueList";
+import { QueueList, QueueMessage } from "@/components/hoje/QueueList";
 import { useQueueActions } from "@/components/hoje/useQueueActions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/hoje")({
 function Hoje() {
   const [ref, setRef] = useState(todayISO());
   const [tab, setTab] = useState("1");
-  const { data: contacts } = useContacts();
+  const { data: contacts, isPending, isError } = useContacts();
   const { data: settings } = useSettings();
   const holidays = useHolidays();
   const offsets = settings ?? DEFAULT_OFFSETS;
@@ -68,7 +68,7 @@ function Hoje() {
             <TabsTrigger key={step.n} value={String(step.n)} className="gap-2">
               {step.label}
               <span className="rounded-full bg-muted px-1.5 text-[11px] font-semibold">
-                {queues[step.n].length}
+                {isPending ? "…" : queues[step.n].length}
               </span>
             </TabsTrigger>
           ))}
@@ -76,7 +76,15 @@ function Hoje() {
 
         {STEPS.map((step) => (
           <TabsContent key={step.n} value={String(step.n)} className="mt-4">
-            <QueueList step={step} items={queues[step.n]} actions={actions} />
+            {isPending ? (
+              <QueueMessage>Carregando a fila…</QueueMessage>
+            ) : isError ? (
+              <QueueMessage>
+                Não foi possível carregar os contatos. Recarregue a página para tentar de novo.
+              </QueueMessage>
+            ) : (
+              <QueueList step={step} items={queues[step.n]} actions={actions} />
+            )}
           </TabsContent>
         ))}
       </Tabs>
