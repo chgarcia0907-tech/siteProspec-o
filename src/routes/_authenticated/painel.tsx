@@ -14,6 +14,14 @@ import { painelIsAdmin } from "@/lib/painel.functions";
 const ABAS = ["indicadores", "hunters", "periodos", "setores", "competicao", "busca"] as const;
 type Aba = (typeof ABAS)[number];
 const isAba = (v: unknown): v is Aba => ABAS.includes(v as Aba);
+const ABA_LABEL: Record<Aba, string> = {
+  indicadores: "Indicadores",
+  hunters: "Hunters",
+  periodos: "Períodos e grupos",
+  setores: "Setores e cadências",
+  competicao: "Competição",
+  busca: "Busca geral",
+};
 
 export const Route = createFileRoute("/_authenticated/painel")({
   // A aba aberta fica na URL (?aba=competicao), para links diretos e o redirecionamento do /ranking.
@@ -59,20 +67,25 @@ function PainelAdmin() {
   const { aba = "indicadores" } = Route.useSearch();
   const navigate = Route.useNavigate();
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Painel do administrador</h1>
+    <div className="space-y-6">
+      <header>
+        <p className="eyebrow">Painel do administrador</p>
+        <h1 className="mt-1 text-title font-bold">{ABA_LABEL[aba]}</h1>
+      </header>
       <Tabs
         value={aba}
         onValueChange={(v) => isAba(v) && navigate({ search: { aba: v }, replace: true })}
       >
-        {/* Quebra em linhas no celular, para todas as abas ficarem ao alcance do toque. */}
-        <TabsList className="h-auto flex-wrap justify-start">
-          <TabsTrigger value="indicadores">Indicadores</TabsTrigger>
-          <TabsTrigger value="hunters">Hunters</TabsTrigger>
-          <TabsTrigger value="periodos">Períodos e grupos</TabsTrigger>
-          <TabsTrigger value="setores">Setores e cadências</TabsTrigger>
-          <TabsTrigger value="competicao">Competição</TabsTrigger>
-          <TabsTrigger value="busca">Busca geral</TabsTrigger>
+        <TabsList className="h-auto w-full flex-wrap justify-start gap-6 rounded-none border-0 border-b bg-transparent p-0">
+          {ABAS.map((v) => (
+            <TabsTrigger
+              key={v}
+              value={v}
+              className="-mb-px rounded-none border-b-2 border-transparent px-0 pb-2.5 data-[state=active]:border-primary data-[state=active]:bg-transparent"
+            >
+              {ABA_LABEL[v]}
+            </TabsTrigger>
+          ))}
         </TabsList>
         <TabsContent value="indicadores">
           <IndicadoresTab />

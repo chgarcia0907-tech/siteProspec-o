@@ -65,6 +65,8 @@ for (const [dir, device] of Object.entries(VIEWPORTS)) {
           // Pelo teclado: no celular as últimas abas do painel ficam fora da tela.
           await page.getByRole("tab", { name: shot.tab }).focus();
           await page.keyboard.press("Enter");
+          // Tira o foco do teclado, para o anel de foco não aparecer na foto.
+          await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
         }
         await snap(page, dir, shot.name);
       });
