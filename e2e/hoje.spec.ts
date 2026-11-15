@@ -67,4 +67,46 @@ test.describe("Envios de hoje", () => {
     release();
     await expect(page.getByRole("tab", { name: /^LinkedIn 1/ })).toHaveText(/LinkedIn 1\s*2/);
   });
+
+  test("marcar como enviado trava o botão e grava uma vez só, mesmo com toque duplo", async ({
+    page,
+  }) => {
+    await page.goto("/hoje");
+    const tab = page.getByRole("tab", { name: /^WhatsApp 1/ });
+    await tab.click();
+    const botao = page.getByRole("button", { name: "Marcar como enviado" });
+    await botao.dblclick();
+    await expect(page.getByText("WhatsApp 1 registrada para Bruno Lima")).toBeVisible();
+    await expect(page.getByText("Bruno Lima")).toHaveCount(0);
+    await expect(tab).toHaveText(/WhatsApp 1\s*0/);
+    const patches = (await mutations()).filter((m) => m.method === "PATCH");
+    expect(patches).toHaveLength(1);
+  });
+
+  test("se a gravação falhar, o lead volta para a fila", async ({ page }) => {
+    await page.route(`${MOCK}/rest/v1/contacts*`, (route) =>
+      route.request().method() === "PATCH"
+        ? route.fulfill({ status: 500, json: { message: "falha simulada" } })
+        : route.continue(),
+    );
+    await page.goto("/hoje");
+    await page.getByRole("tab", { name: /^WhatsApp 1/ }).click();
+    await page.getByRole("button", { name: "Marcar como enviado" }).click();
+    await expect(page.getByText("falha simulada")).toBeVisible();
+    await expect(page.getByText("Bruno Lima")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Marcar como enviado" })).toBeEnabled();
+  });
+
+  test("com movimento reduzido, o cartão sai sem transição", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/hoje");
+    await page.getByRole("tab", { name: /^WhatsApp 1/ }).click();
+    const cartao = page.locator("[data-slot=queue-card]").first();
+    const duracao = await cartao.evaluate((el) =>
+      parseFloat(getComputedStyle(el).transitionDuration),
+    );
+    expect(duracao).toBeLessThan(0.001);
+    await page.getByRole("button", { name: "Marcar como enviado" }).click();
+    await expect(page.getByText("Bruno Lima")).toHaveCount(0);
+  });
 });

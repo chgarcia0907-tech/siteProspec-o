@@ -98,6 +98,23 @@ Contatos (tabela grande com edição na linha), Empresas, Importar conexões (co
 pré-visualizar), Modelos (só leitura), Configurações e as outras abas do painel. Elas devem
 seguir os componentes base. Os detalhes de cada uma estão no inventário.
 
+### 7. Movimento
+
+A auditoria de movimento
+([`motion-audits/cadencia-outbound-2026-11-15.html`](../../motion-audits/cadencia-outbound-2026-11-15.html),
+com demos) concluiu que o app quase não anima, e isso está certo para uma ferramenta usada o dia
+todo. O que falta é movimento **funcional**. Pedimos que o design system defina:
+
+- **Retorno de "Marcar como enviado":** o botão trava e vira "Enviado ✓" na hora, e o cartão sai da
+  fila em cerca de 160ms (opacidade e um leve deslocamento), sem a fila saltar sob o dedo.
+- **Um easing e duas durações para o app inteiro:** por exemplo `cubic-bezier(0.23, 1, 0.32, 1)`,
+  150ms para trocas de estado e 200ms para revelar conteúdo (linhas expansíveis, diálogos).
+- **Carregamento:** esqueleto no formato do conteúdo, sem brilho pulsante, com crossfade curto.
+- **Diálogos:** entrada de 160ms com escala de 0,97 para 1, saída mais curta e véu entre 30% e 40%.
+- **Movimento reduzido:** toda animação tem uma versão sem deslocamento nem escala
+  (`prefers-reduced-motion`).
+- **Encanto em só dois lugares:** a AT marcada e a fila do dia concluída. Nada mais comemora.
+
 ## Restrições
 
 - **Não muda regra nem dado.** O redesign troca só a apresentação. Etapas da cadência e do funil,
@@ -112,11 +129,29 @@ seguir os componentes base. Os detalhes de cada uma estão no inventário.
 
 ## O que esperamos receber
 
-1. Tokens (cores, tipografia, espaçamento, raio, densidade).
+Entregue no formato **DESIGN.md**: um único arquivo Markdown com os tokens (valores exatos), os
+componentes (anatomia, variantes e estados), o movimento (easing, durações, versão reduzida) e uma
+lista do que fazer e do que evitar. Ele vai para a raiz do repositório, e o `AGENTS.md` aponta para
+ele, para que toda sessão do Claude Code siga o mesmo padrão.
+
+1. Tokens (cores, tipografia, espaçamento, raio, densidade e movimento).
 2. Os componentes base acima, com estados.
 3. Navegação em desktop e celular.
 4. Envios de hoje em desktop e celular.
 5. Indicadores em desktop.
 6. As demais telas, depois de aprovados os itens 1 a 5.
 
-A implementação segue no Claude Code, uma tela por PR, com capturas de antes e depois.
+## Como vai ser implementado
+
+A implementação segue no Claude Code, uma tela por PR, com capturas de antes e depois e os
+testes de ponta a ponta como rede de segurança. Skills usadas em cada parte:
+
+| Parte                                      | Skill                                                     |
+| ------------------------------------------ | --------------------------------------------------------- |
+| Cada tela redesenhada                      | `redesign-existing-projects`                              |
+| Gráficos e KPIs de Indicadores             | `dataviz`                                                 |
+| Microinterações (Envios de hoje, diálogos) | `design-motion-principles` (criação e, no fim, auditoria) |
+| Página inicial (`/`) e login (`/auth`)     | `design-taste-frontend` (TasteSkill), só nessas duas      |
+
+A TasteSkill fica restrita às páginas públicas porque ela própria não é para dashboards nem telas
+de app; o resto segue o DESIGN.md.

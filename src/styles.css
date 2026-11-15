@@ -104,3 +104,19 @@
     line-height: 1.15rem;
   }
 }
+
+/*
+ * Movimento reduzido: quem pediu menos movimento ao sistema não vê zoom, deslizamento nem
+ * transições. As durações vão a quase zero (não a zero, para os eventos de fim de animação
+ * continuarem disparando) e os estados finais se mantêm.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
