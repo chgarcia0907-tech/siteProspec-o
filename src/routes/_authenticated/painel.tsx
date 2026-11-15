@@ -11,7 +11,14 @@ import { PeriodosTab } from "@/components/painel/periodos/PeriodosTab";
 import { SetoresTab } from "@/components/painel/setores/SetoresTab";
 import { painelIsAdmin } from "@/lib/painel.functions";
 
+const ABAS = ["indicadores", "hunters", "periodos", "setores", "competicao", "busca"] as const;
+type Aba = (typeof ABAS)[number];
+const isAba = (v: unknown): v is Aba => ABAS.includes(v as Aba);
+
 export const Route = createFileRoute("/_authenticated/painel")({
+  // A aba aberta fica na URL (?aba=competicao), para links diretos e o redirecionamento do /ranking.
+  validateSearch: (s: Record<string, unknown>): { aba?: Aba } =>
+    isAba(s["aba"]) ? { aba: s["aba"] } : {},
   head: () => ({
     meta: [
       { title: "Painel do administrador — Cadência Outbound" },
@@ -49,10 +56,15 @@ function Painel() {
 
 function PainelAdmin() {
   const { ask, dialog } = useConfirm();
+  const { aba = "indicadores" } = Route.useSearch();
+  const navigate = Route.useNavigate();
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Painel do administrador</h1>
-      <Tabs defaultValue="indicadores">
+      <Tabs
+        value={aba}
+        onValueChange={(v) => isAba(v) && navigate({ search: { aba: v }, replace: true })}
+      >
         {/* Quebra em linhas no celular, para todas as abas ficarem ao alcance do toque. */}
         <TabsList className="h-auto flex-wrap justify-start">
           <TabsTrigger value="indicadores">Indicadores</TabsTrigger>

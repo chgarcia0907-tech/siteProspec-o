@@ -1,35 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ActivityBoard } from "@/components/ranking/ActivityBoard";
-import { CompetitionBoard } from "@/components/ranking/CompetitionBoard";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
+// O ranking passou a ser só do administrador, na aba "Competição" do painel. A rota antiga
+// continua existindo para links salvos não darem em página inexistente.
 export const Route = createFileRoute("/_authenticated/ranking")({
-  head: () => ({
-    meta: [
-      { title: "Ranking dos hunters — Cadência Outbound" },
-      {
-        name: "description",
-        content:
-          "Compare importações, mensagens enviadas, cadências concluídas e respostas por hunter.",
-      },
-      { property: "og:title", content: "Ranking dos hunters" },
-      {
-        property: "og:description",
-        content:
-          "Compare importações, mensagens enviadas, cadências concluídas e respostas por hunter.",
-      },
-    ],
-  }),
-  component: Ranking,
+  beforeLoad: () => {
+    throw redirect({ to: "/painel", search: { aba: "competicao" } });
+  },
 });
-
-function Ranking() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Ranking da competição</h1>
-      </div>
-      <CompetitionBoard />
-      <ActivityBoard />
-    </div>
-  );
-}

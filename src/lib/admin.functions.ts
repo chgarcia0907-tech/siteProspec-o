@@ -12,7 +12,13 @@ export const getCompetition = createServerFn({ method: "GET" })
       .optional()
       .parse(d),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // O placar é só do administrador (aba "Competição" do painel).
+    const { data: admin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!admin) throw new Error("Acesso negado");
     const m = await import("./competition.server");
     if (data?.periodId && data.oficial) return m.loadSnapshot(data.periodId);
     return m.loadCompetition(data?.periodId ?? null);

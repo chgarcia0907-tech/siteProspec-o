@@ -15,7 +15,6 @@ const SHOTS: Shot[] = [
   { name: "04-empresas", path: "/empresas" },
   { name: "05-importar", path: "/importar" },
   { name: "06-modelos", path: "/modelos" },
-  { name: "07-ranking", path: "/ranking" },
   { name: "08-configuracoes", path: "/configuracoes" },
   { name: "09-painel-indicadores", path: "/painel", tab: "Indicadores" },
   { name: "10-painel-hunters", path: "/painel", tab: "Hunters" },
