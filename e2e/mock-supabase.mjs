@@ -72,6 +72,36 @@ function filterRows(rows, params) {
   return out;
 }
 
+/** Colunas NOT NULL (com valor padrão) de cada tabela, como no banco real. */
+const NOT_NULL = {
+  contacts: ["name", "headline", "company", "company_gender", "phone", "sector", "job_title"],
+};
+
+/**
+ * Inserção em lote como o PostgREST faz: as colunas são a união das chaves de todas as linhas, e a
+ * chave que falta numa linha vira NULL (o supabase-js manda `defaultToNull`), a não ser com
+ * `Prefer: missing=default`. NULL em coluna NOT NULL recusa o lote inteiro (erro 23502).
+ */
+function notNullViolation(table, raw, prefer = "") {
+  const cols = NOT_NULL[table];
+  if (!cols) return null;
+  const body = JSON.parse(raw || "null");
+  const rows = Array.isArray(body) ? body : [body];
+  const keys = new Set(rows.flatMap((r) => Object.keys(r ?? {})));
+  const missingIsDefault = /missing=default/.test(prefer);
+  for (const r of rows) {
+    for (const col of cols) {
+      const value = col in r ? r[col] : keys.has(col) && !missingIsDefault ? null : undefined;
+      if (value === null)
+        return {
+          code: "23502",
+          message: `null value in column "${col}" of relation "${table}" violates not-null constraint`,
+        };
+    }
+  }
+  return null;
+}
+
 function send(res, status, body, headers = {}) {
   res.writeHead(status, {
     "content-type": "application/json",
@@ -111,6 +141,8 @@ http
       const table = t[1];
 
       if (req.method !== "GET" && req.method !== "HEAD") {
+        const recusa = req.method === "POST" && notNullViolation(table, raw, req.headers.prefer);
+        if (recusa) return send(res, 400, recusa);
         mutations.push({
           method: req.method,
           table,

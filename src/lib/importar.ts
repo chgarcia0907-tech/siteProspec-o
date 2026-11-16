@@ -57,17 +57,22 @@ export const importable = (rows: readonly ImportRow[]) =>
 /**
  * Contato a gravar. `companyId` é a empresa escolhida (cadastrada); sem ela, vai a empresa em
  * texto do headline, se houver.
+ *
+ * Toda linha leva as mesmas colunas, com valor vazio quando não há sugestão. No insert em lote,
+ * o supabase-js manda NULL na coluna que falta numa linha e existe em outra; como empresa e área
+ * são NOT NULL, um contato sem área no meio da lista recusava a importação inteira. Com empresa
+ * cadastrada, o trigger `contacts_copy_company` troca empresa e concordância pelas do cadastro.
  */
 export function importPayload(r: ImportRow, companyId: string | null) {
+  const companyText = companyId ? null : r.companyText;
   return {
     name: r.name,
     headline: r.headline,
     job_title: r.job_title,
     connected_at: r.connected_at,
     company_id: companyId,
-    ...(!companyId && r.companyText
-      ? { company: r.companyText.company, company_gender: r.companyText.company_gender }
-      : {}),
-    ...(r.area ? { sector: r.area } : {}),
+    company: companyText?.company ?? "",
+    company_gender: companyText?.company_gender ?? ("feminino" as CompanyGender),
+    sector: r.area ?? "",
   };
 }

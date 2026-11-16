@@ -57,7 +57,10 @@ describe("importar", () => {
       job_title: r!.job_title,
       connected_at: "2026-11-10",
       company_id: "c-alfa",
-      ...(r!.area ? { sector: r!.area } : {}),
+      // Empresa e concordância vêm do cadastro (trigger); vazias aqui só para a coluna existir.
+      company: "",
+      company_gender: "feminino",
+      sector: r!.area ?? "",
     });
   });
 
@@ -76,5 +79,31 @@ describe("importar", () => {
       company: r!.companyText!.company,
       company_gender: r!.companyText!.company_gender,
     });
+  });
+
+  it("lista com e sem área ou empresa: toda linha leva as mesmas colunas, sem NULL", () => {
+    const rows = importable(
+      buildImportRows(
+        [
+          p("Paula", "Gerente de Marketing no Itaú", "2026-11-10"),
+          p("Sara", "Consultora", "2026-11-10"),
+          p("Ana", "Gerente de Operações na Alfa", "2026-11-10"),
+        ],
+        new Set(),
+        "",
+        companies,
+      ),
+    );
+    expect(rows[1]!.area).toBeNull();
+    expect(rows[1]!.companyText).toBeNull();
+    const payloads = rows.map((r) => importPayload(r, r.suggested));
+    const keys = payloads.map((x) => Object.keys(x).sort().join(","));
+    expect(new Set(keys).size).toBe(1);
+    for (const x of payloads) {
+      expect(x.sector).not.toBeNull();
+      expect(x.company).not.toBeNull();
+      expect(x.company_gender).not.toBeNull();
+    }
+    expect(payloads[1]).toMatchObject({ sector: "", company: "", company_gender: "feminino" });
   });
 });

@@ -44,11 +44,11 @@ test.describe("Importar conexões", () => {
       company_id: EMPRESA_DELTA,
       sector: "Comercial / Vendas",
     });
-    expect(rows[1]).not.toHaveProperty("company");
-    // Sem empresa nem área claras: os campos ficam para o hunter.
-    expect(rows[2]).toMatchObject({ name: "Sara Lins", company_id: null });
-    expect(rows[2]).not.toHaveProperty("company");
-    expect(rows[2]).not.toHaveProperty("sector");
+    // Sem empresa nem área claras: os campos vão vazios para o hunter completar depois. Toda
+    // linha leva as mesmas colunas: uma coluna ausente viraria NULL e recusaria o lote inteiro.
+    expect(rows[2]).toMatchObject({ name: "Sara Lins", company_id: null, company: "", sector: "" });
+    const colunas = rows.map((r) => Object.keys(r).sort().join(","));
+    expect(new Set(colunas).size).toBe(1);
   });
 
   test("pagina a pré-visualização e conta o que fica fora do filtro de data", async ({ page }) => {

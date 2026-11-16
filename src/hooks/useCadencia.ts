@@ -205,9 +205,12 @@ export function useImportContacts() {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
       if (!userId) throw new Error("Sessão expirada");
-      const { error } = await supabase
-        .from("contacts")
-        .insert(rows.map((r) => ({ ...r, user_id: userId })));
+      // `defaultToNull: false`: coluna que falta numa linha usa o padrão do banco, e não NULL
+      // (NULL em coluna NOT NULL recusa o lote inteiro).
+      const { error } = await supabase.from("contacts").insert(
+        rows.map((r) => ({ ...r, user_id: userId })),
+        { defaultToNull: false },
+      );
       if (error) throw error;
       return rows.length;
     },
