@@ -27,10 +27,13 @@ export function QueueCard({
   step,
   item: { contact, planned, late },
   actions,
+  hackathon = false,
 }: {
   step: StepDef;
   item: QueueItem;
   actions: QueueActions;
+  /** Contato de um Hackathon encerrado, exibido só quando o hunter pede. */
+  hackathon?: boolean;
 }) {
   const hasPhone = onlyDigits(contact.phone).length >= 10;
   const noCompany = !contact.company.trim();
@@ -78,6 +81,11 @@ export function QueueCard({
                 {late && (
                   <span className="rounded-sm bg-destructive-soft px-2 py-0.5 text-caption font-semibold text-destructive-text">
                     Atrasado · previsto {ddmm(planned)}
+                  </span>
+                )}
+                {hackathon && (
+                  <span className="rounded-sm bg-control px-2 py-0.5 text-caption font-semibold text-muted-foreground">
+                    Hackathon
                   </span>
                 )}
                 {noCompany && <Pendencia>sem empresa</Pendencia>}

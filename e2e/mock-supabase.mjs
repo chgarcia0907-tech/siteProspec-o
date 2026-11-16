@@ -1,9 +1,18 @@
 // Supabase simulado para os testes de ponta a ponta: auth, PostgREST (filtros usados pelo app,
 // paginação de 1.000 linhas) e RPC. Os dados vêm de ./fixtures.mjs; as escritas são registradas
 // e podem ser lidas em GET /__mutations. POST /__reset volta ao estado inicial e
-// POST /__seed?n=60 acrescenta n contatos simples ao hunter logado.
+// POST /__seed?n=60 acrescenta n contatos simples ao hunter logado;
+// POST /__seed?hackathon=1 acrescenta um contato de período de Hackathon encerrado.
 import http from "node:http";
-import { RPC, SERVICE_KEY, U1, USER, initialDb, seedContacts } from "./fixtures.mjs";
+import {
+  RPC,
+  SERVICE_KEY,
+  U1,
+  USER,
+  hackathonContact,
+  initialDb,
+  seedContacts,
+} from "./fixtures.mjs";
 
 const PORT = Number(process.env.MOCK_SUPABASE_PORT ?? 54399);
 let db = initialDb();
@@ -125,6 +134,10 @@ http
       if (url.pathname === "/__reset") {
         db = initialDb();
         mutations = [];
+        return send(res, 200, { ok: true });
+      }
+      if (url.pathname === "/__seed" && url.searchParams.get("hackathon")) {
+        db.contacts.push(hackathonContact());
         return send(res, 200, { ok: true });
       }
       if (url.pathname === "/__seed") {

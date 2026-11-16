@@ -11,6 +11,35 @@ import {
 } from "./cadencia";
 import type { SectorTemplates, TemplateText } from "./empresas";
 
+/** Período como a regra do Hackathon precisa enxergar (subconjunto de `periods`). */
+export type PeriodInfo = { id: string; status: string; kind: string };
+
+/**
+ * Ids dos períodos do Hackathon já encerrados (`kind = 'competicao'`). Os contatos carimbados
+ * neles ficam fora das filas de envio; um Hackathon ainda ativo não entra, para não esconder
+ * o trabalho em andamento.
+ */
+export function hackathonPeriodIds(periods: PeriodInfo[] | undefined): Set<string> {
+  return new Set(
+    (periods ?? [])
+      .filter((p) => p.kind === "competicao" && p.status === "closed")
+      .map((p) => p.id),
+  );
+}
+
+/** Separa os contatos do Hackathon (arquivados) dos demais. */
+export function splitHackathon(
+  contacts: Contact[],
+  hackathonIds: Set<string>,
+): { current: Contact[]; hackathon: Contact[] } {
+  const current: Contact[] = [];
+  const hackathon: Contact[] = [];
+  for (const c of contacts) {
+    (c.period_id && hackathonIds.has(c.period_id) ? hackathon : current).push(c);
+  }
+  return { current, hackathon };
+}
+
 export type QueueItem = { contact: Contact; planned: string | null; late: boolean };
 export type Queues = Record<StepDef["n"], QueueItem[]>;
 
