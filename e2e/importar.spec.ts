@@ -50,4 +50,25 @@ test.describe("Importar conexões", () => {
     expect(rows[2]).not.toHaveProperty("company");
     expect(rows[2]).not.toHaveProperty("sector");
   });
+
+  test("pagina a pré-visualização e conta o que fica fora do filtro de data", async ({ page }) => {
+    // 55 conexões de 11/11 e 5 de 10/11 (nomes únicos, sem empresa no headline).
+    const linhas = Array.from({ length: 60 }, (_, i) => {
+      const dia = i < 55 ? 11 : 10;
+      return [`Pessoa Teste ${i + 1}`, "Analista", `Conexão feita em ${dia} de novembro de 2026`];
+    }).flat();
+    await page.goto("/importar");
+    await page.getByRole("textbox", { name: "Texto copiado do LinkedIn" }).fill(linhas.join("\n"));
+    await expect(page.getByText("60 detectados, 60 novos")).toBeVisible();
+    await expect(page.getByText("1–50 de 60 conexões")).toBeVisible();
+    await expect(page.locator("main tbody tr")).toHaveCount(50);
+    await page.getByRole("button", { name: "Próxima" }).click();
+    await expect(page.locator("main tbody tr")).toHaveCount(10);
+
+    await page.getByLabel("Importar apenas conexões feitas a partir de").fill("2026-11-11");
+    await expect(page.getByText("60 detectados, 55 novos")).toBeVisible();
+    await expect(page.getByText("5 fora do filtro de data")).toBeVisible();
+    // Trocar o filtro volta para a primeira página.
+    await expect(page.getByText("1–50 de 60 conexões")).toBeVisible();
+  });
 });

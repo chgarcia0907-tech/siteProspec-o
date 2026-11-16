@@ -13,13 +13,13 @@ export function TablePagination<T>({
 }) {
   if (paged.pageCount <= 1) return null;
   return (
-    <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
+    <div className="flex items-center justify-end gap-2 text-dense text-muted-foreground">
       <span>
         {paged.from}–{paged.to} de {paged.total} {noun}
       </span>
       <Button
         size="sm"
-        variant="outline"
+        variant="secondary"
         disabled={paged.page === 0}
         onClick={() => onPage(paged.page - 1)}
       >
@@ -30,7 +30,7 @@ export function TablePagination<T>({
       </span>
       <Button
         size="sm"
-        variant="outline"
+        variant="secondary"
         disabled={paged.page >= paged.pageCount - 1}
         onClick={() => onPage(paged.page + 1)}
       >

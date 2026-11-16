@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,13 +18,20 @@ export function PasteCard({
 }) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Texto copiado do LinkedIn</CardTitle>
+      <CardHeader className="space-y-1">
+        <p className="text-caption font-bold tracking-wider text-subtle-foreground uppercase">
+          Passo 1
+        </p>
+        <CardTitle>Texto copiado do LinkedIn</CardTitle>
+        <CardDescription>
+          Na página de conexões do LinkedIn, use Ctrl+A e Ctrl+C e cole aqui.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Textarea
           rows={12}
-          className="font-mono text-xs"
+          aria-label="Texto copiado do LinkedIn"
+          className="font-mono text-caption"
           placeholder={
             "Foto do perfil de Kenny Tan Mei\nKenny Tan Mei\nGraduando em Engenharia Elétrica\nConexão feita em 28 de setembro de 2026\nMensagem"
           }
@@ -42,7 +49,7 @@ export function PasteCard({
               onChange={(e) => onFromDate(e.target.value)}
             />
           </div>
-          <Button variant="ghost" onClick={() => onFromDate("")}>
+          <Button variant="ghost" disabled={!fromDate} onClick={() => onFromDate("")}>
             Sem filtro de data
           </Button>
         </div>

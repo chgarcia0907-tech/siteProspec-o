@@ -63,16 +63,18 @@ function Importar() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Importar conexões</h1>
-        <p className="text-sm text-muted-foreground">
-          Copie a página de conexões do LinkedIn (Ctrl+A, Ctrl+C) e cole abaixo. Empresa e área são
-          sugeridas pelo headline; o que não der para descobrir fica em branco.
+      <header>
+        <p className="eyebrow">Conexões do LinkedIn</p>
+        <h1 className="mt-1 text-title font-bold">Importar conexões</h1>
+        <p className="mt-2 max-w-3xl text-body text-muted-foreground">
+          Cole a página de conexões e confira a pré-visualização. Empresa e área são sugeridas pelo
+          headline; o que não der para descobrir fica em branco para você completar depois.
         </p>
-      </div>
+      </header>
       <PasteCard text={text} onText={setText} fromDate={fromDate} onFromDate={setFromDate} />
       {rows.length > 0 && (
         <ImportPreview
+          key={`${rows.length}-${fromDate}`}
           rows={rows}
           newCount={toImport.length}
           companies={companies ?? []}
