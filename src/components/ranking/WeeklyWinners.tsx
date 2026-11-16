@@ -8,14 +8,14 @@ export function WeeklyWinners({ weeks }: { weeks: CompWeek[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Semanas com mais ATs</CardTitle>
+        <CardTitle>Semanas com mais ATs</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1 text-sm">
+      <CardContent className="space-y-1 text-dense">
         {weeks.map((w) => (
           <p key={w.inicio}>
             {formatBR(w.inicio)} a {formatBR(w.fim)}
             {w.parcial && (
-              <span className="ml-1 rounded-full bg-muted px-2 text-caption font-semibold">
+              <span className="ml-1 rounded-full bg-control px-2 text-caption font-semibold text-heading">
                 parcial
               </span>
             )}

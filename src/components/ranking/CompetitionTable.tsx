@@ -11,7 +11,7 @@ import { FUNNEL } from "@/lib/cadencia";
 import type { CompRowG } from "@/lib/competition.server";
 import { cn } from "@/lib/utils";
 
-const PODIUM = ["bg-warning-soft", "bg-accent", "bg-linkedin-soft"];
+const PODIUM = ["bg-warning-soft", "bg-primary-soft", "bg-surface-inset"];
 const COLS = FUNNEL.length + 9;
 
 /** Placar: etapas do funil, bônus e pontuação final por hunter (pódio destacado). */
@@ -77,7 +77,7 @@ export function CompetitionTable({ rows, isLoading }: { rows: CompRowG[]; isLoad
                     <TableCell className="text-right">
                       {r.taxa_conversao.toLocaleString("pt-BR")}%
                     </TableCell>
-                    <TableCell className="text-right text-base font-bold">
+                    <TableCell className="text-right font-display text-card-title font-bold text-heading">
                       {r.pontuacao_final.toLocaleString("pt-BR", { minimumFractionDigits: 1 })}
                     </TableCell>
                   </TableRow>

@@ -124,16 +124,16 @@ export function AddMembersDialog({
                   : `Selecionar todos (${list.length})`}
               </Button>
             </div>
-            <div className="max-h-64 space-y-1 overflow-y-auto rounded-md border p-2">
+            <div className="max-h-64 space-y-1 overflow-y-auto rounded-lg border bg-surface-inset p-2">
               {list.map((x) => (
-                <label key={x.id} className="flex items-center gap-2 text-sm">
+                <label key={x.id} className="flex items-center gap-2 text-dense">
                   <Checkbox checked={sel.has(x.id)} onCheckedChange={() => sel.toggle(x.id)} />
                   <span>{x.name}</span>
-                  <span className="text-xs text-muted-foreground">{x.info}</span>
+                  <span className="text-caption text-muted-foreground">{x.info}</span>
                 </label>
               ))}
               {!list.length && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-caption text-muted-foreground">
                   Ninguém para adicionar (todos já estão neste período).
                 </p>
               )}

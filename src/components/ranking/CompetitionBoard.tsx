@@ -128,7 +128,7 @@ export function CompetitionBoard() {
           </NativeSelect>
         )}
       </div>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-dense text-muted-foreground">
         {useOficial && "Placar oficial congelado no encerramento · "}
         {closed &&
           !oficial &&

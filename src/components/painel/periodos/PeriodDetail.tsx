@@ -33,13 +33,13 @@ export function PeriodDetail({
       <PeriodHeader period={period} members={scope.members.length} ask={ask} />
 
       {scope.unallocated.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3 rounded-md border border-warning/50 bg-warning/10 p-3 text-sm">
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-warning-border bg-warning-soft/60 px-4 py-3 text-dense text-warning-text">
           <span className="font-medium">
             {scope.unallocated.length}{" "}
             {scope.unallocated.length === 1 ? "membro aguardando" : "membros aguardando"} alocação
             em grupo
           </span>
-          <Button size="sm" variant="outline" onClick={() => setOnlyUnalloc(true)}>
+          <Button size="sm" variant="ghost" onClick={() => setOnlyUnalloc(true)}>
             Mostrar
           </Button>
         </div>
@@ -85,7 +85,7 @@ function PeriodHeader({
 
   return (
     <Card>
-      <CardContent className="flex flex-wrap items-center gap-3 pt-6 text-sm">
+      <CardContent className="flex flex-wrap items-center gap-3 pt-6 text-dense">
         <span className="font-semibold">{period.name}</span>
         <Badge variant={closed ? "secondary" : "default"}>{closed ? "Encerrado" : "Ativo"}</Badge>
         <Badge variant="outline">{period.kind === "ciclo" ? "Ciclo" : "Competição"}</Badge>
@@ -98,7 +98,7 @@ function PeriodHeader({
         </span>
         {!closed && (
           <span className="ml-auto flex items-center gap-2">
-            <Label htmlFor="end-date" className="text-xs text-muted-foreground">
+            <Label htmlFor="end-date" className="text-caption text-muted-foreground">
               Conta até
             </Label>
             <Input

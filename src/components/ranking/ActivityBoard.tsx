@@ -51,8 +51,8 @@ export function ActivityBoard() {
     <>
       <div className="flex flex-wrap items-end justify-between gap-4 pt-4">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Atividade</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-section font-semibold">Atividade</h2>
+          <p className="text-dense text-muted-foreground">
             Mensagens enviadas por etapa — período a partir de {formatBR(start)}.
           </p>
         </div>
@@ -69,7 +69,7 @@ export function ActivityBoard() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Métricas de atividade</CardTitle>
+          <CardTitle>Métricas de atividade</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto rounded-lg border">
