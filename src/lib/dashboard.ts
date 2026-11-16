@@ -121,6 +121,11 @@ export type DashInput = {
   sectorId?: string | null;
   goals?: readonly DashGoal[];
   templateCodes?: TemplateCodes;
+  /**
+   * Início do ciclo: etapa pendente prevista antes dele não conta como atrasada (é pendência de
+   * antes do ciclo). O contato continua na base e volta a contar se andar na cadência.
+   */
+  lateSince?: string | null;
 };
 
 /* --------------------------------- Saída --------------------------------- */
@@ -356,12 +361,16 @@ export function previousRange(from: string, to: string): { from: string; to: str
   return { from: addDaysISO(prevTo, -(len - 1)), to: prevTo };
 }
 
-/** Primeira etapa pendente com data prevista antes de hoje (contato ativo), ou null. */
+/**
+ * Primeira etapa pendente com data prevista antes de hoje (contato ativo), ou null.
+ * Com `since`, a pendência prevista antes dessa data fica de fora (anterior ao ciclo).
+ */
 function lateStep(
   c: DashContact,
   planned: Record<number, string | null>,
   steps: readonly StepDef[],
   today: string,
+  since?: string | null,
 ) {
   if (!isActive(c)) return null;
   for (const s of STEPS) {
@@ -369,6 +378,7 @@ function lateStep(
     const p = planned[s.n];
     if (s.n === 1 && !c.step1_date) return null; // aguardando início, não atrasado
     if (!p || p >= today) return null;
+    if (since && p < since) return null;
     return steps.includes(s) ? { step: s, planned: p } : null;
   }
   return null;
@@ -541,7 +551,7 @@ export function computeDashboard(input: DashInput): Dashboard {
     }
 
     // Atrasados agora.
-    const late = lateStep(c, planned, steps, today);
+    const late = lateStep(c, planned, steps, today, input.lateSince);
     if (late) {
       const days = Math.max(1, businessDaysBetween(late.planned, today, holidays));
       r.late++;
