@@ -17,6 +17,7 @@ import { Route as AuthenticatedContatosRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedEmpresasRouteImport } from './routes/_authenticated/empresas'
 import { Route as AuthenticatedHojeRouteImport } from './routes/_authenticated/hoje'
 import { Route as AuthenticatedImportarRouteImport } from './routes/_authenticated/importar'
+import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
 import { Route as AuthenticatedModelosRouteImport } from './routes/_authenticated/modelos'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
@@ -64,6 +65,11 @@ const AuthenticatedImportarRoute = AuthenticatedImportarRouteImport.update({
   path: '/importar',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInicioRoute = AuthenticatedInicioRouteImport.update({
+  id: '/inicio',
+  path: '/inicio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedModelosRoute = AuthenticatedModelosRouteImport.update({
   id: '/modelos',
   path: '/modelos',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/empresas': typeof AuthenticatedEmpresasRoute
   '/hoje': typeof AuthenticatedHojeRoute
   '/importar': typeof AuthenticatedImportarRoute
+  '/inicio': typeof AuthenticatedInicioRoute
   '/modelos': typeof AuthenticatedModelosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/ranking': typeof AuthenticatedRankingRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/empresas': typeof AuthenticatedEmpresasRoute
   '/hoje': typeof AuthenticatedHojeRoute
   '/importar': typeof AuthenticatedImportarRoute
+  '/inicio': typeof AuthenticatedInicioRoute
   '/modelos': typeof AuthenticatedModelosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/ranking': typeof AuthenticatedRankingRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/_authenticated/empresas': typeof AuthenticatedEmpresasRoute
   '/_authenticated/hoje': typeof AuthenticatedHojeRoute
   '/_authenticated/importar': typeof AuthenticatedImportarRoute
+  '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/_authenticated/modelos': typeof AuthenticatedModelosRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/empresas'
     | '/hoje'
     | '/importar'
+    | '/inicio'
     | '/modelos'
     | '/painel'
     | '/ranking'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/empresas'
     | '/hoje'
     | '/importar'
+    | '/inicio'
     | '/modelos'
     | '/painel'
     | '/ranking'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/_authenticated/empresas'
     | '/_authenticated/hoje'
     | '/_authenticated/importar'
+    | '/_authenticated/inicio'
     | '/_authenticated/modelos'
     | '/_authenticated/painel'
     | '/_authenticated/ranking'
@@ -260,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedImportarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inicio': {
+      id: '/_authenticated/inicio'
+      path: '/inicio'
+      fullPath: '/inicio'
+      preLoaderRoute: typeof AuthenticatedInicioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/modelos': {
       id: '/_authenticated/modelos'
       path: '/modelos'
@@ -311,6 +330,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEmpresasRoute: typeof AuthenticatedEmpresasRoute
   AuthenticatedHojeRoute: typeof AuthenticatedHojeRoute
   AuthenticatedImportarRoute: typeof AuthenticatedImportarRoute
+  AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
   AuthenticatedModelosRoute: typeof AuthenticatedModelosRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
@@ -322,6 +342,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEmpresasRoute: AuthenticatedEmpresasRoute,
   AuthenticatedHojeRoute: AuthenticatedHojeRoute,
   AuthenticatedImportarRoute: AuthenticatedImportarRoute,
+  AuthenticatedInicioRoute: AuthenticatedInicioRoute,
   AuthenticatedModelosRoute: AuthenticatedModelosRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,

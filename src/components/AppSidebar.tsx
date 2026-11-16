@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import {
   Building2,
   FileText,
+  House,
   LayoutDashboard,
   LogOut,
   Send,
@@ -33,6 +34,7 @@ export function AppSidebar({
     {
       title: "Prospecção",
       items: [
+        { to: "/inicio", label: "Início", icon: House },
         { to: "/hoje", label: "Envios de hoje", icon: Send, count: pendingToday },
         { to: "/empresas", label: "Empresas", icon: Building2 },
         { to: "/contatos", label: "Contatos", icon: Users },
@@ -59,7 +61,7 @@ export function AppSidebar({
   return (
     <aside className="fixed inset-y-0 left-0 z-20 flex w-58 flex-col border-r bg-sidebar">
       <Link
-        to="/hoje"
+        to="/inicio"
         className="flex h-16 items-center px-5 font-display text-card-title font-bold text-heading"
       >
         <Marca />

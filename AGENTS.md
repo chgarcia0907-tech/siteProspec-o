@@ -62,7 +62,7 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 ## Organização do código
 
 - Rotas em `src/routes/` são finas: estado da tela e composição. Componentes de uma tela ficam
-  em `src/components/<tela>/` (`auth`, `configuracoes`, `contatos`, `empresas`, `hoje`, `importar`, `inicio`, `modelos`,
+  em `src/components/<tela>/` (`auth`, `configuracoes`, `contatos`, `empresas`, `hoje`, `importar`, `inicio`, `modelos`, `semana`,
   `ranking`, `painel`); componentes usados em
   mais de uma tela ficam na raiz de `src/components/` (ex.: `SectorSelect`, `InlineInput`,
   `Funnel`); `src/components/ui/` é o shadcn/ui.
@@ -139,6 +139,13 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   (`resolveGoal`). Metas diárias/semanais viram metas do intervalo pelos dias úteis já passados;
   semáforo: na meta ≥ 100%, perto ≥ 70% (no prazo: até 10 pontos abaixo). Escrita por
   `painelSaveGoal`/`painelDeleteGoal` (`painel.functions.ts`, has_role antes).
+- Início do hunter (`/inicio`, primeira tela depois do login; o admin continua indo para o
+  painel): regras puras em `src/lib/inicio.ts` (`weekAts`, `teamWeekGoal`, `atSlots`, `lateRows`,
+  `conversion`), componentes em `src/components/semana/`. As ATs da equipe vêm de `inicioResumo`
+  (`inicio.functions.ts`, service role para qualquer hunter logado): o cliente recebe só o dia de
+  cada AT dos outros e a meta somada (`ats_semana` de cada hunter, com a herança de `resolveGoal`).
+  A equipe é a dos Indicadores (ciclo ativo: só os membros). Envios, atrasados e conversão usam os
+  contatos do próprio hunter, com `buildQueues`/`dayProgress` (mesma conta de Envios de hoje).
 - Recorte do ciclo: quando o período escolhido nos Indicadores é um ciclo, `painelDashboard` usa só
   os membros dele e corta o intervalo nas datas do ciclo (`clampToCycle` em `dashboard.ts`); outros
   períodos no filtro mostram o histórico. Atrasados também respeitam o ciclo: etapa pendente prevista
