@@ -103,7 +103,7 @@ function PeriodHeader({
         </span>
         {!closed && (
           <span className="flex items-center gap-2">
-            <Label htmlFor="start-date" className="text-xs text-muted-foreground">
+            <Label htmlFor="start-date" className="text-caption text-muted-foreground">
               Conta desde
             </Label>
             <Input
