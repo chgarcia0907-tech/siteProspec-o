@@ -27,8 +27,8 @@ export function BulkActions({ selection }: { selection: Selection }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-accent/60 px-3 py-2 text-sm">
-      <span className="font-medium">{selection.size} selecionados</span>
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-primary/35 bg-primary-soft px-3 py-2 text-dense">
+      <span className="font-semibold text-heading">{selection.size} selecionados</span>
       <Button size="sm" onClick={step1Today}>
         Enviei LinkedIn 1 hoje para os selecionados
       </Button>
