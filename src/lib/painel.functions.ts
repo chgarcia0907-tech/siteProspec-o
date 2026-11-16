@@ -368,6 +368,7 @@ export const painelDashboard = createServerFn({ method: "POST" })
       from: range?.from ?? data.from,
       to: range?.to ?? data.to,
       today: data.today,
+      lateSince: cycle?.start ?? null,
       channel: data.channel,
       sectorId: data.sectorId,
       goals: goals.data ?? [],

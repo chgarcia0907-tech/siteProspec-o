@@ -179,6 +179,15 @@ describe("indicadores", () => {
     expect(d.hunters.find((h) => h.hunter_id === H2)!.total).toBe(0);
   });
 
+  it("no ciclo, pendência prevista antes do início não conta como atrasada", () => {
+    // Bia: WhatsApp 1 previsto para antes de 09/11 (fora); Ana: LinkedIn 2 previsto depois (conta).
+    const r = computeDashboard({ ...input, lateSince: "2026-11-09" });
+    const h = r.hunters.find((x) => x.hunter_id === H1)!;
+    expect(r.kpis.atrasados).toBe(1);
+    expect(h.lateList.map((l) => l.name)).toEqual(["Ana"]);
+    expect(h.lateBands).toEqual([1, 0, 0]);
+  });
+
   it("etapa depois de uma etapa atrasada não conta como devida", () => {
     // LinkedIn 1 em 05/11 e WhatsApp 1 (previsto 06/11) parado: LinkedIn 2, WhatsApp 2 e
     // LinkedIn 3 caem (pela previsão) dentro do intervalo, mas não podem sair antes do WhatsApp 1.
