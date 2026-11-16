@@ -7,13 +7,34 @@ import { seed, test, TODAY } from "./helpers";
 /** Altura máxima da foto (px CSS): listas longas não precisam aparecer inteiras. */
 const MAX_HEIGHT = 2400;
 
-type Shot = { name: string; path: string; tab?: string; seed?: number };
+type Shot = {
+  name: string;
+  path: string;
+  tab?: string;
+  seed?: number;
+  /** Texto colado no primeiro campo antes da foto (ex.: a pré-visualização da importação). */
+  paste?: string;
+};
+
+/** Conexões de exemplo: uma empresa citada no headline, uma cadastrada e uma sem pistas. */
+const COLADO = [
+  "Paula Reis",
+  "Gerente de Marketing no Itaú | Ex-Ambev",
+  "Conexão feita em 10 de novembro de 2026",
+  "Rui Alves",
+  "Diretor Comercial na Delta",
+  "Conexão feita em 11 de novembro de 2026",
+  "Sara Lins",
+  "Sócia-fundadora",
+  "Conexão feita em 11 de novembro de 2026",
+].join("\n");
 
 const SHOTS: Shot[] = [
   { name: "02-hoje", path: "/hoje", seed: 60 },
   { name: "03-contatos", path: "/contatos", seed: 60 },
   { name: "04-empresas", path: "/empresas" },
   { name: "05-importar", path: "/importar" },
+  { name: "05-importar-previa", path: "/importar", paste: COLADO },
   { name: "06-modelos", path: "/modelos" },
   { name: "08-configuracoes", path: "/configuracoes" },
   { name: "09-painel-indicadores", path: "/painel", tab: "Indicadores" },
@@ -61,6 +82,7 @@ for (const [dir, device] of Object.entries(VIEWPORTS)) {
       test(shot.name, async ({ page }) => {
         if (shot.seed) await seed(shot.seed);
         await page.goto(shot.path);
+        if (shot.paste) await page.getByRole("textbox").first().fill(shot.paste);
         if (shot.tab) {
           // Pelo teclado: no celular as últimas abas do painel ficam fora da tela.
           await page.getByRole("tab", { name: shot.tab }).focus();
