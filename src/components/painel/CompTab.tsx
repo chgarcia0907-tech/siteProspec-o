@@ -7,12 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCompetition } from "@/lib/admin.functions";
-import { FUNNEL, formatBR } from "@/lib/cadencia";
+import { formatBR } from "@/lib/cadencia";
 import { painelSetPeriod } from "@/lib/painel.functions";
+import { ActivityBoard } from "@/components/ranking/ActivityBoard";
+import { CompetitionBoard } from "@/components/ranking/CompetitionBoard";
 
-const n = (v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
-
-/** Aba "Competição": período da competição geral e placar resumido. */
+/** Aba "Competição": período da competição geral, placar e atividade (o ranking só aparece aqui). */
 export function CompTab() {
   const fn = useServerFn(getCompetition);
   const save = useServerFn(painelSetPeriod);
@@ -58,63 +58,8 @@ export function CompTab() {
           )}
         </CardContent>
       </Card>
-      <div className="overflow-x-auto rounded-md border">
-        <table className="table-dense w-full text-sm">
-          <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-            <tr>
-              {[
-                "#",
-                "Hunter",
-                ...FUNNEL.map((f) => f.abbr),
-                "Funil",
-                "Bônus",
-                "Total",
-                "LinkedIn 1",
-                "Conversão",
-                "Final",
-              ].map((h) => (
-                <th key={h} className="p-2">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data?.rows.map((r, i) => (
-              <tr key={r.hunter_id} className={`border-t ${i < 3 ? "font-medium" : ""}`}>
-                <td className="p-2">{i + 1}º</td>
-                <td className="p-2">{r.hunter}</td>
-                {FUNNEL.map((f) => (
-                  <td key={f.countKey} className="p-2">
-                    {r[f.countKey]}
-                  </td>
-                ))}
-                <td className="p-2">{r.pontos_funil}</td>
-                <td className="p-2">{r.bonus_primeiro_at + r.bonus_semanas}</td>
-                <td className="p-2">{r.total_pontos}</td>
-                <td className="p-2">{r.linkedin1}</td>
-                <td className="p-2">{n(r.taxa_conversao)}%</td>
-                <td className="p-2 font-semibold">{n(r.pontuacao_final)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {!!data?.weeks.length && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Semanas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1 text-sm">
-            {data.weeks.map((w) => (
-              <p key={w.inicio}>
-                {formatBR(w.inicio)} a {formatBR(w.fim)}
-                {w.parcial ? " (parcial)" : ""}: {w.vencedores.join(", ")} — {w.max} ATs
-              </p>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <CompetitionBoard />
+      <ActivityBoard />
     </div>
   );
 }

@@ -52,7 +52,9 @@ function Index() {
             Fila de envios de hoje e atrasados
           </li>
           <li className="rounded-lg border bg-card px-3 py-2">Modelos com nome preenchido</li>
-          <li className="rounded-lg border bg-card px-3 py-2">Ranking entre os hunters</li>
+          <li className="rounded-lg border bg-card px-3 py-2">
+            Empresas da semana com cadência por setor
+          </li>
         </ul>
         <div className="mt-8 flex gap-3">
           <Button asChild size="lg">

@@ -5,7 +5,7 @@ import { useDeleter } from "@/hooks/usePainel";
 import { useSelection } from "@/hooks/useSelection";
 import { STATUS_LABEL, formatBR } from "@/lib/cadencia";
 import type { painelContacts } from "@/lib/painel.functions";
-import type { Ask } from "./useConfirm";
+import type { Ask } from "@/components/useConfirm";
 
 export type PainelContact = Awaited<ReturnType<typeof painelContacts>>["rows"][number];
 
@@ -105,7 +105,7 @@ export function ContactTable({
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-destructive"
+                    className="text-destructive-text"
                     onClick={() =>
                       ask({
                         title: "Excluir contato",

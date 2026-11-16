@@ -9,6 +9,7 @@ import {
   type Offsets,
   type StepDef,
 } from "./cadencia";
+import type { SectorTemplates, TemplateText } from "./empresas";
 
 export type QueueItem = { contact: Contact; planned: string | null; late: boolean };
 export type Queues = Record<StepDef["n"], QueueItem[]>;
@@ -48,13 +49,50 @@ export function buildQueues(
   return result;
 }
 
-/** O que falta no lead para gerar a mensagem da etapa (null = pode gerar). */
+export type DayProgress = {
+  /** Etapas enviadas no dia `ref` (um contato pode contar mais de uma vez). */
+  done: number;
+  /** Leads com envio pendente nas filas do dia (cada lead conta uma vez). */
+  pending: number;
+  /** Dos leads pendentes, os que têm algum envio atrasado. */
+  late: number;
+  total: number;
+};
+
+/**
+ * Progresso do dia `ref`: o que já foi enviado nesse dia e quantos leads ainda esperam envio.
+ * Um lead atrasado pode estar em mais de uma fila (as etapas seguintes vencem em cadeia), mas
+ * conta uma vez: ao enviar a etapa mais cedo, as outras saem da fila e o total não encolhe.
+ */
+export function dayProgress(contacts: Contact[], queues: Queues, ref: string): DayProgress {
+  let done = 0;
+  for (const c of contacts)
+    for (const s of STEPS) if ((c[s.sentField] as string | null)?.slice(0, 10) === ref) done++;
+  const pending = new Set<string>();
+  const late = new Set<string>();
+  for (const item of Object.values(queues).flat()) {
+    pending.add(item.contact.id);
+    if (item.late) late.add(item.contact.id);
+  }
+  return { done, pending: pending.size, late: late.size, total: done + pending.size };
+}
+
+/**
+ * O que falta no lead para gerar a mensagem da etapa (null = pode gerar).
+ * No LinkedIn 1 a área e o cargo são exigidos; com o texto do modelo (`body`),
+ * só quando ele usa [DOR_DO_SETOR] ou [CARGO] (cadências de setor podem não usar).
+ */
 export function missingForMessage(
   contact: Contact,
   step: StepDef,
+  body?: string,
 ): "empresa" | "setor_cargo" | null {
   if (!contact.company.trim()) return "empresa";
-  if (step.n === 1 && (!contact.sector || !contact.job_title.trim())) return "setor_cargo";
+  if (step.n !== 1) return null;
+  const needsArea = body === undefined || body.includes("[DOR_DO_SETOR]");
+  const needsCargo = body === undefined || body.includes("[CARGO]");
+  if ((needsArea && !contact.sector) || (needsCargo && !contact.job_title.trim()))
+    return "setor_cargo";
   return null;
 }
 
@@ -64,4 +102,20 @@ export function markSentPatch(contact: Contact, step: StepDef, ref: string): Par
   if (step.n === 1 && !contact.step1_date) patch.step1_date = ref;
   patch.status = computedStatus({ ...contact, ...patch } as Contact);
   return patch;
+}
+
+/**
+ * Modelo da etapa para o lead: a mensagem da cadência do setor da empresa, se existir;
+ * senão o modelo padrão da equipe. `fromSector` diz qual dos dois foi usado.
+ */
+export function pickTemplate(
+  step: StepDef,
+  sectorId: string | null | undefined,
+  sectorTemplates: SectorTemplates | undefined,
+  defaults: Partial<Record<number, TemplateText>> | undefined,
+): (TemplateText & { fromSector: boolean }) | null {
+  const own = sectorId ? sectorTemplates?.[sectorId]?.[step.n] : undefined;
+  if (own?.body.trim()) return { ...own, fromSector: true };
+  const def = defaults?.[step.n];
+  return def?.body.trim() ? { ...def, fromSector: false } : null;
 }

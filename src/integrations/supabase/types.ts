@@ -4,7 +4,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17";
+    PostgrestVersion: "14.18";
   };
   public: {
     Tables: {
@@ -28,6 +28,57 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [];
+      };
+      companies: {
+        Row: {
+          created_at: string;
+          gender: string;
+          id: string;
+          name: string;
+          period_id: string | null;
+          sector_id: string;
+          updated_at: string;
+          user_id: string;
+          week_start: string;
+        };
+        Insert: {
+          created_at?: string;
+          gender?: string;
+          id?: string;
+          name: string;
+          period_id?: string | null;
+          sector_id: string;
+          updated_at?: string;
+          user_id: string;
+          week_start: string;
+        };
+        Update: {
+          created_at?: string;
+          gender?: string;
+          id?: string;
+          name?: string;
+          period_id?: string | null;
+          sector_id?: string;
+          updated_at?: string;
+          user_id?: string;
+          week_start?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "companies_period_id_fkey";
+            columns: ["period_id"];
+            isOneToOne: false;
+            referencedRelation: "periods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "companies_sector_id_fkey";
+            columns: ["sector_id"];
+            isOneToOne: false;
+            referencedRelation: "sectors";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       competition_settings: {
         Row: {
@@ -58,6 +109,7 @@ export type Database = {
           at_registrado_em: string | null;
           company: string;
           company_gender: string;
+          company_id: string | null;
           connected_at: string | null;
           created_at: string;
           headline: string;
@@ -70,6 +122,9 @@ export type Database = {
           phone: string;
           proposta_em: string | null;
           proposta_registrado_em: string | null;
+          respondeu_em: string | null;
+          resposta_etapa: number | null;
+          resposta_modelo: string | null;
           sector: string;
           sent1_at: string | null;
           sent2_at: string | null;
@@ -90,6 +145,7 @@ export type Database = {
           at_registrado_em?: string | null;
           company?: string;
           company_gender?: string;
+          company_id?: string | null;
           connected_at?: string | null;
           created_at?: string;
           headline?: string;
@@ -102,6 +158,9 @@ export type Database = {
           phone?: string;
           proposta_em?: string | null;
           proposta_registrado_em?: string | null;
+          respondeu_em?: string | null;
+          resposta_etapa?: number | null;
+          resposta_modelo?: string | null;
           sector?: string;
           sent1_at?: string | null;
           sent2_at?: string | null;
@@ -122,6 +181,7 @@ export type Database = {
           at_registrado_em?: string | null;
           company?: string;
           company_gender?: string;
+          company_id?: string | null;
           connected_at?: string | null;
           created_at?: string;
           headline?: string;
@@ -134,6 +194,9 @@ export type Database = {
           phone?: string;
           proposta_em?: string | null;
           proposta_registrado_em?: string | null;
+          respondeu_em?: string | null;
+          resposta_etapa?: number | null;
+          resposta_modelo?: string | null;
           sector?: string;
           sent1_at?: string | null;
           sent2_at?: string | null;
@@ -149,10 +212,61 @@ export type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: "contacts_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "contacts_period_id_fkey";
             columns: ["period_id"];
             isOneToOne: false;
             referencedRelation: "periods";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      goals: {
+        Row: {
+          ats_semana: number | null;
+          created_at: string;
+          envios_dia: number | null;
+          group_id: string | null;
+          id: string;
+          l1_semana: number | null;
+          no_prazo_pct: number | null;
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          ats_semana?: number | null;
+          created_at?: string;
+          envios_dia?: number | null;
+          group_id?: string | null;
+          id?: string;
+          l1_semana?: number | null;
+          no_prazo_pct?: number | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          ats_semana?: number | null;
+          created_at?: string;
+          envios_dia?: number | null;
+          group_id?: string | null;
+          id?: string;
+          l1_semana?: number | null;
+          no_prazo_pct?: number | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "goals_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
             referencedColumns: ["id"];
           },
         ];
@@ -366,8 +480,8 @@ export type Database = {
           closed_at: string | null;
           created_at: string;
           id: string;
-          name: string;
           kind: string;
+          name: string;
           started_at: string;
           status: string;
         };
@@ -415,6 +529,65 @@ export type Database = {
           gender?: string;
           id?: string;
           message_name?: string | null;
+        };
+        Relationships: [];
+      };
+      sector_templates: {
+        Row: {
+          body: string;
+          code: string;
+          sector_id: string;
+          step: number;
+          updated_at: string;
+        };
+        Insert: {
+          body?: string;
+          code?: string;
+          sector_id: string;
+          step: number;
+          updated_at?: string;
+        };
+        Update: {
+          body?: string;
+          code?: string;
+          sector_id?: string;
+          step?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sector_templates_sector_id_fkey";
+            columns: ["sector_id"];
+            isOneToOne: false;
+            referencedRelation: "sectors";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      sectors: {
+        Row: {
+          active: boolean;
+          created_at: string;
+          id: string;
+          name: string;
+          sort: number;
+          updated_at: string;
+        };
+        Insert: {
+          active?: boolean;
+          created_at?: string;
+          id?: string;
+          name: string;
+          sort?: number;
+          updated_at?: string;
+        };
+        Update: {
+          active?: boolean;
+          created_at?: string;
+          id?: string;
+          name?: string;
+          sort?: number;
+          updated_at?: string;
         };
         Relationships: [];
       };

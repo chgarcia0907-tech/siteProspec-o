@@ -2,18 +2,18 @@ import { cn } from "@/lib/utils";
 import { STATUS_LABEL, type Channel, type ContactStatus } from "@/lib/cadencia";
 
 const STATUS_CLASS: Record<ContactStatus, string> = {
-  aguardando: "bg-muted text-muted-foreground",
+  aguardando: "border border-input text-muted-foreground",
   em_cadencia: "bg-linkedin-soft text-linkedin",
   respondeu: "bg-success-soft text-success",
-  concluido: "bg-accent text-accent-foreground",
-  descartado: "bg-warning-soft text-warning",
+  concluido: "bg-divider text-foreground",
+  descartado: "bg-destructive-soft text-destructive-text",
 };
 
 export function StatusBadge({ status }: { status: ContactStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-caption font-semibold whitespace-nowrap",
         STATUS_CLASS[status],
       )}
     >
@@ -32,7 +32,7 @@ export function ChannelBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap",
+        "inline-flex items-center rounded-sm px-2 py-0.5 text-caption font-semibold whitespace-nowrap",
         channel === "linkedin"
           ? "bg-linkedin-soft text-linkedin"
           : "bg-whatsapp-soft text-whatsapp",

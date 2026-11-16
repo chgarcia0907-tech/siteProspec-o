@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { OverviewPeriod } from "@/hooks/usePainel";
 import { useSelection } from "@/hooks/useSelection";
 import { allocateMembers, removeMembers } from "@/lib/periodos.functions";
-import type { Ask } from "../useConfirm";
+import type { Ask } from "@/components/useConfirm";
 import { GroupSubgroupSelect } from "./GroupSubgroupSelect";
 import { NO_ALLOCATION, usePeriodActions, type Allocation, type PeriodScope } from "./shared";
 
@@ -80,7 +80,7 @@ export function MembersCard({
             <Button
               size="sm"
               variant="ghost"
-              className="text-destructive"
+              className="text-destructive-text"
               onClick={() =>
                 ask({
                   title: "Remover do período",

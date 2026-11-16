@@ -2,6 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_OFFSETS, type Contact, type Offsets } from "@/lib/cadencia";
+import type { Company, Sector, SectorTemplates } from "@/lib/empresas";
+import { sortSectors } from "@/lib/empresas";
+import { groupPatches } from "@/lib/enriquecimento";
 import { fetchAll } from "@/lib/fetch-all";
 
 export function useContacts() {
@@ -115,6 +118,10 @@ export function useSaveMessageName() {
   });
 }
 
+/**
+ * Atualiza um contato de forma otimista: a lista em cache muda na hora (ex.: o cartão sai da
+ * fila ao marcar o envio) e volta ao estado anterior se a gravação falhar.
+ */
 export function useUpdateContact() {
   const qc = useQueryClient();
   return useMutation({
@@ -122,7 +129,18 @@ export function useUpdateContact() {
       const { error } = await supabase.from("contacts").update(patch).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["contacts"] }),
+    onMutate: async ({ id, patch }) => {
+      await qc.cancelQueries({ queryKey: ["contacts"] });
+      const previous = qc.getQueryData<Contact[]>(["contacts"]);
+      qc.setQueryData<Contact[]>(["contacts"], (list) =>
+        list?.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+      );
+      return { previous };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.previous) qc.setQueryData(["contacts"], ctx.previous);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["contacts"] }),
   });
 }
 
@@ -138,11 +156,51 @@ export function useUpdateContacts() {
   });
 }
 
+/**
+ * Grava alterações diferentes por contato (ex.: preenchimento automático). Alterações iguais
+ * viram uma só requisição; os grupos rodam em lotes para não abrir centenas de conexões.
+ */
+export function useBulkPatchContacts() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (items: { id: string; patch: Partial<Contact> }[]): Promise<number> => {
+      const jobs = groupPatches(items).flatMap(({ ids, patch }) => {
+        const chunks: { ids: string[]; patch: Partial<Contact> }[] = [];
+        for (let i = 0; i < ids.length; i += 200)
+          chunks.push({ ids: ids.slice(i, i + 200), patch });
+        return chunks;
+      });
+      for (let i = 0; i < jobs.length; i += 6) {
+        const results = await Promise.all(
+          jobs
+            .slice(i, i + 6)
+            .map(({ ids, patch }) => supabase.from("contacts").update(patch).in("id", ids)),
+        );
+        const failed = results.find((r) => r.error);
+        if (failed?.error) throw failed.error;
+      }
+      return items.length;
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["contacts"] }),
+  });
+}
+
 export function useImportContacts() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (
-      rows: { name: string; headline: string; job_title: string; connected_at: string | null }[],
+      rows: {
+        name: string;
+        headline: string;
+        job_title: string;
+        connected_at: string | null;
+        company_id: string | null;
+        /** Empresa em texto livre, quando não há empresa cadastrada vinculada. */
+        company?: string;
+        company_gender?: Contact["company_gender"];
+        /** Área do contato (TI, RH...). */
+        sector?: string;
+      }[],
     ) => {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
@@ -171,21 +229,6 @@ export function useSaveGender() {
   });
 }
 
-export function useCompetitionSettings() {
-  return useQuery({
-    queryKey: ["competition_settings"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("competition_settings")
-        .select("start_date, end_date")
-        .eq("id", 1)
-        .maybeSingle();
-      if (error) throw error;
-      return data ?? { start_date: "2026-10-01", end_date: null };
-    },
-  });
-}
-
 export type HolidayRow = { date: string; name: string };
 
 export function useHolidayList() {
@@ -204,4 +247,117 @@ export function useHolidayList() {
 export function useHolidays(): ReadonlySet<string> {
   const { data } = useHolidayList();
   return useMemo(() => new Set((data ?? []).map((h) => h.date)), [data]);
+}
+
+/** Ramos de atuação cadastrados pelo admin (ativos e inativos), na ordem definida. */
+export function useSectors() {
+  return useQuery({
+    queryKey: ["sectors"],
+    queryFn: async (): Promise<Sector[]> => {
+      const { data, error } = await supabase.from("sectors").select("*");
+      if (error) throw error;
+      return sortSectors(data ?? []);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/** Mensagens das cadências por setor (setor → etapa → modelo). */
+export function useSectorTemplates() {
+  return useQuery({
+    queryKey: ["sector_templates"],
+    queryFn: async (): Promise<SectorTemplates> => {
+      const { data, error } = await supabase
+        .from("sector_templates")
+        .select("sector_id, step, code, body");
+      if (error) throw error;
+      const map: SectorTemplates = {};
+      for (const row of data ?? []) {
+        const step = row.step as 1 | 2 | 3 | 4 | 5;
+        (map[row.sector_id] ??= {})[step] = { code: row.code, body: row.body };
+      }
+      return map;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/** Empresas do hunter logado (RLS), mais recentes primeiro. */
+export function useCompanies() {
+  return useQuery({
+    queryKey: ["companies"],
+    queryFn: async (): Promise<Company[]> => {
+      const data = await fetchAll((a, b) =>
+        supabase
+          .from("companies")
+          .select("*")
+          .order("week_start", { ascending: false })
+          .order("id")
+          .range(a, b),
+      );
+      return data as unknown as Company[];
+    },
+  });
+}
+
+export function useAddCompanies() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      rows: Pick<Company, "name" | "gender" | "sector_id" | "week_start">[],
+    ): Promise<number> => {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth.user?.id;
+      if (!userId) throw new Error("Sessão expirada");
+      if (rows.length === 0) return 0;
+      const { error } = await supabase
+        .from("companies")
+        .insert(rows.map((r) => ({ ...r, user_id: userId })));
+      if (error) {
+        if (error.code === "23505") throw new Error("Essa empresa já está cadastrada");
+        throw error;
+      }
+      return rows.length;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["companies"] }),
+  });
+}
+
+export function useUpdateCompany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: Partial<Pick<Company, "name" | "gender" | "sector_id" | "week_start">>;
+    }) => {
+      const { error } = await supabase.from("companies").update(patch).eq("id", id);
+      if (error) {
+        if (error.code === "23505") throw new Error("Já existe outra empresa com esse nome");
+        throw error;
+      }
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["companies"] });
+      // Nome e concordância são copiados para os contatos vinculados.
+      if (v.patch.name !== undefined || v.patch.gender !== undefined)
+        qc.invalidateQueries({ queryKey: ["contacts"] });
+    },
+  });
+}
+
+export function useDeleteCompany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("companies").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["companies"] });
+      qc.invalidateQueries({ queryKey: ["contacts"] });
+    },
+  });
 }

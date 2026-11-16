@@ -90,7 +90,7 @@ export function formatBR(iso: string | null | undefined): string {
 }
 
 /** Dia da semana (0 = domingo) de uma data ISO, independente de fuso. */
-function weekdayISO(iso: string): number {
+export function weekdayISO(iso: string): number {
   const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
   return new Date(Date.UTC(y!, (m ?? 1) - 1, d ?? 1)).getUTCDay();
 }
@@ -155,7 +155,10 @@ export function plannedDates(
   return out;
 }
 
-export function computedStatus(c: Contact): ContactStatus {
+/** Campos que definem a situação calculada do contato. */
+export type StatusInput = Pick<Contact, "status" | "step1_date" | StepDef["sentField"]>;
+
+export function computedStatus(c: StatusInput): ContactStatus {
   if (c.status === "respondeu" || c.status === "descartado") return c.status;
   const allSent = STEPS.every((s) => c[s.sentField]);
   if (allSent) return "concluido";
@@ -163,9 +166,50 @@ export function computedStatus(c: Contact): ContactStatus {
   return "aguardando";
 }
 
-export function isActive(c: Contact): boolean {
+export function isActive(c: Pick<Contact, "at_marcada_em" | "status">): boolean {
   if (c.at_marcada_em) return false; // AT marcada tira o contato das filas
   return c.status !== "respondeu" && c.status !== "descartado";
+}
+
+/* ------------------------ Mensagem que gerou a resposta ----------------------- */
+
+/** `contacts.resposta_etapa` para resposta que não veio de uma mensagem da cadência. */
+export const OUTRO_CANAL = 0;
+export type EntryChannel = Channel | "outro";
+
+export const ENTRY_CHANNEL_LABEL: Record<EntryChannel, string> = {
+  linkedin: "LinkedIn",
+  whatsapp: "WhatsApp",
+  outro: "Outro canal",
+};
+
+/** Rótulo da origem da resposta: a etapa (ex.: "WhatsApp 1") ou "Outro canal". */
+export function responseOriginLabel(etapa: number): string {
+  return STEPS.find((s) => s.n === etapa)?.label ?? ENTRY_CHANNEL_LABEL.outro;
+}
+
+/** Canal de entrada da resposta, derivado da etapa informada. */
+export function entryChannel(etapa: number): EntryChannel {
+  return STEPS.find((s) => s.n === etapa)?.channel ?? "outro";
+}
+
+/** Etapas que o hunter pode apontar como origem: as já enviadas, da mais recente para a primeira. */
+export function responseOriginChoices(c: Pick<Contact, StepDef["sentField"]>): StepDef[] {
+  return STEPS.filter((s) => c[s.sentField]).reverse();
+}
+
+/**
+ * A mudança marca uma resposta (situação "respondeu" ou AT nova) num contato que ainda não
+ * tem a mensagem de origem informada: o hunter precisa dizer qual mensagem gerou a resposta.
+ */
+export function needsResponseOrigin(
+  c: Pick<Contact, "status" | "at_marcada_em" | "resposta_etapa">,
+  patch: Partial<Contact>,
+): boolean {
+  if (c.resposta_etapa != null || patch.resposta_etapa != null) return false;
+  const responds = patch.status === "respondeu" && c.status !== "respondeu";
+  const newAt = !!patch.at_marcada_em && !c.at_marcada_em;
+  return responds || newAt;
 }
 
 export function firstName(name: string): string {

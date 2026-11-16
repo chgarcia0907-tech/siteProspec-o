@@ -1,9 +1,13 @@
-import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { painelIsAdmin } from "@/lib/painel.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import { useMemo } from "react";
+import { AppSidebar } from "@/components/AppSidebar";
+import { useContacts, useHolidays, useSettings } from "@/hooks/useCadencia";
+import { DEFAULT_OFFSETS, todayISO } from "@/lib/cadencia";
+import { buildQueues, dayProgress } from "@/lib/fila";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -15,15 +19,6 @@ export const Route = createFileRoute("/_authenticated")({
   component: AppLayout,
 });
 
-const NAV = [
-  { to: "/hoje", label: "Envios de hoje" },
-  { to: "/contatos", label: "Contatos" },
-  { to: "/importar", label: "Importar conexões" },
-  { to: "/modelos", label: "Modelos" },
-  { to: "/ranking", label: "Ranking" },
-  { to: "/configuracoes", label: "Configurações" },
-] as const;
-
 function AppLayout() {
   const { user } = Route.useRouteContext();
   const navigate = useNavigate();
@@ -34,6 +29,7 @@ function AppLayout() {
     queryFn: () => isAdminFn(),
     staleTime: Infinity,
   });
+  const pendingToday = usePendingToday();
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -44,39 +40,30 @@ function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-6 px-4">
-          <Link to="/hoje" className="text-sm font-bold tracking-tight">
-            Cadência <span className="text-linkedin">Outbound</span>
-          </Link>
-          <nav className="flex flex-1 items-center gap-1 overflow-x-auto">
-            {NAV.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
-              >
-                {item.label}
-              </Link>
-            ))}
-            {adm?.admin && (
-              <Link
-                to="/painel"
-                className="rounded-md px-3 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-accent data-[status=active]:bg-accent"
-              >
-                Painel Admin
-              </Link>
-            )}
-          </nav>
-          <span className="hidden text-xs text-muted-foreground md:inline">{user.email}</span>
-          <Button variant="outline" size="sm" onClick={signOut}>
-            Sair
-          </Button>
+      <AppSidebar
+        email={user.email ?? ""}
+        isAdmin={!!adm?.admin}
+        pendingToday={pendingToday}
+        onSignOut={signOut}
+      />
+      <main className="ml-58 px-10 py-8">
+        <div className="mx-auto max-w-[1120px]">
+          <Outlet />
         </div>
-      </header>
-      <main className="mx-auto max-w-[1600px] px-4 py-6">
-        <Outlet />
       </main>
     </div>
   );
+}
+
+/** Leads com envio pendente hoje (contador da navegação; mesma conta da barra de progresso). */
+function usePendingToday(): number | undefined {
+  const { data: contacts } = useContacts();
+  const { data: settings } = useSettings();
+  const holidays = useHolidays();
+  return useMemo(() => {
+    if (!contacts) return undefined;
+    const ref = todayISO();
+    const queues = buildQueues(contacts, settings ?? DEFAULT_OFFSETS, holidays, ref);
+    return dayProgress(contacts, queues, ref).pending;
+  }, [contacts, settings, holidays]);
 }

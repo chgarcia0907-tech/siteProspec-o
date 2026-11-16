@@ -26,3 +26,19 @@ jobs:
 
       - name: Build
         run: bun run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Instalar dependências
+        run: bun install --frozen-lockfile
+
+      - name: Instalar o Chromium do Playwright
+        run: bunx playwright install --with-deps chromium
+
+      - name: Testes de ponta a ponta
+        run: bun run e2e

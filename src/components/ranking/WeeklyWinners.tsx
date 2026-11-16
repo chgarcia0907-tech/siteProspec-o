@@ -15,7 +15,7 @@ export function WeeklyWinners({ weeks }: { weeks: CompWeek[] }) {
           <p key={w.inicio}>
             {formatBR(w.inicio)} a {formatBR(w.fim)}
             {w.parcial && (
-              <span className="ml-1 rounded-full bg-muted px-2 text-[11px] font-semibold">
+              <span className="ml-1 rounded-full bg-muted px-2 text-caption font-semibold">
                 parcial
               </span>
             )}

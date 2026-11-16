@@ -7,19 +7,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { ReactNode } from "react";
+import { NativeSelect } from "@/components/ui/native-select";
 import { STATUS_LABEL } from "@/lib/cadencia";
-import { CONTACT_STATUSES, type StatusFilter } from "@/lib/contatos";
+import {
+  CONTACT_STATUSES,
+  MISSING_LABEL,
+  type MissingFilter,
+  type StatusFilter,
+} from "@/lib/contatos";
 
 const PLANILHA_URL =
   "https://docs.google.com/spreadsheets/d/1M25CO9Y4NqPjGdCi3P1hNWNglWZ3Jf7EDVIl_k9JLj0/edit";
 
-/** Título, busca, filtro de situação, link da planilha e exportação. */
+/** Título, busca, filtros de situação e pendência, link da planilha, ações e exportação. */
 export function ContactsToolbar({
   count,
   search,
   onSearch,
   status,
   onStatus,
+  missing,
+  onMissing,
+  actions,
   onExport,
 }: {
   count: number;
@@ -27,25 +37,48 @@ export function ContactsToolbar({
   onSearch: (v: string) => void;
   status: StatusFilter;
   onStatus: (v: StatusFilter) => void;
+  missing: MissingFilter;
+  onMissing: (v: MissingFilter) => void;
+  /** Botões extras (ex.: preenchimento automático). */
+  actions?: ReactNode;
   onExport: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Contatos</h1>
-        <p className="text-sm text-muted-foreground">
-          {count} contatos · edite empresa, telefone e datas direto na tabela.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">{count === 1 ? "1 contato" : `${count} contatos`}</p>
+          <h1 className="mt-1 text-title font-bold">Contatos</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-end leading-tight">
+            <a
+              href={PLANILHA_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="text-dense font-semibold text-primary underline-offset-4 hover:underline"
+            >
+              Abrir planilha
+            </a>
+            <span className="text-caption text-subtle-foreground">
+              atualiza automaticamente, com atraso de até 1 hora
+            </span>
+          </div>
+          <Button variant="secondary" onClick={onExport}>
+            Exportar CSV
+          </Button>
+        </div>
+      </header>
       <div className="flex flex-wrap items-center gap-2">
         <Input
           placeholder="Buscar por nome ou empresa"
-          className="w-64"
+          aria-label="Buscar contatos"
+          className="w-72"
           value={search}
           onChange={(e) => onSearch(e.target.value)}
         />
         <Select value={status} onValueChange={(v) => onStatus(v as StatusFilter)}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-48" aria-label="Situação">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -57,22 +90,19 @@ export function ContactsToolbar({
             ))}
           </SelectContent>
         </Select>
-        <div className="flex flex-col items-end leading-tight">
-          <a
-            href={PLANILHA_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Abrir planilha
-          </a>
-          <span className="text-[11px] text-muted-foreground">
-            atualiza automaticamente, com atraso de até 1 hora
-          </span>
-        </div>
-        <Button variant="outline" onClick={onExport}>
-          Exportar CSV
-        </Button>
+        <NativeSelect
+          aria-label="Pendências"
+          className="w-48"
+          value={missing}
+          onChange={(e) => onMissing(e.target.value as MissingFilter)}
+        >
+          {(Object.keys(MISSING_LABEL) as MissingFilter[]).map((m) => (
+            <option key={m} value={m}>
+              {MISSING_LABEL[m]}
+            </option>
+          ))}
+        </NativeSelect>
+        <div className="ml-auto">{actions}</div>
       </div>
     </div>
   );

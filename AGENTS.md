@@ -9,8 +9,16 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Deploy: produção é o branch `main` (a Vercel publica cada push nele) e o banco de produção é
   o Supabase `ctxsmboaqbjgslctojeq`. O desenvolvimento acontece no `dev` e chega ao `main` por
   pull request. Rode as verificações antes de cada push:
-  `bun run typecheck && bun run lint && bun run test && bun run build`.
+  `bun run typecheck && bun run lint && bun run test && bun run build && bun run e2e`.
 - Gerenciador de pacotes: bun (`bun.lock` versionado). Instale com `bun install`.
+- Testes de ponta a ponta: `bun run e2e` roda o Playwright contra o build de produção e um
+  Supabase simulado (`e2e/mock-supabase.mjs`, dados em `e2e/fixtures.mjs`, relógio fixo em
+  12/11/2026). Mudou uma tela ou um fluxo? Ajuste ou acrescente o teste em `e2e/*.spec.ts`
+  no mesmo commit. Nunca pule ou apague teste para ficar verde.
+- Skills do projeto (`.claude/skills/`): `/verificar` (todas as verificações),
+  `/nova-migracao` (migração seguindo as regras abaixo) e `/publicar` (PR `dev` → `main`).
+  O `.claude/settings.json` libera os comandos de verificação e formata com o prettier todo
+  arquivo editado.
 - Não reescreva histórico já enviado (force push, rebase ou amend de commits publicados).
 - Commits e títulos de pull request seguem [Conventional Commits](https://www.conventionalcommits.org/pt-br/v1.0.0/):
   `<tipo>(<escopo opcional>): <descrição>`, com a descrição em português, no imperativo e
@@ -18,7 +26,25 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   `style`, `build`, `ci`, `chore`, `revert`. Mudança incompatível leva `!` após o tipo
   (ex.: `feat(db)!: ...`) e um rodapé `BREAKING CHANGE: ...`.
   Escopos comuns: `cadencia`, `funil`, `ranking`, `painel`, `periodos`, `planilha`,
-  `auth`, `db`, `ui`, `deps`.
+  `empresas`, `auth`, `db`, `ui`, `deps`.
+
+## UI e design system
+
+- Antes de criar ou alterar qualquer tela ou componente, leia `docs/redesign/DESIGN.md`.
+- Use só os tokens de `src/styles.css` (classes como `bg-card`, `text-heading`, `bg-primary`,
+  `text-dense`, `bg-warning-soft`). Não escreva hex, `text-[11px]` nem cores do Tailwind padrão
+  (`slate-*`, `blue-*`) em componentes. O tamanho de título de cartão é `text-card-title`
+  (`text-card` é a cor do cartão).
+- Tema escuro único: não use `dark:` nem a classe `.dark`. Só desktop: não crie layout de celular.
+- O redesign muda só a apresentação. Rótulos e etapas vêm de `STEPS`, `FUNNEL`, `STATUS_LABEL` e
+  `SECTORS`; regras e cálculos ficam em `src/lib/`. Respeite a seção 5 de `docs/redesign/inventario.md`.
+  Não mexa em `src/lib/`, `src/hooks/` nem em `*.functions.ts`/`*.server.ts` num PR de tela; se a
+  tela nova precisar de outro dado ou regra, isso vai num PR separado, com teste.
+- Uma tela por PR, com captura de antes e depois (`bun run screenshots` regenera
+  `docs/redesign/screenshots/`; as capturas do visual antigo ficam em `docs/redesign/antes/`) e os
+  testes de `e2e/` ajustados no mesmo commit.
+- Quando o pedido trouxer uma imagem da prancheta do Claude Design, siga a imagem para layout e
+  hierarquia, e este design system para cores, tipografia e componentes.
 
 ## Banco de dados (Supabase, projeto próprio)
 
@@ -36,15 +62,17 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 ## Organização do código
 
 - Rotas em `src/routes/` são finas: estado da tela e composição. Componentes de uma tela ficam
-  em `src/components/<tela>/` (`contatos`, `hoje`, `ranking`, `painel`); componentes usados em
+  em `src/components/<tela>/` (`configuracoes`, `contatos`, `empresas`, `hoje`, `importar`, `ranking`,
+  `painel`); componentes usados em
   mais de uma tela ficam na raiz de `src/components/` (ex.: `SectorSelect`, `InlineInput`,
   `Funnel`); `src/components/ui/` é o shadcn/ui.
-- Regras puras de cada tela ficam em `src/lib/<tela>.ts` (`contatos.ts`, `fila.ts`,
-  `ranking.ts`), com testes ao lado (`*.test.ts`). Lógica que dá para testar não fica em
+- Regras puras de cada tela ficam em `src/lib/<tela>.ts` (`contatos.ts`, `empresas.ts`, `fila.ts`,
+  `importar.ts`, `ranking.ts`), com testes ao lado (`*.test.ts`). Lógica que dá para testar não fica em
   componente.
 - Hooks compartilhados: `useCadencia` (dados do hunter), `usePainel` (dados do admin),
-  `useSelection` (seleção por checkbox). No painel, ações destrutivas passam por
-  `useConfirm` (`ask({ title, desc, word?, run })`).
+  `useSelection` (seleção por checkbox). Ações destrutivas passam por `useConfirm`
+  (`src/components/useConfirm.tsx`: `ask({ title, desc, word?, action?, reversible?, run })`),
+  nunca pelo `confirm()` do navegador.
 - Etapas da cadência vêm de `STEPS` e etapas do funil de `FUNNEL` (ambos em `cadencia.ts`):
   colunas, rótulos, pontos e CSVs derivam dessas listas; não repita os campos à mão.
 - Selects simples usam `NativeSelect`; erros em toast usam `errorMessage` (`src/lib/utils.ts`).
@@ -60,8 +88,8 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Regras de cadência, parser do LinkedIn e utilitários de data ficam em `src/lib/cadencia.ts` — uma única fonte de verdade reutilizada por todas as telas.
 - Acesso a dados via cliente Supabase do navegador em hooks React Query (`src/hooks/useCadencia.ts`), protegido por RLS por hunter; não usar server functions para CRUD simples.
 - Datas previstas são calculadas (nunca gravadas) por `plannedDates` em `cadencia.ts`, em dias úteis (sem fins de semana nem feriados da tabela `holidays`, carregada uma vez por tela/export e passada como Set) e encadeadas a partir do envio real (ou previsão) da etapa anterior; todas as telas, CSVs e o export usam essa função única.
-- Ranking usa a função SQL `public.ranking(date)` (SECURITY DEFINER) porque agrega dados de outros hunters, que o RLS esconde.
-- Exclusão de contatos e período da competição só via server functions em `src/lib/admin.functions.ts`, após validar ADMIN_PASSWORD (bloqueio em `admin_attempts`); hunters não têm DELETE em `contacts`.
+- Ranking é só do administrador: fica na aba "Competição" do /painel (`/ranking` redireciona para `/painel?aba=competicao`); `getCompetition` exige has_role e a função SQL `public.ranking(date)` (SECURITY DEFINER, porque agrega dados de outros hunters que o RLS esconde) devolve vazio para quem não é admin.
+- Exclusão de contatos e feriados só via server functions em `src/lib/admin.functions.ts`, após validar ADMIN_PASSWORD (bloqueio em `admin_attempts`); hunters não têm DELETE em `contacts`. O período da competição geral (`competition_settings`) só se edita no painel, aba "Competição" (`painelSetPeriod`, has_role).
 - Pontuação da competição: cálculo puro em `src/lib/competition.ts`, carregado com service role em `competition.server.ts`; o cliente recebe só totais.
 - Planilha: o Google Sheets puxa CSV via IMPORTDATA de `/api/public/planilha/*.csv` (token = secret SHEET_EXPORT_TOKEN); lógica em `src/lib/planilha.server.ts`, reaproveitando `cadencia.ts` e `competition.server.ts`.
 - Painel admin (/painel): papel em public.user_roles + has_role(); toda leitura/exclusão global via server functions em src/lib/painel.functions.ts que validam has_role antes de usar service role.
@@ -71,3 +99,43 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Feriados: leitura pública para logados; escrita só por `adminAddHoliday`/`adminRemoveHoliday` (senha de administrador), para manter o mesmo controle das outras ações sensíveis.
 - Funil: `FUNNEL` em `cadencia.ts` é a fonte única das etapas (coluna da data, coluna de registro, contador do placar, rótulos e pontos). Cada etapa tem coluna `*_registrado_em` (momento do clique); a pontuação usa `stageScoreDate` em `competition.ts`, e a data agendada (`*_em`) fica só para consolidado — assim agendamentos futuros não represam pontos.
 - Tipos de período (periods.kind): 'competicao' (Hacka: contatos do próprio período) e 'ciclo' (equipe: só membros, todos os contatos deles contados pela data de cada etapa, com ranking por semana via computeWeekly). closePeriod aceita `end` para congelar o placar numa data passada. A planilha lê o ciclo em ranking.csv?visao=ciclo e ?visao=semanas.
+- Empresas e setores: o hunter cadastra as empresas da semana em /empresas (`companies`, RLS por hunter,
+  `week_start` = segunda-feira) e escolhe o setor (ramo de atuação, tabela `sectors`). O contato se liga
+  à empresa por `contacts.company_id`; um trigger copia nome e concordância para `contacts.company` e
+  `company_gender`, então planilha, ranking e mensagens seguem lendo esses campos. `contacts.sector` é
+  outra coisa: a área do contato (TI, RH...), que alimenta [DOR_DO_SETOR].
+- Cadências por setor: `sector_templates` (setor × etapa), escritas só pelo admin na aba "Setores e
+  cadências" do painel via `src/lib/setores.functions.ts` (has_role antes do service role). Em Envios de
+  hoje, `pickTemplate` (`fila.ts`) usa a mensagem do setor da empresa e cai no modelo padrão
+  (`message_templates`) quando a etapa não tem mensagem própria. Setor com empresas não é excluído, só
+  desativado.
+- Preenchimento automático de empresa e área: regras puras em `src/lib/enriquecimento.ts`
+  (`companyFromHeadline`, `areaFromTitle`, `autoFillPatch`), sem IA e sem serviço externo. Valem na
+  importação (empresa cadastrada citada no headline vira `company_id`; senão o nome do headline vai
+  para `contacts.company`) e no botão "Preencher empresa e área" de Contatos. Só preenchem campos
+  vazios e, na dúvida, deixam em branco; CEO, sócio e financeiro ficam sem área de propósito. Ao
+  ajustar uma regra, acrescente o caso real em `enriquecimento.test.ts`.
+- Indicadores do painel (aba "Indicadores", a primeira do /painel): cálculo puro em
+  `src/lib/dashboard.ts` (`computeDashboard`), carregado com service role em `painelDashboard`
+  (`painel.functions.ts`, has_role antes). Reaproveita `plannedDates`/`isActive`/`computedStatus` e
+  `atScoreDate`/`stageScoreDate`, então envios, atrasados e funil batem com Envios de hoje e com o
+  placar. O "hoje" vem do navegador (fuso SP) para servidor e tela concordarem. Componentes em
+  `src/components/painel/dashboard/`. Limite conhecido: `sentN_at` é o dia em que a etapa foi
+  marcada (sem histórico).
+- Respostas: `contacts.respondeu_em` é carimbado por trigger quando a situação vira "respondeu"
+  (descartar depois mantém a data; voltar para uma situação de cadência apaga). O painel usa
+  `responseDate` (`dashboard.ts`): essa data, senão o registro da AT. Respostas marcadas antes da
+  coluna existir ficam sem data e fora das contagens por período.
+- Mensagem que gerou a resposta: ao marcar "respondeu" ou a AT (`needsResponseOrigin` em
+  `cadencia.ts`), o hunter escolhe a etapa (`contacts.resposta_etapa`, 1–5; 0 = outro canal) num
+  diálogo obrigatório (`useResponseOrigin`, `src/components/RespostaOrigem.tsx`) e pode trocá-la
+  depois no "Avançar no funil". Um trigger carimba `resposta_modelo` com o código do modelo em uso
+  (o do setor, senão o padrão; mesma escolha de `pickTemplate`). O painel usa a etapa informada e,
+  sem ela, a última mensagem enviada antes; daí saem "Canal de entrada" e "Mensagens que geram
+  reunião" (`entryChannels`/`messages` em `dashboard.ts`). Limite: envios antigos contam com o
+  código atual do modelo.
+- Metas: tabela `goals` (só service role), uma linha por escopo — equipe (sem `user_id` e
+  `group_id`), grupo ou hunter —, com herança campo a campo hunter → grupo → equipe
+  (`resolveGoal`). Metas diárias/semanais viram metas do intervalo pelos dias úteis já passados;
+  semáforo: na meta ≥ 100%, perto ≥ 70% (no prazo: até 10 pontos abaixo). Escrita por
+  `painelSaveGoal`/`painelDeleteGoal` (`painel.functions.ts`, has_role antes).

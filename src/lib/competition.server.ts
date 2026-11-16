@@ -203,7 +203,7 @@ export async function loadSnapshot(periodId: string): Promise<CompResultG> {
 }
 
 /** Contas com papel admin não participam do ranking. */
-async function adminIds(db: SupabaseClient<Database>): Promise<Set<string>> {
+export async function adminIds(db: SupabaseClient<Database>): Promise<Set<string>> {
   const { data } = await db.from("user_roles").select("user_id").eq("role", "admin");
   return new Set((data ?? []).map((r) => r.user_id));
 }

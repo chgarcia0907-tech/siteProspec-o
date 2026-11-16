@@ -4,11 +4,13 @@ import {
   STEPS,
   computedStatus,
   formatBR,
+  isActive,
   plannedDates,
   type Contact,
   type ContactStatus,
   type Holidays,
   type Offsets,
+  type StepDef,
 } from "./cadencia";
 
 /** Situações na ordem em que aparecem nos filtros e seletores. */
@@ -18,15 +20,33 @@ export type StatusFilter = "todos" | ContactStatus;
 
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-/** Filtra por situação e por nome/empresa, sem diferenciar acentos e maiúsculas. */
+/** Contatos com dado faltando, para completar a empresa ou a área. */
+export type MissingFilter = "todos" | "empresa" | "area";
+
+export const MISSING_LABEL: Record<MissingFilter, string> = {
+  todos: "Com ou sem pendência",
+  empresa: "Sem empresa",
+  area: "Sem área",
+};
+
+export const hasNoCompany = (c: Pick<Contact, "company_id" | "company">) =>
+  !c.company_id && !c.company.trim();
+
+/**
+ * Filtra por situação, por pendência e por nome/empresa, sem diferenciar acentos e maiúsculas.
+ * A situação é a calculada (`computedStatus`), a mesma que o selo da tabela mostra.
+ */
 export function filterContacts(
   contacts: Contact[],
   search: string,
   status: StatusFilter,
+  missing: MissingFilter = "todos",
 ): Contact[] {
   const term = fold(search).trim();
   return contacts.filter((c) => {
-    if (status !== "todos" && c.status !== status) return false;
+    if (status !== "todos" && computedStatus(c) !== status) return false;
+    if (missing === "empresa" && !hasNoCompany(c)) return false;
+    if (missing === "area" && c.sector.trim()) return false;
     return !term || fold(`${c.name} ${c.company}`).includes(term);
   });
 }
@@ -63,4 +83,37 @@ export function contactsCsvRows(rows: Contact[], offsets: Offsets, holidays: Hol
     ];
   });
   return [header, ...body];
+}
+
+/** Próximo envio da cadência: a primeira etapa ainda não enviada e a data prevista dela. */
+export type NextSend = { step: StepDef; date: string | null; late: boolean };
+
+/**
+ * Próximo envio do contato no dia `today`. `null` quando não há o que enviar: cadência
+ * concluída ou contato fora das filas (respondeu, descartado ou com AT marcada).
+ * `date` é `null` no LinkedIn 1 sem data definida.
+ */
+export function nextSend(
+  contact: Contact,
+  offsets: Offsets,
+  holidays: Holidays,
+  today: string,
+): NextSend | null {
+  if (!isActive(contact)) return null;
+  const step = STEPS.find((s) => !contact[s.sentField]);
+  if (!step) return null;
+  const date = plannedDates(contact, offsets, holidays)[step.n] ?? null;
+  return { step, date, late: !!date && date < today };
+}
+
+/** Marcador de cada etapa na coluna Cadência (DESIGN.md, seção 7). */
+export type StepMark = "enviada" | "proxima" | "atrasada" | "futura";
+
+/** Um marcador por etapa de `STEPS`: enviada, a próxima (ou atrasada) e as futuras. */
+export function cadenceMarks(contact: Contact, next: NextSend | null): StepMark[] {
+  return STEPS.map((s) => {
+    if (contact[s.sentField]) return "enviada";
+    if (next?.step.n === s.n) return next.late ? "atrasada" : "proxima";
+    return "futura";
+  });
 }

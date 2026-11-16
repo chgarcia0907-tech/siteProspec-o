@@ -1,188 +1,126 @@
-import { CompanyGenderToggle } from "@/components/CompanyGender";
-import { FunnelBadge, FunnelControl } from "@/components/Funnel";
-import { InlineInput } from "@/components/InlineInput";
-import { SectorSelect } from "@/components/SectorSelect";
+import { Pencil } from "lucide-react";
+import { FunnelBadge } from "@/components/Funnel";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { TableCell, TableRow } from "@/components/ui/table";
-import {
-  STATUS_LABEL,
-  STEPS,
-  computedStatus,
-  formatBR,
-  funnelIndex,
-  plannedDates,
-  todayISO,
-  type Contact,
-  type ContactStatus,
-  type Holidays,
-  type Offsets,
-} from "@/lib/cadencia";
-import { CONTACT_STATUSES } from "@/lib/contatos";
+import { STEPS, computedStatus, formatBR, funnelIndex, type Contact } from "@/lib/cadencia";
+import type { NextSend, StepMark } from "@/lib/contatos";
 import { cn } from "@/lib/utils";
 
-/** Linha editável de um contato: dados, etapas da cadência, situação e funil. */
+/** "2026-11-06" → "06/11". */
+const ddmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+
+const MARK_LABEL: Record<StepMark, string> = {
+  enviada: "enviada",
+  proxima: "próxima",
+  atrasada: "atrasada",
+  futura: "a enviar",
+};
+
+/**
+ * Linha de um contato (DESIGN.md, seção 7): só leitura, com as 9 colunas. A edição detalhada
+ * abre pelo botão de editar, no fim da linha.
+ */
 export function ContactRow({
   contact: c,
-  offsets,
-  holidays,
+  sectorName,
+  next,
+  marks,
   selected,
   onToggle,
-  onPatch,
-  onStatus,
+  onEdit,
 }: {
   contact: Contact;
-  offsets: Offsets;
-  holidays: Holidays;
+  /** Setor (ramo) da empresa cadastrada, quando o contato está vinculado a uma. */
+  sectorName: string | null;
+  next: NextSend | null;
+  marks: StepMark[];
   selected: boolean;
   onToggle: () => void;
-  onPatch: (changes: Partial<Contact>) => void;
-  onStatus: (s: ContactStatus) => void;
+  onEdit: () => void;
 }) {
-  const planned = plannedDates(c, offsets, holidays);
-  const status = computedStatus(c);
-  const [step1, ...nextSteps] = STEPS;
-
   return (
-    <TableRow className="align-middle">
+    <TableRow data-state={selected ? "selected" : undefined}>
       <TableCell>
-        <Checkbox checked={selected} onCheckedChange={onToggle} />
-      </TableCell>
-      <TableCell className="font-medium whitespace-nowrap">
-        <InlineInput
-          value={c.name}
-          placeholder="Nome"
-          onCommit={(v) => v.trim() && onPatch({ name: v.trim() })}
+        <Checkbox
+          checked={selected}
+          onCheckedChange={onToggle}
+          aria-label={`Selecionar ${c.name}`}
         />
       </TableCell>
-      <TableCell className="max-w-[260px] truncate text-muted-foreground">
-        {c.headline || "—"}
+      <TableCell className="max-w-56">
+        <p className="truncate font-semibold text-heading">{c.name}</p>
+        <p className="truncate text-caption text-muted-foreground" title={c.headline}>
+          {c.job_title.trim() || c.headline || "Sem cargo"}
+        </p>
       </TableCell>
-      <TableCell>
-        <InlineInput
-          value={c.job_title}
-          placeholder="Cargo"
-          onCommit={(v) => onPatch({ job_title: v })}
-        />
-        {c.headline && (
-          <p
-            className="mt-0.5 max-w-[240px] truncate text-[11px] text-muted-foreground"
-            title={c.headline}
-          >
-            {c.headline}
+      <TableCell className="max-w-48">
+        <p className="truncate text-foreground">{c.company.trim() || "—"}</p>
+        {c.company.trim() && (
+          <p className="truncate text-caption text-subtle-foreground">
+            {c.company_id ? (sectorName ?? "empresa cadastrada") : "texto livre"}
           </p>
         )}
       </TableCell>
-      <TableCell>
-        <SectorSelect
-          value={c.sector}
-          onChange={(v) => onPatch({ sector: v })}
-          className="h-7 w-40 text-xs"
-        />
+      <TableCell className="whitespace-nowrap text-muted-foreground">{c.sector || "—"}</TableCell>
+      <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
+        {c.phone || "—"}
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-1">
-          <InlineInput
-            value={c.company}
-            placeholder="Empresa"
-            onCommit={(v) => onPatch({ company: v })}
-          />
-          <CompanyGenderToggle
-            value={c.company_gender ?? "feminino"}
-            onChange={(g) => onPatch({ company_gender: g })}
-          />
-        </div>
-      </TableCell>
-      <TableCell>
-        <InlineInput
-          value={c.phone}
-          placeholder="(11) 90000-0000"
-          onCommit={(v) => onPatch({ phone: v })}
-        />
-      </TableCell>
-      <TableCell className="whitespace-nowrap text-muted-foreground">
-        {formatBR(c.connected_at)}
+        <span
+          className="flex items-center gap-1"
+          role="img"
+          aria-label={`Cadência: ${STEPS.map((s, i) => `${s.label} ${MARK_LABEL[marks[i]!]}`).join(", ")}`}
+        >
+          {STEPS.map((s, i) => {
+            const m = marks[i]!;
+            const sent = c[s.sentField] as string | null;
+            return (
+              <span
+                key={s.n}
+                title={`${s.label}: ${sent ? `enviada em ${formatBR(sent)}` : MARK_LABEL[m]}`}
+                className={cn(
+                  "size-3 rounded-full border-2",
+                  m === "enviada" &&
+                    (s.channel === "linkedin"
+                      ? "border-linkedin bg-linkedin"
+                      : "border-whatsapp bg-whatsapp"),
+                  m === "proxima" &&
+                    (s.channel === "linkedin" ? "border-linkedin" : "border-whatsapp"),
+                  m === "atrasada" && "border-destructive",
+                  m === "futura" && "border-divider",
+                )}
+              />
+            );
+          })}
+        </span>
       </TableCell>
       <TableCell className="whitespace-nowrap">
-        <div className="flex items-center gap-1">
-          <Input
-            type="date"
-            className="h-7 w-32 text-xs"
-            value={c.step1_date ?? ""}
-            onChange={(e) => onPatch({ step1_date: e.target.value || null })}
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 px-2 text-xs"
-            onClick={() => onPatch({ step1_date: todayISO(), [step1!.sentField]: todayISO() })}
-          >
-            Enviei hoje
-          </Button>
-          <StepCheck
-            checked={!!c[step1!.sentField]}
-            onToggle={(v) =>
-              onPatch({
-                [step1!.sentField]: v ? todayISO() : null,
-                ...(v && !c.step1_date ? { step1_date: todayISO() } : {}),
-              })
-            }
-          />
-        </div>
+        {!next ? (
+          <span className="text-subtle-foreground">—</span>
+        ) : (
+          <>
+            <p className={cn("text-heading", next.late && "text-destructive-text")}>
+              {next.date ? ddmm(next.date) : "Sem data"}
+              {next.late && <span className="ml-1 text-caption">atrasado</span>}
+            </p>
+            <p className="text-caption text-subtle-foreground">{next.step.label}</p>
+          </>
+        )}
       </TableCell>
-      {nextSteps.map((s) => (
-        <TableCell key={s.n} className="whitespace-nowrap">
-          <div className="flex items-center gap-1.5">
-            <span
-              className={cn("text-xs", c[s.sentField] ? "text-muted-foreground line-through" : "")}
-            >
-              {formatBR(planned[s.n])}
-            </span>
-            <StepCheck
-              checked={!!c[s.sentField]}
-              onToggle={(v) => onPatch({ [s.sentField]: v ? todayISO() : null })}
-            />
-          </div>
-        </TableCell>
-      ))}
       <TableCell>
         {funnelIndex(c) >= 0 ? (
           <FunnelBadge contact={c} />
         ) : (
-          <Select value={status} onValueChange={(v) => onStatus(v as ContactStatus)}>
-            <SelectTrigger className="h-7 w-[150px] text-xs">
-              <SelectValue asChild>
-                <span>
-                  <StatusBadge status={status} />
-                </span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {CONTACT_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {STATUS_LABEL[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <StatusBadge status={computedStatus(c)} />
         )}
       </TableCell>
-      <TableCell>
-        <FunnelControl contact={c} onPatch={onPatch} />
+      <TableCell className="text-right">
+        <Button size="icon" variant="ghost" onClick={onEdit} aria-label={`Editar ${c.name}`}>
+          <Pencil strokeWidth={1.75} />
+        </Button>
       </TableCell>
     </TableRow>
   );
-}
-
-function StepCheck({ checked, onToggle }: { checked: boolean; onToggle: (v: boolean) => void }) {
-  return <Checkbox checked={checked} onCheckedChange={(v) => onToggle(!!v)} title="Enviado" />;
 }

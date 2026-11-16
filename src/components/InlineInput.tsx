@@ -6,15 +6,21 @@ export function InlineInput({
   value,
   placeholder,
   onCommit,
+  className = "h-7 w-36",
+  ...rest
 }: {
   value: string;
   placeholder?: string;
   onCommit: (v: string) => void;
+  className?: string;
+  "aria-label"?: string;
+  id?: string;
 }) {
   const [local, setLocal] = useState(value);
   return (
     <Input
-      className="h-7 w-36 text-xs"
+      className={className}
+      {...rest}
       placeholder={placeholder}
       value={local}
       onChange={(e) => setLocal(e.target.value)}

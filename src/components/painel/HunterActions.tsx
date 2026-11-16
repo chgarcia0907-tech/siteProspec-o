@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { HunterInfo } from "@/hooks/usePainel";
 import { deleteHunter, transferContacts } from "@/lib/periodos.functions";
-import type { Ask } from "./useConfirm";
+import type { Ask } from "@/components/useConfirm";
 
 /** Transferir os contatos de um hunter para outro e excluir a conta (só sem contatos). */
 export function HunterActions({
@@ -68,7 +68,7 @@ export function HunterActions({
       <Button
         size="sm"
         variant="ghost"
-        className="ml-auto text-destructive"
+        className="ml-auto text-destructive-text"
         disabled={hunter.total > 0}
         title={hunter.total > 0 ? "Transfira ou exclua os contatos antes" : ""}
         onClick={() =>

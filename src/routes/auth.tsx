@@ -99,7 +99,7 @@ function AuthPage() {
                   id="nome"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Como aparece no ranking"
+                  placeholder="Como a equipe vai ver seu nome"
                 />
               </div>
             )}
