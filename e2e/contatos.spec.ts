@@ -3,15 +3,14 @@ import { expect, mutations, seed, test, TODAY } from "./helpers";
 test.describe("Contatos", () => {
   test("lista os contatos do hunter e busca sem acento", async ({ page }) => {
     await page.goto("/contatos");
-    await expect(page.getByText("8 contatos ·")).toBeVisible();
+    await expect(page.getByText("8 contatos", { exact: true })).toBeVisible();
     await page.getByPlaceholder("Buscar por nome ou empresa").fill("fabio");
-    await expect(page.getByText("1 contatos ·")).toBeVisible();
+    await expect(page.getByText("1 contato", { exact: true })).toBeVisible();
     await expect(page.locator("main tbody tr")).toHaveCount(1);
   });
 
   test("ação em lote registra o LinkedIn 1 dos selecionados", async ({ page }) => {
     await page.goto("/contatos");
-    // a primeira caixa da linha é a seleção; as outras marcam as etapas enviadas
     await page.locator("main tbody tr").first().getByRole("checkbox").first().click();
     await expect(page.getByText("1 selecionados")).toBeVisible();
     await page.getByRole("button", { name: "Enviei LinkedIn 1 hoje para os selecionados" }).click();
@@ -27,7 +26,13 @@ test.describe("Contatos", () => {
 
   test("editar a empresa salva ao sair do campo", async ({ page }) => {
     await page.goto("/contatos");
-    const empresa = page.locator("main tbody tr").first().getByPlaceholder("Empresa");
+    // A edição detalhada abre pelo botão de editar da linha.
+    await page
+      .locator("main tbody tr")
+      .first()
+      .getByRole("button", { name: /^Editar / })
+      .click();
+    const empresa = page.getByRole("dialog").getByPlaceholder("Empresa");
     await empresa.fill("Nova Empresa");
     await empresa.press("Enter");
     await expect.poll(async () => (await mutations()).length).toBe(1);
@@ -38,9 +43,9 @@ test.describe("Contatos", () => {
     await page.goto("/contatos");
     const pend = page.getByRole("combobox", { name: "Pendências" });
     await pend.selectOption({ label: "Sem área" });
-    await expect(page.getByText("3 contatos ·")).toBeVisible();
+    await expect(page.getByText("3 contatos", { exact: true })).toBeVisible();
     await pend.selectOption({ label: "Sem empresa" });
-    await expect(page.getByText("1 contatos ·")).toBeVisible();
+    await expect(page.getByText("1 contato", { exact: true })).toBeVisible();
     await expect(page.locator("main tbody tr").first()).toContainText("Diretora de Operações");
   });
 
@@ -65,7 +70,7 @@ test.describe("Contatos", () => {
   }) => {
     await seed(60);
     await page.goto("/contatos");
-    await expect(page.getByText("68 contatos ·")).toBeVisible();
+    await expect(page.getByText("68 contatos", { exact: true })).toBeVisible();
     await expect(page.locator("main tbody tr")).toHaveCount(50);
     await expect(page.getByText("1–50 de 68 contatos")).toBeVisible();
     await page.getByRole("button", { name: "Próxima" }).click();
@@ -93,11 +98,10 @@ test.describe("Contatos", () => {
 
   test("marcar 'respondeu' pergunta qual mensagem gerou a resposta", async ({ page }) => {
     await page.goto("/contatos");
-    const row = page
-      .locator("main tbody tr")
-      .filter({ has: page.locator('input[value="Bruno Lima"]') });
+    await page.getByRole("button", { name: "Editar Bruno Lima" }).click();
+    const editor = page.getByRole("dialog", { name: "Bruno Lima" });
     const responder = async () => {
-      await row.getByRole("combobox").filter({ hasText: "Em cadência" }).click();
+      await editor.getByRole("combobox", { name: "Situação" }).click();
       await page.getByRole("option", { name: "Respondeu" }).click();
     };
     const origem = page.getByRole("dialog", { name: "Qual mensagem gerou a resposta?" });
@@ -116,11 +120,11 @@ test.describe("Contatos", () => {
 
   test("desfazer uma etapa do funil pede confirmação", async ({ page }) => {
     await page.goto("/contatos");
-    // O nome fica num campo editável, então a linha é achada pelo valor do campo.
-    const row = page
-      .locator("main tbody tr")
-      .filter({ has: page.locator('input[value="Fábio Neves"]') });
-    await row.getByRole("button", { name: "Avançar no funil" }).click();
+    await page.getByRole("button", { name: "Editar Fábio Neves" }).click();
+    await page
+      .getByRole("dialog", { name: "Fábio Neves" })
+      .getByRole("button", { name: "Avançar no funil" })
+      .click();
     await page.getByRole("button", { name: "Desfazer Lead" }).click();
     const dialog = page.getByRole("alertdialog");
     await expect(dialog).toContainText("Desfazer Lead?");
@@ -129,5 +133,32 @@ test.describe("Contatos", () => {
     const [m] = await mutations();
     expect(m).toMatchObject({ method: "PATCH", table: "contacts" });
     expect(JSON.parse(m!.body)).toMatchObject({ lead_em: null });
+  });
+
+  test("mostra a cadência em marcadores e o próximo envio, com atraso", async ({ page }) => {
+    await page.goto("/contatos");
+    const cabecalhos = page.locator("main thead th");
+    await expect(cabecalhos).toHaveCount(9);
+    const bruno = page.locator("main tbody tr", { hasText: "Bruno Lima" });
+    // Bruno enviou o LinkedIn 1; o WhatsApp 1 estava previsto para 06/11 e atrasou.
+    await expect(bruno.getByRole("img", { name: /^Cadência:/ })).toHaveAttribute(
+      "aria-label",
+      /LinkedIn 1 enviada, WhatsApp 1 atrasada, LinkedIn 2 a enviar/,
+    );
+    await expect(bruno).toContainText("06/11atrasado");
+    await expect(bruno).toContainText("WhatsApp 1");
+  });
+
+  test("o editor marca uma etapa como enviada", async ({ page }) => {
+    await page.goto("/contatos");
+    await page.getByRole("button", { name: "Editar Bruno Lima" }).click();
+    await page
+      .getByRole("dialog", { name: "Bruno Lima" })
+      .getByRole("checkbox", { name: "WhatsApp 1 enviada" })
+      // click, e não check: o estado vem da atualização otimista, um instante depois do clique.
+      .click();
+    await expect.poll(async () => (await mutations()).length).toBe(1);
+    expect(JSON.parse((await mutations())[0]!.body)).toMatchObject({ sent2_at: TODAY });
+    await expect(page.getByRole("checkbox", { name: "WhatsApp 1 enviada" })).toBeChecked();
   });
 });

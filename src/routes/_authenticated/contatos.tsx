@@ -9,6 +9,7 @@ import { useResponseOrigin } from "@/components/RespostaOrigem";
 import { TablePagination } from "@/components/TablePagination";
 import {
   useCompanies,
+  useSectors,
   useContacts,
   useHolidays,
   useSettings,
@@ -52,6 +53,11 @@ function Contatos() {
   const { data: settings } = useSettings();
   const holidays = useHolidays();
   const { data: companies } = useCompanies();
+  const { data: sectors } = useSectors();
+  const sectorName = useMemo(() => {
+    const byId = new Map((sectors ?? []).map((s) => [s.id, s.name]));
+    return new Map((companies ?? []).map((co) => [co.id, byId.get(co.sector_id) ?? ""] as const));
+  }, [companies, sectors]);
   const offsets = settings ?? DEFAULT_OFFSETS;
   const update = useUpdateContact();
   const selection = useSelection();
@@ -72,7 +78,7 @@ function Contatos() {
     update.mutate({ id: contact.id, patch }, { onError: (e) => toast.error(e.message) });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <ContactsToolbar
         count={rows.length}
         search={search}
@@ -102,7 +108,9 @@ function Contatos() {
         isLoading={isLoading}
         offsets={offsets}
         holidays={holidays}
+        today={todayISO()}
         companies={companies ?? []}
+        sectorName={sectorName}
         selection={selection}
         onPatch={(c, changes) => save(c, withSyncedStatus(c, changes))}
         onStatus={(c, status) => origin.guard(c, { status }, (p) => save(c, p))}

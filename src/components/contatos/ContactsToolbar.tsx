@@ -44,22 +44,41 @@ export function ContactsToolbar({
   onExport: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Contatos</h1>
-        <p className="text-sm text-muted-foreground">
-          {count} contatos · edite empresa, telefone e datas direto na tabela.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">{count === 1 ? "1 contato" : `${count} contatos`}</p>
+          <h1 className="mt-1 text-title font-bold">Contatos</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-end leading-tight">
+            <a
+              href={PLANILHA_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="text-dense font-semibold text-primary underline-offset-4 hover:underline"
+            >
+              Abrir planilha
+            </a>
+            <span className="text-caption text-subtle-foreground">
+              atualiza automaticamente, com atraso de até 1 hora
+            </span>
+          </div>
+          <Button variant="secondary" onClick={onExport}>
+            Exportar CSV
+          </Button>
+        </div>
+      </header>
       <div className="flex flex-wrap items-center gap-2">
         <Input
           placeholder="Buscar por nome ou empresa"
-          className="w-64"
+          aria-label="Buscar contatos"
+          className="w-72"
           value={search}
           onChange={(e) => onSearch(e.target.value)}
         />
         <Select value={status} onValueChange={(v) => onStatus(v as StatusFilter)}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-48" aria-label="Situação">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -83,23 +102,7 @@ export function ContactsToolbar({
             </option>
           ))}
         </NativeSelect>
-        {actions}
-        <div className="flex flex-col items-end leading-tight">
-          <a
-            href={PLANILHA_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Abrir planilha
-          </a>
-          <span className="text-caption text-muted-foreground">
-            atualiza automaticamente, com atraso de até 1 hora
-          </span>
-        </div>
-        <Button variant="outline" onClick={onExport}>
-          Exportar CSV
-        </Button>
+        <div className="ml-auto">{actions}</div>
       </div>
     </div>
   );
