@@ -10,23 +10,6 @@ export const EXEMPLO = {
   job_title: "Gerente de Operações",
 };
 
-/** Variáveis que os modelos aceitam: as mesmas que renderTemplate (cadencia.ts) substitui. */
-export const VARIAVEIS = [
-  "[FIRST NAME]",
-  "[NOME + SOBRENOME]",
-  "[NOME]",
-  "[EMPRESA]",
-  "[A_EMPRESA]",
-  "[NA_EMPRESA]",
-  "[DA_EMPRESA]",
-  "[CARGO]",
-  "[DOR_DO_SETOR]",
-  "[CONSULTOR]",
-  "[OBRIGADO]",
-  "[SAUDACAO]",
-  "[JANELA]",
-];
-
 /** Uma etapa da cadência: o modelo (com as variáveis destacadas) e a pré-visualização ao lado. */
 export function ModeloEtapa({
   step,

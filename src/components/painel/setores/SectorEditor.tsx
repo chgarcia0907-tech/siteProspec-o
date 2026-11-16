@@ -1,10 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ChannelBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { VARIAVEIS } from "@/components/templateVars";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,11 +16,8 @@ import { useProfile, useTemplates } from "@/hooks/useCadencia";
 import { STEPS, renderTemplate } from "@/lib/cadencia";
 import type { Sector, SectorTemplates, TemplateText } from "@/lib/empresas";
 import { sectorDelete, sectorSave, sectorSaveCadence } from "@/lib/setores.functions";
-import { errorMessage } from "@/lib/utils";
+import { cn, errorMessage } from "@/lib/utils";
 import type { Ask } from "@/components/useConfirm";
-
-const TAGS =
-  "[FIRST NAME], [EMPRESA], [NA_EMPRESA], [A_EMPRESA], [DA_EMPRESA], [CARGO], [DOR_DO_SETOR], [NOME], [CONSULTOR], [OBRIGADO], [JANELA], [SAUDACAO]";
 
 type Draft = Record<number, TemplateText>;
 
@@ -51,6 +51,8 @@ export function SectorEditor({
       ) as Draft,
   );
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState("1");
+  const bodies = useRef<Record<number, HTMLTextAreaElement | null>>({});
   const hunter = {
     name: profile?.message_name?.trim() || profile?.display_name || "Seu Nome",
     gender: (profile?.gender === "f" ? "f" : "m") as "m" | "f",
@@ -77,24 +79,34 @@ export function SectorEditor({
     }
   }
 
-  const saveInfo = () =>
+  /** Um botão só (DESIGN.md, seção 7): grava os dados do setor e as 5 mensagens. */
+  const saveAll = () =>
     run(async () => {
       await save({
         data: { id: sector.id, name: name.trim(), active, sort: Number(sort) || 0 },
       });
-      await qc.invalidateQueries({ queryKey: ["sectors"] });
-    }, "Setor salvo");
-
-  const saveSteps = () =>
-    run(async () => {
       await saveCadence({
         data: {
           sectorId: sector.id,
           steps: STEPS.map((s) => ({ step: s.n, ...draft[s.n]! })),
         },
       });
+      await qc.invalidateQueries({ queryKey: ["sectors"] });
       await qc.invalidateQueries({ queryKey: ["sector_templates"] });
-    }, "Cadência salva");
+    }, "Setor e cadência salvos");
+
+  /** Insere a variável onde está o cursor na mensagem da etapa aberta. */
+  function insertVar(n: number, v: string) {
+    const el = bodies.current[n];
+    const body = draft[n]!.body;
+    const at = el ? el.selectionStart : body.length;
+    const end = el ? el.selectionEnd : body.length;
+    setStep(n, { body: body.slice(0, at) + v + body.slice(end) });
+    requestAnimationFrame(() => {
+      el?.focus();
+      el?.setSelectionRange(at + v.length, at + v.length);
+    });
+  }
 
   function copyDefaults() {
     setDraft((d) => {
@@ -110,41 +122,18 @@ export function SectorEditor({
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Setor</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-end gap-3">
+        <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
           <div className="space-y-1">
-            <Label htmlFor="sn">Nome</Label>
-            <Input
-              id="sn"
-              className="w-64"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+            <CardTitle>{sector.name}</CardTitle>
+            <CardDescription>
+              {companies === 1
+                ? "1 empresa usa este setor"
+                : `${companies} empresas usam este setor`}
+            </CardDescription>
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="so">Ordem</Label>
-            <Input
-              id="so"
-              type="number"
-              min={0}
-              className="w-20"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            />
-          </div>
-          <label className="flex h-9 items-center gap-2 text-sm">
-            <Checkbox checked={active} onCheckedChange={(v) => setActive(v === true)} />
-            Ativo (aparece para os hunters)
-          </label>
-          <Button size="sm" disabled={busy || !name.trim()} onClick={saveInfo}>
-            Salvar setor
-          </Button>
           <Button
             size="sm"
-            variant="ghost"
-            className="ml-auto text-destructive-text"
+            variant="destructive-ghost"
             disabled={busy}
             onClick={() =>
               companies > 0
@@ -165,63 +154,146 @@ export function SectorEditor({
                   })
             }
           >
+            <Trash2 strokeWidth={1.75} aria-hidden />
             Excluir setor
           </Button>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-end gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="sn">Nome</Label>
+            <Input
+              id="sn"
+              className="w-64"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="so">Ordem</Label>
+            <Input
+              id="so"
+              type="number"
+              min={0}
+              className="w-20"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+            />
+          </div>
+          <label className="flex h-9 cursor-pointer items-center gap-2 text-dense">
+            <Checkbox checked={active} onCheckedChange={(v) => setActive(v === true)} />
+            Ativo (aparece para os hunters)
+          </label>
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-sm font-semibold">Cadência do setor</h2>
-        <p className="text-xs text-muted-foreground">
-          Variáveis: {TAGS}. Etapa vazia usa o modelo padrão.
-        </p>
-        <div className="ml-auto flex gap-2">
-          <Button size="sm" variant="outline" onClick={copyDefaults}>
+      <Card>
+        <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
+          <div className="space-y-1">
+            <CardTitle>Cadência do setor</CardTitle>
+            <CardDescription>
+              Etapa sem mensagem própria usa o modelo padrão da equipe.
+            </CardDescription>
+          </div>
+          <Button size="sm" variant="secondary" onClick={copyDefaults}>
             Preencher vazias com o padrão
           </Button>
-          <Button size="sm" disabled={busy} onClick={saveSteps}>
-            Salvar cadência
-          </Button>
-        </div>
-      </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={tab} onValueChange={setTab}>
+            <TabsList className="h-auto flex-wrap justify-start">
+              {STEPS.map((s) => {
+                const propria = !!draft[s.n]!.body.trim();
+                return (
+                  <TabsTrigger key={s.n} value={String(s.n)} className="gap-2">
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "size-2 rounded-full",
+                        s.channel === "linkedin" ? "bg-linkedin" : "bg-whatsapp",
+                      )}
+                    />
+                    {s.label}
+                    <span
+                      className={cn(
+                        "text-caption font-semibold",
+                        propria ? "text-success" : "text-subtle-foreground",
+                      )}
+                    >
+                      {propria ? "própria" : "padrão"}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+            {STEPS.map((s) => {
+              const t = draft[s.n]!;
+              return (
+                <TabsContent key={s.n} value={String(s.n)}>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <ChannelBadge channel={s.channel}>{s.label}</ChannelBadge>
+                        <Input
+                          aria-label={`Código da mensagem ${s.label}`}
+                          placeholder="Código (ex.: VAR-IN01)"
+                          className="h-8 w-44 font-mono"
+                          value={t.code}
+                          onChange={(e) => setStep(s.n, { code: e.target.value })}
+                        />
+                      </div>
+                      <Textarea
+                        ref={(el) => {
+                          bodies.current[s.n] = el;
+                        }}
+                        aria-label={`Mensagem ${s.label}`}
+                        rows={9}
+                        placeholder={defaults?.[s.n]?.body}
+                        value={t.body}
+                        onChange={(e) => setStep(s.n, { body: e.target.value })}
+                      />
+                      <div className="space-y-1.5">
+                        <p className="text-caption text-subtle-foreground">
+                          Clique numa variável para inseri-la no cursor:
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {VARIAVEIS.map((v) => (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => insertVar(s.n, v)}
+                              className="rounded-sm bg-primary-soft px-2 py-0.5 font-mono text-caption text-primary-text-strong hover:bg-primary/25 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            >
+                              {v}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-caption font-semibold text-muted-foreground">
+                        Pré-visualização{!t.body.trim() && " (modelo padrão)"}
+                      </p>
+                      <div className="min-h-48 rounded-lg border bg-surface-inset p-4 text-body whitespace-pre-wrap text-heading">
+                        {renderTemplate(
+                          t.body.trim() ? t.body : (defaults?.[s.n]?.body ?? ""),
+                          exemplo,
+                          hunter,
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              );
+            })}
+          </Tabs>
+        </CardContent>
+      </Card>
 
-      {STEPS.map((s) => {
-        const t = draft[s.n]!;
-        return (
-          <Card key={s.n}>
-            <CardHeader className="flex-row items-center gap-2 pb-2">
-              <ChannelBadge channel={s.channel}>{s.label}</ChannelBadge>
-              <Input
-                aria-label={`Código da mensagem ${s.label}`}
-                placeholder="Código (ex.: VAR-IN01)"
-                className="h-7 w-44 font-mono text-xs"
-                value={t.code}
-                onChange={(e) => setStep(s.n, { code: e.target.value })}
-              />
-              {!t.body.trim() && (
-                <span className="text-xs text-muted-foreground">usa o modelo padrão</span>
-              )}
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <Textarea
-                aria-label={`Mensagem ${s.label}`}
-                rows={9}
-                className="text-sm"
-                placeholder={defaults?.[s.n]?.body}
-                value={t.body}
-                onChange={(e) => setStep(s.n, { body: e.target.value })}
-              />
-              <div className="whitespace-pre-wrap rounded-md border bg-muted/40 p-3 text-sm">
-                {renderTemplate(
-                  t.body.trim() ? t.body : (defaults?.[s.n]?.body ?? ""),
-                  exemplo,
-                  hunter,
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+      <div className="flex justify-end">
+        <Button disabled={busy || !name.trim()} onClick={saveAll}>
+          Salvar setor e cadência
+        </Button>
+      </div>
     </div>
   );
 }

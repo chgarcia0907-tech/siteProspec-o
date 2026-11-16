@@ -64,8 +64,9 @@ test.describe("Empresas", () => {
       .getByLabel("Mensagem LinkedIn 1", { exact: true })
       .fill("Olá, [FIRST NAME]! Varejo [NA_EMPRESA].");
     await expect(page.getByText("Olá, Mariana! Varejo na Acme.")).toBeVisible();
-    await page.getByRole("button", { name: "Salvar cadência" }).click();
-    await expect(page.getByText("Cadência salva")).toBeVisible();
+    // Um botão só grava o setor e a cadência.
+    await page.getByRole("button", { name: "Salvar setor e cadência" }).click();
+    await expect(page.getByText("Setor e cadência salvos")).toBeVisible();
 
     const m = (await mutations()).find((x) => x.table === "sector_templates");
     expect(m).toMatchObject({ method: "POST" });
@@ -91,5 +92,18 @@ test.describe("Empresas", () => {
     await dialog.getByRole("button", { name: "Excluir" }).click();
     await expect.poll(async () => (await mutations()).length).toBe(1);
     expect((await mutations())[0]).toMatchObject({ method: "DELETE", table: "companies" });
+  });
+
+  test("no editor do setor, as variáveis entram na mensagem com um clique", async ({ page }) => {
+    await page.goto("/painel?aba=setores");
+    await page.getByRole("button", { name: /Varejo/ }).click();
+    // A aba do WhatsApp 2 tem mensagem própria; as outras usam o padrão.
+    await expect(page.getByRole("tab", { name: /^WhatsApp 2/ })).toContainText("própria");
+    await expect(page.getByRole("tab", { name: /^LinkedIn 1/ })).toContainText("padrão");
+    const msg = page.getByLabel("Mensagem LinkedIn 1", { exact: true });
+    await msg.fill("Oi, ");
+    await page.getByRole("button", { name: "[FIRST NAME]", exact: true }).click();
+    await expect(msg).toHaveValue("Oi, [FIRST NAME]");
+    await expect(page.getByRole("tab", { name: /^LinkedIn 1/ })).toContainText("própria");
   });
 });

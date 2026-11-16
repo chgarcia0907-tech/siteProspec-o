@@ -6,7 +6,8 @@ import { STEPS, renderTemplate } from "@/lib/cadencia";
 import { pickTemplate } from "@/lib/fila";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { EXEMPLO, ModeloEtapa, VARIAVEIS } from "@/components/modelos/ModeloEtapa";
+import { EXEMPLO, ModeloEtapa } from "@/components/modelos/ModeloEtapa";
+import { VARIAVEIS } from "@/components/templateVars";
 
 export const Route = createFileRoute("/_authenticated/modelos")({
   head: () => ({
@@ -69,7 +70,7 @@ function Modelos() {
       </header>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="h-auto flex-wrap">
+        <TabsList className="h-auto flex-wrap justify-start">
           {STEPS.map((step) => {
             const t = pickTemplate(step, sectorId || null, sectorTemplates, templates);
             return (

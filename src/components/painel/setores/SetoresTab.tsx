@@ -43,10 +43,11 @@ export function SetoresTab({ ask }: { ask: Ask }) {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+    <div className="grid grid-cols-[280px_minmax(0,1fr)] items-start gap-6">
       <Card className="h-fit">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Setores (ramos de atuação)</CardTitle>
+          <CardTitle>Setores</CardTitle>
+          <p className="text-dense text-muted-foreground">Ramos de atuação das empresas.</p>
         </CardHeader>
         <CardContent className="space-y-3">
           <form className="flex gap-2" onSubmit={create}>
@@ -61,7 +62,7 @@ export function SetoresTab({ ask }: { ask: Ask }) {
             </Button>
           </form>
           {list.length === 0 && (
-            <p className="text-xs text-muted-foreground">Nenhum setor cadastrado.</p>
+            <p className="text-dense text-muted-foreground">Nenhum setor cadastrado.</p>
           )}
           <ul className="space-y-1">
             {list.map((s) => {
@@ -72,8 +73,8 @@ export function SetoresTab({ ask }: { ask: Ask }) {
                     type="button"
                     onClick={() => setSelected(s.id)}
                     className={cn(
-                      "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent",
-                      s.id === selected && "bg-accent",
+                      "flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-dense transition-colors hover:bg-control",
+                      s.id === selected && "bg-primary-soft text-heading",
                       !s.active && "text-muted-foreground",
                     )}
                   >
@@ -86,9 +87,9 @@ export function SetoresTab({ ask }: { ask: Ask }) {
                     </span>
                     <span
                       className={cn(
-                        "rounded-full px-1.5 text-caption font-medium",
+                        "rounded-full px-1.5 text-caption font-semibold",
                         faltam === 0
-                          ? "bg-whatsapp-soft text-whatsapp"
+                          ? "bg-success-soft text-success"
                           : "bg-warning-soft text-warning-text",
                       )}
                       title="Etapas com mensagem própria do setor"
@@ -112,10 +113,12 @@ export function SetoresTab({ ask }: { ask: Ask }) {
           onDeleted={() => setSelected(null)}
         />
       ) : (
-        <p className="text-sm text-muted-foreground">
-          Escolha um setor para editar a cadência. Etapas sem mensagem própria usam o modelo padrão
-          da equipe.
-        </p>
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-input px-6 py-12 text-center">
+          <p className="text-card-title font-semibold text-heading">Escolha um setor</p>
+          <p className="text-dense text-muted-foreground">
+            Etapas sem mensagem própria usam o modelo padrão da equipe.
+          </p>
+        </div>
       )}
     </div>
   );

@@ -86,7 +86,7 @@ function Hoje() {
       <DayProgressBar progress={progress} missing={missing} />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="h-auto flex-wrap">
+        <TabsList className="h-auto flex-wrap justify-start">
           {STEPS.map((step) => (
             <TabsTrigger key={step.n} value={String(step.n)} className="gap-2">
               <span
