@@ -163,9 +163,7 @@ export function ContactEditDialog({
                       previsto {formatBR(planned[s.n])}
                     </span>
                   )}
-                  {/* Sem <label> em volta: o Checkbox é um <button>, e o label repassaria o
-                      clique, marcando e desmarcando no mesmo toque. */}
-                  <span className="flex items-center gap-2 text-muted-foreground">
+                  <label className="flex cursor-pointer items-center gap-2 text-muted-foreground">
                     <Checkbox
                       checked={!!sent}
                       aria-label={`${s.label} enviada`}
@@ -177,7 +175,7 @@ export function ContactEditDialog({
                       }
                     />
                     {sent ? `enviada em ${formatBR(sent)}` : "não enviada"}
-                  </span>
+                  </label>
                   {s.n === 1 && !sent && (
                     <Button
                       size="sm"
