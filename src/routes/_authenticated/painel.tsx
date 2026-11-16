@@ -1,21 +1,17 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminGate } from "@/components/painel/AdminGate";
 import { BuscaTab } from "@/components/painel/BuscaTab";
 import { CompTab } from "@/components/painel/CompTab";
 import { useConfirm } from "@/components/useConfirm";
 import { HuntersTab } from "@/components/painel/HuntersTab";
-import { IndicadoresTab } from "@/components/painel/dashboard/IndicadoresTab";
 import { PeriodosTab } from "@/components/painel/periodos/PeriodosTab";
 import { SetoresTab } from "@/components/painel/setores/SetoresTab";
-import { painelIsAdmin } from "@/lib/painel.functions";
 
-const ABAS = ["indicadores", "hunters", "periodos", "setores", "competicao", "busca"] as const;
+const ABAS = ["hunters", "periodos", "setores", "competicao", "busca"] as const;
 type Aba = (typeof ABAS)[number];
 const isAba = (v: unknown): v is Aba => ABAS.includes(v as Aba);
 const ABA_LABEL: Record<Aba, string> = {
-  indicadores: "Indicadores",
   hunters: "Hunters",
   periodos: "Períodos e grupos",
   setores: "Setores e cadências",
@@ -25,19 +21,23 @@ const ABA_LABEL: Record<Aba, string> = {
 
 export const Route = createFileRoute("/_authenticated/painel")({
   // A aba aberta fica na URL (?aba=competicao), para links diretos e o redirecionamento do /ranking.
-  validateSearch: (s: Record<string, unknown>): { aba?: Aba } =>
-    isAba(s["aba"]) ? { aba: s["aba"] } : {},
+  // "indicadores" saiu do painel (virou /indicadores): o valor passa só para o redirecionamento.
+  validateSearch: (s: Record<string, unknown>): { aba?: Aba | "indicadores" } =>
+    isAba(s["aba"]) || s["aba"] === "indicadores" ? { aba: s["aba"] } : {},
+  beforeLoad: ({ search }) => {
+    if (search.aba === "indicadores") throw redirect({ to: "/indicadores" });
+  },
   head: () => ({
     meta: [
       { title: "Painel do administrador — Outbound NTec" },
       {
         name: "description",
-        content: "Indicadores das cadências, hunters, competição e contatos de toda a equipe.",
+        content: "Hunters, períodos, setores, competição e contatos de toda a equipe.",
       },
       { property: "og:title", content: "Painel do administrador — Outbound NTec" },
       {
         property: "og:description",
-        content: "Indicadores das cadências, hunters, competição e contatos de toda a equipe.",
+        content: "Hunters, períodos, setores, competição e contatos de toda a equipe.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -47,24 +47,17 @@ export const Route = createFileRoute("/_authenticated/painel")({
 });
 
 function Painel() {
-  const isAdmin = useServerFn(painelIsAdmin);
-  const { data, isLoading } = useQuery({ queryKey: ["painel_admin"], queryFn: () => isAdmin() });
-  if (isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
-  if (!data?.admin)
-    return (
-      <p className="text-sm text-muted-foreground">
-        Acesso restrito ao administrador.{" "}
-        <Link to="/hoje" className="underline">
-          Voltar
-        </Link>
-      </p>
-    );
-  return <PainelAdmin />;
+  return (
+    <AdminGate>
+      <PainelAdmin />
+    </AdminGate>
+  );
 }
 
 function PainelAdmin() {
   const { ask, dialog } = useConfirm();
-  const { aba = "indicadores" } = Route.useSearch();
+  const search = Route.useSearch();
+  const aba: Aba = search.aba === "indicadores" || !search.aba ? "hunters" : search.aba;
   const navigate = Route.useNavigate();
   return (
     <div className="space-y-6">
@@ -87,9 +80,6 @@ function PainelAdmin() {
             </TabsTrigger>
           ))}
         </TabsList>
-        <TabsContent value="indicadores">
-          <IndicadoresTab />
-        </TabsContent>
         <TabsContent value="hunters">
           <HuntersTab ask={ask} />
         </TabsContent>

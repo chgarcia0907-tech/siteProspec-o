@@ -115,7 +115,8 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   para `contacts.company`) e no botão "Preencher empresa e área" de Contatos. Só preenchem campos
   vazios e, na dúvida, deixam em branco; CEO, sócio e financeiro ficam sem área de propósito. Ao
   ajustar uma regra, acrescente o caso real em `enriquecimento.test.ts`.
-- Indicadores do painel (aba "Indicadores", a primeira do /painel): cálculo puro em
+- Indicadores (menu próprio "Indicadores" em Administração, rota `/indicadores`, só admin; antes era a
+  aba do /painel, e `/painel?aba=indicadores` redireciona): cálculo puro em
   `src/lib/dashboard.ts` (`computeDashboard`), carregado com service role em `painelDashboard`
   (`painel.functions.ts`, has_role antes). Reaproveita `plannedDates`/`isActive`/`computedStatus` e
   `atScoreDate`/`stageScoreDate`, então envios, atrasados e funil batem com Envios de hoje e com o
@@ -139,8 +140,8 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   (`resolveGoal`). Metas diárias/semanais viram metas do intervalo pelos dias úteis já passados;
   semáforo: na meta ≥ 100%, perto ≥ 70% (no prazo: até 10 pontos abaixo). Escrita por
   `painelSaveGoal`/`painelDeleteGoal` (`painel.functions.ts`, has_role antes).
-- Início do hunter (`/inicio`, primeira tela depois do login; o admin continua indo para o
-  painel): regras puras em `src/lib/inicio.ts` (`weekAts`, `teamWeekGoal`, `atSlots`, `lateRows`,
+- Início do hunter (`/inicio`, primeira tela depois do login; o admin continua indo para os
+  Indicadores): regras puras em `src/lib/inicio.ts` (`weekAts`, `teamWeekGoal`, `atSlots`, `lateRows`,
   `conversion`), componentes em `src/components/semana/`. As ATs da equipe vêm de `inicioResumo`
   (`inicio.functions.ts`, service role para qualquer hunter logado): o cliente recebe só o dia de
   cada AT dos outros e a meta somada (`ats_semana` de cada hunter, com a herança de `resolveGoal`).
