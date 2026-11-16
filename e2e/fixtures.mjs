@@ -28,6 +28,7 @@ const blank = {
   company: "",
   company_gender: "feminino",
   phone: "",
+  sem_whatsapp: false,
   sector: "",
   job_title: "",
   connected_at: null,

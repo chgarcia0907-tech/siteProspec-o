@@ -153,6 +153,11 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   `at_registrado_em` agora (pontua no dia do cadastro) e `resposta_etapa = 0` (outro canal; o painel
   não separa e-mail de ligação). Nome repetido só gera aviso: para um lead já importado, o caminho
   é "Avançar no funil" no contato existente.
+- Contato sem WhatsApp (`contacts.sem_whatsapp`, caixa "Sem WhatsApp" na edição do contato, em Contatos e
+  em Envios de hoje): `stepApplies` (`cadencia.ts`) dispensa as etapas de WhatsApp dele. Elas saem das
+  filas (`buildQueues`), dos atrasados e da pendência de telefone dos Indicadores, da próxima etapa e
+  da conclusão (`computedStatus`). As datas previstas das demais etapas não mudam. Ao criar um uso
+  novo de `STEPS`, respeite `stepApplies`.
 - Cards do Hackathon fora das métricas atuais: `isHackathonContact` (`fila.ts`) = contato carimbado num
   período `competicao` **encerrado** e criado até o `closed_at` dele (quem entrou depois, mesmo carimbado
   com o último período, é contato novo). Ficam fora de Envios de hoje (com botão para exibi-los), do

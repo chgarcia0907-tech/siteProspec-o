@@ -4,6 +4,7 @@ import {
   computedStatus,
   isActive,
   plannedDates,
+  stepApplies,
   type Contact,
   type Holidays,
   type Offsets,
@@ -71,7 +72,7 @@ export function buildQueues(
     if (!isActive(c)) continue;
     const planned = plannedDates(c, offsets, holidays);
     for (const step of STEPS) {
-      if (c[step.sentField]) continue;
+      if (c[step.sentField] || !stepApplies(c, step)) continue;
       if (step.n === 1 && !c.step1_date) {
         result[1].push({ contact: c, planned: null, late: false });
         continue;

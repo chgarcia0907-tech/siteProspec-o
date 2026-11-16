@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_OFFSETS, STEPS, type Contact } from "./cadencia";
+import { computedStatus, DEFAULT_OFFSETS, STEPS, type Contact } from "./cadencia";
 import {
   buildQueues,
   dayProgress,
@@ -70,6 +70,31 @@ describe("filas do dia", () => {
     const x = c({ step1_date: "2026-11-11", sent1_at: "2026-11-11" });
     const q = buildQueues([x], DEFAULT_OFFSETS, new Set(["2026-11-12"]), REF);
     expect(q[2]).toEqual([]);
+  });
+});
+
+describe("contato sem WhatsApp", () => {
+  const base = { step1_date: "2026-11-05", sent1_at: "2026-11-05", status: "em_cadencia" } as const;
+
+  it("fica fora das filas de WhatsApp e segue nas de LinkedIn", () => {
+    const sem = c({ ...base, name: "sem", sem_whatsapp: true });
+    const com = c({ ...base, name: "com" });
+    const q = buildQueues([sem, com], DEFAULT_OFFSETS, new Set(), REF);
+    expect(names(q[2])).toEqual(["com"]);
+    expect(names(q[4])).toEqual(["com"]);
+    expect(names(q[3])).toEqual(["sem", "com"]);
+    expect(names(q[5])).toEqual(["sem", "com"]);
+  });
+
+  it("conclui sem as etapas de WhatsApp", () => {
+    const x = c({
+      ...base,
+      sem_whatsapp: true,
+      sent3_at: "2026-11-09",
+      sent5_at: "2026-11-11",
+    });
+    expect(computedStatus(x)).toBe("concluido");
+    expect(computedStatus({ ...x, sem_whatsapp: false })).toBe("em_cadencia");
   });
 });
 
