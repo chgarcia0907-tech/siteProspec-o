@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_OFFSETS, STEPS, type Contact } from "./cadencia";
+import { computedStatus, DEFAULT_OFFSETS, STEPS, type Contact } from "./cadencia";
 import {
   buildQueues,
   dayProgress,
-  hackathonPeriodIds,
+  hackathonPeriods,
+  isHackathonContact,
   markSentPatch,
   missingForMessage,
   splitHackathon,
@@ -72,6 +73,31 @@ describe("filas do dia", () => {
   });
 });
 
+describe("contato sem WhatsApp", () => {
+  const base = { step1_date: "2026-11-05", sent1_at: "2026-11-05", status: "em_cadencia" } as const;
+
+  it("fica fora das filas de WhatsApp e segue nas de LinkedIn", () => {
+    const sem = c({ ...base, name: "sem", sem_whatsapp: true });
+    const com = c({ ...base, name: "com" });
+    const q = buildQueues([sem, com], DEFAULT_OFFSETS, new Set(), REF);
+    expect(names(q[2])).toEqual(["com"]);
+    expect(names(q[4])).toEqual(["com"]);
+    expect(names(q[3])).toEqual(["sem", "com"]);
+    expect(names(q[5])).toEqual(["sem", "com"]);
+  });
+
+  it("conclui sem as etapas de WhatsApp", () => {
+    const x = c({
+      ...base,
+      sem_whatsapp: true,
+      sent3_at: "2026-11-09",
+      sent5_at: "2026-11-11",
+    });
+    expect(computedStatus(x)).toBe("concluido");
+    expect(computedStatus({ ...x, sem_whatsapp: false })).toBe("em_cadencia");
+  });
+});
+
 describe("mensagem e envio", () => {
   it("exige empresa sempre e setor/cargo só no LinkedIn 1", () => {
     expect(missingForMessage(c({ company: " " }), STEPS[1]!)).toBe("empresa");
@@ -133,23 +159,34 @@ describe("progresso do dia", () => {
 });
 
 describe("contatos do Hackathon", () => {
+  const CLOSED = "2026-10-24T02:59:59+00:00";
   const periods = [
-    { id: "hacka-fechado", status: "closed", kind: "competicao" },
-    { id: "hacka-ativo", status: "active", kind: "competicao" },
-    { id: "ciclo", status: "active", kind: "ciclo" },
+    { id: "hacka-fechado", status: "closed", kind: "competicao", closed_at: CLOSED },
+    { id: "hacka-ativo", status: "active", kind: "competicao", closed_at: null },
+    { id: "ciclo", status: "active", kind: "ciclo", closed_at: null },
   ];
+  const mk = (name: string, period_id: string | null, created_at: string) =>
+    c({ name, period_id, created_at } as Partial<Contact>);
 
   it("só períodos de competição encerrados contam como Hackathon", () => {
-    expect([...hackathonPeriodIds(periods)]).toEqual(["hacka-fechado"]);
-    expect(hackathonPeriodIds(undefined).size).toBe(0);
+    expect([...hackathonPeriods(periods).keys()]).toEqual(["hacka-fechado"]);
+    expect(hackathonPeriods(undefined).size).toBe(0);
   });
 
-  it("separa os contatos e mantém os sem período na fila", () => {
-    const ids = hackathonPeriodIds(periods);
-    const a = c({ name: "hacka", period_id: "hacka-fechado" } as Partial<Contact>);
-    const b = c({ name: "ciclo", period_id: "ciclo" } as Partial<Contact>);
-    const d = c({ name: "sem-periodo", period_id: null } as Partial<Contact>);
-    const { current, hackathon } = splitHackathon([a, b, d], ids);
+  it("contato criado depois do encerramento, mesmo carimbado no Hackathon, é contato novo", () => {
+    const h = hackathonPeriods(periods);
+    const antigo = mk("antigo", "hacka-fechado", "2026-10-20T12:00:00+00:00");
+    const novo = mk("novo", "hacka-fechado", "2026-10-30T12:00:00+00:00");
+    expect(isHackathonContact(antigo, h)).toBe(true);
+    expect(isHackathonContact(novo, h)).toBe(false);
+  });
+
+  it("separa os contatos e mantém os sem período e os do ciclo", () => {
+    const h = hackathonPeriods(periods);
+    const a = mk("hacka", "hacka-fechado", "2026-10-10T12:00:00+00:00");
+    const b = mk("ciclo", "ciclo", "2026-11-10T12:00:00+00:00");
+    const d = mk("sem-periodo", null, "2026-10-10T12:00:00+00:00");
+    const { current, hackathon } = splitHackathon([a, b, d], h);
     expect(names(current.map((contact) => ({ contact })))).toEqual(["ciclo", "sem-periodo"]);
     expect(hackathon).toEqual([a]);
   });

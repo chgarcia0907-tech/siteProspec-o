@@ -28,6 +28,7 @@ const blank = {
   company: "",
   company_gender: "feminino",
   phone: "",
+  sem_whatsapp: false,
   sector: "",
   job_title: "",
   connected_at: null,
@@ -381,8 +382,10 @@ export function seedContacts(count) {
 }
 
 /** Contato do hunter logado de um período de competição encerrado (Hackathon), com envio pendente. */
-export function hackathonContact() {
+export function hackathonContact(comAt = false) {
   return ct(U1, {
+    ...(comAt ? { at_marcada_em: "2026-11-12", at_registrado_em: "2026-11-12T15:00:00Z" } : {}),
+    created_at: "2026-10-06T12:00:00Z", // antes do encerramento do Hackathon
     name: "Hugo Hacka",
     headline: "CEO na Omega",
     company: "Omega",

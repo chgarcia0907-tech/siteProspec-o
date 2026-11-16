@@ -15,6 +15,20 @@ test.describe("Envios de hoje", () => {
     await expect(page.getByText("Atrasado · previsto 06/11")).toBeVisible();
   });
 
+  test("edita o contato pelo cartão e marca quem não tem WhatsApp", async ({ page }) => {
+    await page.goto("/hoje");
+    await page.getByRole("tab", { name: /^WhatsApp 1/ }).click();
+    await page.getByRole("button", { name: "Editar Bruno Lima" }).click();
+    const dialog = page.getByRole("dialog", { name: "Bruno Lima" });
+    await dialog.getByRole("checkbox", { name: "Sem WhatsApp" }).click();
+    await expect.poll(async () => (await mutations()).length).toBe(1);
+    expect(JSON.parse((await mutations())[0]!.body)).toMatchObject({ sem_whatsapp: true });
+    await dialog.getByRole("button", { name: "Close" }).click();
+    // Sai das filas de WhatsApp e não aparece mais como pendência.
+    await expect(page.getByText("Bruno Lima")).toHaveCount(0);
+    await expect(page.getByRole("tab", { name: /^WhatsApp 1/ })).toHaveText(/WhatsApp 1\s*0/);
+  });
+
   test("contatos do Hackathon saem das filas e podem ser exibidos", async ({ page }) => {
     await seedHackathon();
     await page.goto("/hoje");

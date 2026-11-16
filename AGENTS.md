@@ -115,7 +115,8 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   para `contacts.company`) e no botão "Preencher empresa e área" de Contatos. Só preenchem campos
   vazios e, na dúvida, deixam em branco; CEO, sócio e financeiro ficam sem área de propósito. Ao
   ajustar uma regra, acrescente o caso real em `enriquecimento.test.ts`.
-- Indicadores do painel (aba "Indicadores", a primeira do /painel): cálculo puro em
+- Indicadores (menu próprio "Indicadores" em Administração, rota `/indicadores`, só admin; antes era a
+  aba do /painel, e `/painel?aba=indicadores` redireciona): cálculo puro em
   `src/lib/dashboard.ts` (`computeDashboard`), carregado com service role em `painelDashboard`
   (`painel.functions.ts`, has_role antes). Reaproveita `plannedDates`/`isActive`/`computedStatus` e
   `atScoreDate`/`stageScoreDate`, então envios, atrasados e funil batem com Envios de hoje e com o
@@ -139,13 +140,32 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   (`resolveGoal`). Metas diárias/semanais viram metas do intervalo pelos dias úteis já passados;
   semáforo: na meta ≥ 100%, perto ≥ 70% (no prazo: até 10 pontos abaixo). Escrita por
   `painelSaveGoal`/`painelDeleteGoal` (`painel.functions.ts`, has_role antes).
-- Início do hunter (`/inicio`, primeira tela depois do login; o admin continua indo para o
-  painel): regras puras em `src/lib/inicio.ts` (`weekAts`, `teamWeekGoal`, `atSlots`, `lateRows`,
+- Início do hunter (`/inicio`, primeira tela depois do login; o admin continua indo para os
+  Indicadores): regras puras em `src/lib/inicio.ts` (`weekAts`, `teamWeekGoal`, `atSlots`, `lateRows`,
   `conversion`), componentes em `src/components/semana/`. As ATs da equipe vêm de `inicioResumo`
   (`inicio.functions.ts`, service role para qualquer hunter logado): o cliente recebe só o dia de
   cada AT dos outros e a meta somada (`ats_semana` de cada hunter, com a herança de `resolveGoal`).
   A equipe é a dos Indicadores (ciclo ativo: só os membros). Envios, atrasados e conversão usam os
   contatos do próprio hunter, com `buildQueues`/`dayProgress` (mesma conta de Envios de hoje).
+- Contato manual (botão "Adicionar contato" em Contatos): serve para AT marcada fora da cadência, como
+  por e-mail. Regra em `manualAtRow`/`manualAtError` (`contatos.ts`), gravação por `useAddContact`.
+  O contato entra como `respondeu`, com `at_marcada_em` na data informada (pode ser futura),
+  `at_registrado_em` agora (pontua no dia do cadastro) e `resposta_etapa = 0` (outro canal; o painel
+  não separa e-mail de ligação). Nome repetido só gera aviso: para um lead já importado, o caminho
+  é "Avançar no funil" no contato existente.
+- Contato sem WhatsApp (`contacts.sem_whatsapp`, caixa "Sem WhatsApp" na edição do contato, em Contatos e
+  em Envios de hoje): `stepApplies` (`cadencia.ts`) dispensa as etapas de WhatsApp dele. Elas saem das
+  filas (`buildQueues`), dos atrasados e da pendência de telefone dos Indicadores, da próxima etapa e
+  da conclusão (`computedStatus`). As datas previstas das demais etapas não mudam. Ao criar um uso
+  novo de `STEPS`, respeite `stepApplies`.
+- Cards do Hackathon fora das métricas atuais: `isHackathonContact` (`fila.ts`) = contato carimbado num
+  período `competicao` **encerrado** e criado até o `closed_at` dele (quem entrou depois, mesmo carimbado
+  com o último período, é contato novo). Ficam fora de Envios de hoje (com botão para exibi-los), do
+  contador da navegação, de envios/atrasados/conversão do Início, das ATs da semana (`inicioResumo`), dos
+  Indicadores (salvo quando o filtro é a própria competição) e do placar do ciclo e da competição geral
+  (`loadCompetition`; só o período `competicao` os mantém). Na tabela Atividade, `public.ranking()` ignora só
+  os eventos posteriores ao encerramento, o histórico do Hackathon continua. Regra do TS e do SQL
+  andam juntas: ao mudar uma, revise a outra.
 - Recorte do ciclo: quando o período escolhido nos Indicadores é um ciclo, `painelDashboard` usa só
   os membros dele e corta o intervalo nas datas do ciclo (`clampToCycle` em `dashboard.ts`); outros
   períodos no filtro mostram o histórico. Atrasados também respeitam o ciclo: etapa pendente prevista

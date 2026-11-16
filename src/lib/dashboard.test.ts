@@ -26,6 +26,8 @@ const CO1 = "co1";
 const blank: DashContact = {
   id: "",
   user_id: H1,
+  period_id: null,
+  sem_whatsapp: false,
   name: "",
   company: "",
   company_id: null,
@@ -113,6 +115,18 @@ const input: DashInput = {
   to: "2026-11-15",
   today: "2026-11-12",
 };
+
+describe("contato sem WhatsApp no painel", () => {
+  it("não cobra telefone nem atraso de WhatsApp", () => {
+    const sem = {
+      ...input,
+      contacts: contacts.map((x) => (x.id === "b" ? { ...x, sem_whatsapp: true } : x)),
+    };
+    const h = computeDashboard(sem).hunters.find((x) => x.hunter_id === H1)!;
+    expect(h.noPhone).toBe(0);
+    expect(h.lateList.find((l) => l.name === "Bia")?.step).not.toBe("WhatsApp 1");
+  });
+});
 
 describe("datas do painel", () => {
   it("conta dias úteis sem fins de semana e feriados", () => {

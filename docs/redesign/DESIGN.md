@@ -130,7 +130,7 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
 - **Sidebar fixa à esquerda** (`bg-sidebar`, ~232 px), três grupos:
   - **Prospecção:** Envios de hoje (com contador), Empresas, Contatos, Importar conexões.
   - **Referência:** Modelos, Configurações.
-  - **Administração:** Painel Admin, só para `has_role` admin.
+  - **Administração:** Indicadores e Painel Admin, só para `has_role` admin.
 - Usuário e "Sair" no rodapé da sidebar.
 - Item ativo: `bg-primary-soft text-heading`.
 - **Painel**: eyebrow "Painel do administrador" + H1 com o nome da aba + abas sublinhadas (`border-b-2 border-primary` na ativa). Cada aba continua em `/painel?aba=…`.

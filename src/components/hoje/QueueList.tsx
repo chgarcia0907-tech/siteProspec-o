@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { StepDef } from "@/lib/cadencia";
-import type { QueueItem } from "@/lib/fila";
+import type { Contact, StepDef } from "@/lib/cadencia";
+import { isHackathonContact, type HackathonPeriods, type QueueItem } from "@/lib/fila";
 import { QueueCard } from "./QueueCard";
 import type { QueueActions } from "./useQueueActions";
 
@@ -14,13 +14,15 @@ export function QueueList({
   step,
   items,
   actions,
-  hackathonIds,
+  onEdit,
+  hackathonPeriods: hackathon,
 }: {
   step: StepDef;
   items: QueueItem[];
   actions: QueueActions;
+  onEdit?: ((contact: Contact) => void) | undefined;
   /** Períodos de Hackathon encerrados, para marcar os cartões desses contatos. */
-  hackathonIds?: Set<string>;
+  hackathonPeriods?: HackathonPeriods;
 }) {
   const [visible, setVisible] = useState(BATCH);
   if (items.length === 0) {
@@ -43,7 +45,8 @@ export function QueueList({
           step={step}
           item={item}
           actions={actions}
-          hackathon={!!item.contact.period_id && !!hackathonIds?.has(item.contact.period_id)}
+          onEdit={onEdit}
+          hackathon={!!hackathon && isHackathonContact(item.contact, hackathon)}
         />
       ))}
       {rest > 0 && (

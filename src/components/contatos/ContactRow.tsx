@@ -16,6 +16,7 @@ const MARK_LABEL: Record<StepMark, string> = {
   proxima: "próxima",
   atrasada: "atrasada",
   futura: "a enviar",
+  dispensada: "sem WhatsApp",
 };
 
 /**
@@ -90,6 +91,7 @@ export function ContactRow({
                     (s.channel === "linkedin" ? "border-linkedin" : "border-whatsapp"),
                   m === "atrasada" && "border-destructive",
                   m === "futura" && "border-divider",
+                  m === "dispensada" && "border-dashed border-divider opacity-50",
                 )}
               />
             );

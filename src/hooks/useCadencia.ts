@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_OFFSETS, type Contact, type Offsets } from "@/lib/cadencia";
+import type { manualAtRow } from "@/lib/contatos";
 import type { Company, Sector, SectorTemplates } from "@/lib/empresas";
 import { sortSectors } from "@/lib/empresas";
 import { groupPatches } from "@/lib/enriquecimento";
@@ -31,7 +32,7 @@ export function usePeriods() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("periods")
-        .select("id, name, status, started_at, kind")
+        .select("id, name, status, started_at, closed_at, kind")
         .order("started_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -228,6 +229,23 @@ export function useImportContacts() {
       );
       if (error) throw error;
       return rows.length;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["contacts"] }),
+  });
+}
+
+/** Cadastra um contato à mão (ex.: AT marcada por e-mail), já com o `user_id` do hunter logado. */
+export function useAddContact() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (row: ReturnType<typeof manualAtRow>) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth.user?.id;
+      if (!userId) throw new Error("Sessão expirada");
+      const { error } = await supabase
+        .from("contacts")
+        .insert({ ...row, user_id: userId }, { defaultToNull: false });
+      if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["contacts"] }),
   });

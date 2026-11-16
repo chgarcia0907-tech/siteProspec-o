@@ -37,6 +37,27 @@ export function BulkActions({ selection }: { selection: Selection }) {
         variant="outline"
         onClick={() => {
           const ids = selection.ids();
+          updateMany.mutate(
+            { ids, patch: { sem_whatsapp: true } },
+            {
+              onSuccess: () => {
+                toast.success(
+                  `${ids.length} contatos sem WhatsApp: etapas de WhatsApp dispensadas`,
+                );
+                selection.clear();
+              },
+              onError: (e) => toast.error(e.message),
+            },
+          );
+        }}
+      >
+        Sem WhatsApp
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          const ids = selection.ids();
           ask({
             title: `Descartar ${ids.length} ${ids.length === 1 ? "contato" : "contatos"}?`,
             desc: "Os contatos descartados saem das filas de envio. Dá para voltar a situação de cada um na tabela.",

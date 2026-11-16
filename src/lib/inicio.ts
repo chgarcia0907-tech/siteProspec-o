@@ -27,7 +27,10 @@ export function shortWeekday(iso: string): string {
 /** Uma AT da equipe na semana. A empresa só vem nas ATs do próprio hunter. */
 export type WeekAt = { day: string; mine: boolean; company: string | null };
 
-export type AtContact = Pick<Contact, "user_id" | "company" | "at_marcada_em" | "at_registrado_em">;
+export type AtContact = Pick<
+  Contact,
+  "user_id" | "company" | "at_marcada_em" | "at_registrado_em" | "period_id" | "created_at"
+>;
 
 /**
  * ATs da equipe registradas na semana (pela mesma data do placar, `atScoreDate`), em ordem de

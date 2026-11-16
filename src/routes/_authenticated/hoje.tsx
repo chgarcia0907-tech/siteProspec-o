@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { ContactEditDialog } from "@/components/contatos/ContactEditDialog";
 import { DayProgressBar } from "@/components/hoje/DayProgressBar";
 import { QueueError, QueueList, QueueLoading } from "@/components/hoje/QueueList";
 import { useQueueActions } from "@/components/hoje/useQueueActions";
+import { useResponseOrigin } from "@/components/RespostaOrigem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,10 +13,11 @@ import { DEFAULT_OFFSETS, STEPS, todayISO } from "@/lib/cadencia";
 import {
   buildQueues,
   dayProgress,
-  hackathonPeriodIds,
+  hackathonPeriods,
   missingForMessage,
   splitHackathon,
 } from "@/lib/fila";
+import { withSyncedStatus } from "@/lib/contatos";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/hoje")({
@@ -52,10 +55,10 @@ function Hoje() {
   const { data: allContacts, isPending: contactsPending, isError, refetch } = useContacts();
   const periods = usePeriods();
   const isPending = contactsPending || periods.isPending;
-  const hackathonIds = useMemo(() => hackathonPeriodIds(periods.data), [periods.data]);
+  const hackathon = useMemo(() => hackathonPeriods(periods.data), [periods.data]);
   const split = useMemo(
-    () => (allContacts ? splitHackathon(allContacts, hackathonIds) : undefined),
-    [allContacts, hackathonIds],
+    () => (allContacts ? splitHackathon(allContacts, hackathon) : undefined),
+    [allContacts, hackathon],
   );
   const contacts = split && (showHackathon ? allContacts : split.current);
   const hackathonCount = split?.hackathon.length ?? 0;
@@ -63,6 +66,9 @@ function Hoje() {
   const holidays = useHolidays();
   const offsets = settings ?? DEFAULT_OFFSETS;
   const actions = useQueueActions(ref);
+  const origin = useResponseOrigin();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editing = allContacts?.find((c) => c.id === editingId) ?? null;
   const queues = useMemo(
     () => buildQueues(contacts ?? [], offsets, holidays, ref),
     [contacts, offsets, holidays, ref],
@@ -149,12 +155,27 @@ function Hoje() {
                 step={step}
                 items={queues[step.n]}
                 actions={actions}
-                hackathonIds={hackathonIds}
+                onEdit={(c) => setEditingId(c.id)}
+                hackathonPeriods={hackathon}
               />
             )}
           </TabsContent>
         ))}
       </Tabs>
+      {editing && (
+        <ContactEditDialog
+          contact={editing}
+          offsets={offsets}
+          holidays={holidays}
+          companies={actions.companies}
+          onPatch={(changes) => actions.patchContact(editing, withSyncedStatus(editing, changes))}
+          onStatus={(status) =>
+            origin.guard(editing, { status }, (p) => actions.patchContact(editing, p))
+          }
+          onClose={() => setEditingId(null)}
+        />
+      )}
+      {origin.dialog}
     </div>
   );
 }

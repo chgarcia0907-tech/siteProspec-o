@@ -29,6 +29,7 @@ import {
   formatBR,
   funnelIndex,
   plannedDates,
+  stepApplies,
   todayISO,
   type Contact,
   type ContactStatus,
@@ -108,6 +109,19 @@ export function ContactEditDialog({
               onCommit={(v) => onPatch({ phone: v })}
             />
           </Field>
+          <label className="col-span-2 -mt-2 flex cursor-pointer items-center gap-2 text-dense text-muted-foreground">
+            <Checkbox
+              checked={c.sem_whatsapp}
+              aria-label="Sem WhatsApp"
+              onCheckedChange={(v) =>
+                onPatch({
+                  sem_whatsapp: !!v,
+                  status: computedStatus({ ...c, sem_whatsapp: !!v }),
+                })
+              }
+            />
+            Sem número de WhatsApp: tira as etapas de WhatsApp da cadência deste contato
+          </label>
           <Field label="Empresa" className="col-span-2">
             <div className="flex flex-wrap items-center gap-2">
               {companies.length > 0 && (
@@ -142,6 +156,16 @@ export function ContactEditDialog({
           <ul className="divide-y rounded-lg border bg-surface-inset">
             {STEPS.map((s) => {
               const sent = c[s.sentField] as string | null;
+              if (!stepApplies(c, s) && !sent)
+                return (
+                  <li
+                    key={s.n}
+                    className="flex items-center gap-3 px-3 py-2 text-dense text-subtle-foreground"
+                  >
+                    <span className="w-24 font-semibold">{s.label}</span>
+                    dispensada: contato sem WhatsApp
+                  </li>
+                );
               return (
                 <li key={s.n} className="flex items-center gap-3 px-3 py-2 text-dense">
                   <span className="w-24 font-semibold text-heading">{s.label}</span>

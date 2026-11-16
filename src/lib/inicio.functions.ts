@@ -31,12 +31,13 @@ export const inicioResumo = createServerFn({ method: "POST" })
     const { fetchAll } = await import("./fetch-all");
     const { adminIds } = await import("./competition.server");
     const { teamWeekGoal, weekAts, weekOf } = await import("./inicio");
+    const { hackathonPeriods, splitHackathon } = await import("./fila");
 
     const week = weekOf(data.today);
     const [profiles, admins, periods, members, goals, contacts] = await Promise.all([
       fetchAll((a, b) => db.from("profiles").select("id").order("id").range(a, b)),
       adminIds(db),
-      db.from("periods").select("id, status, kind"),
+      db.from("periods").select("id, status, kind, closed_at"),
       fetchAll((a, b) =>
         db.from("period_members").select("period_id, user_id, group_id").order("id").range(a, b),
       ),
@@ -46,7 +47,7 @@ export const inicioResumo = createServerFn({ method: "POST" })
         (a, b) =>
           db
             .from("contacts")
-            .select("user_id, company, at_marcada_em, at_registrado_em")
+            .select("user_id, company, at_marcada_em, at_registrado_em, period_id, created_at")
             .not("at_marcada_em", "is", null)
             .order("id")
             .range(a, b) as unknown as PageResult<AtContact>,
@@ -64,7 +65,13 @@ export const inicioResumo = createServerFn({ method: "POST" })
 
     return {
       goal: teamWeekGoal(goals.data ?? [], team),
-      ats: weekAts(contacts, new Set(team.map((h) => h.id)), context.userId, week),
+      ats: weekAts(
+        // Um card do Hackathon encerrado avançado agora não conta nas ATs da semana.
+        splitHackathon(contacts, hackathonPeriods(periods.data ?? [])).current,
+        new Set(team.map((h) => h.id)),
+        context.userId,
+        week,
+      ),
       teamSize: team.length,
     };
   });

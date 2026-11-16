@@ -40,7 +40,7 @@ const SHOTS: Shot[] = [
   { name: "05-importar-previa", path: "/importar", paste: COLADO },
   { name: "06-modelos", path: "/modelos" },
   { name: "08-configuracoes", path: "/configuracoes" },
-  { name: "09-painel-indicadores", path: "/painel", tab: "Indicadores" },
+  { name: "09-indicadores", path: "/indicadores" },
   { name: "10-painel-hunters", path: "/painel", tab: "Hunters" },
   { name: "11-painel-periodos", path: "/painel", tab: "Períodos e grupos" },
   { name: "12-painel-setores", path: "/painel", tab: "Setores e cadências" },
