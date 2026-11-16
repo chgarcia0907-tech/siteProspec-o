@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useDeleter, useHunters } from "@/hooks/usePainel";
+import { useHunters } from "@/hooks/usePainel";
 import { painelContacts } from "@/lib/painel.functions";
 import { cn } from "@/lib/utils";
 import type { Ask } from "@/components/useConfirm";
@@ -17,7 +16,6 @@ export function HuntersTab({ ask }: { ask: Ask }) {
   const [hid, setHid] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const fn = useServerFn(painelContacts);
-  const deleter = useDeleter();
   const contacts = useQuery({
     queryKey: ["painel_contacts", hid],
     enabled: !!hid,
@@ -31,14 +29,12 @@ export function HuntersTab({ ask }: { ask: Ask }) {
   }, [contacts.data, q]);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
+    <div className="grid grid-cols-[260px_minmax(0,1fr)] items-start gap-6">
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">
-            Hunters · {data?.total ?? "…"} contatos no total
-          </CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle>Hunters · {data?.total ?? "…"} contatos no total</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-1 p-2">
+        <CardContent className="space-y-0.5 p-2 pt-0">
           {data?.hunters.map((h) => (
             <button
               key={h.id}
@@ -47,64 +43,53 @@ export function HuntersTab({ ask }: { ask: Ask }) {
                 setQ("");
               }}
               className={cn(
-                "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent",
-                hid === h.id && "bg-accent",
+                "flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-dense transition-colors hover:bg-control",
+                hid === h.id && "bg-primary-soft text-heading",
               )}
             >
               <span className="truncate">{h.name}</span>
-              <span className="text-xs text-muted-foreground">{h.total}</span>
+              <span className="text-caption text-muted-foreground tabular-nums">{h.total}</span>
             </button>
           ))}
         </CardContent>
       </Card>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {!hunter ? (
-          <p className="text-sm text-muted-foreground">
-            Escolha um hunter para ver os contatos dele.
-          </p>
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-input px-6 py-12 text-center">
+            <p className="text-card-title font-semibold text-heading">Escolha um hunter</p>
+            <p className="text-dense text-muted-foreground">
+              Escolha um hunter para ver os contatos dele.
+            </p>
+          </div>
         ) : (
           <>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-end gap-3">
               <div>
-                <p className="font-semibold">{hunter.name}</p>
-                <p className="text-xs text-muted-foreground">
+                <h2 className="text-section font-semibold">{hunter.name}</h2>
+                <p className="text-dense text-muted-foreground">
                   {hunter.email} · {hunter.total} contatos · {hunter.ats} ATs · {hunter.descartados}{" "}
                   descartados
                 </p>
               </div>
               <Input
                 className="ml-auto max-w-xs"
+                aria-label="Buscar contatos do hunter"
                 placeholder="Buscar nome ou empresa"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={!hunter.total}
-                onClick={() =>
-                  ask({
-                    title: `Limpar contatos de ${hunter.name}`,
-                    desc: `Todos os ${hunter.total} contatos deste hunter serão excluídos.`,
-                    word: "EXCLUIR",
-                    run: () => deleter({ mode: "hunter", hunterId: hunter.id }),
-                  })
-                }
-              >
-                Limpar todos deste hunter
-              </Button>
             </div>
+            {contacts.isLoading ? (
+              <p className="text-dense text-muted-foreground">Carregando…</p>
+            ) : (
+              <ContactTable rows={rows} ask={ask} />
+            )}
             <HunterActions
               hunter={hunter}
               hunters={data?.hunters ?? []}
               ask={ask}
               onDeleted={() => setHid(null)}
             />
-            {contacts.isLoading ? (
-              <p className="text-sm text-muted-foreground">Carregando…</p>
-            ) : (
-              <ContactTable rows={rows} ask={ask} />
-            )}
           </>
         )}
       </div>
