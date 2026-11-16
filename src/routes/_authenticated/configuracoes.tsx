@@ -8,12 +8,12 @@ import { useProfile, useSaveDisplayName, useSaveMessageName } from "@/hooks/useC
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   head: () => ({
     meta: [
-      { title: "Configurações — Cadência Outbound" },
+      { title: "Configurações — Outbound NTec" },
       {
         name: "description",
         content: "Defina os intervalos em dias entre os toques da cadência.",
       },
-      { property: "og:title", content: "Configurações — Cadência Outbound" },
+      { property: "og:title", content: "Configurações — Outbound NTec" },
       {
         property: "og:description",
         content: "Defina os intervalos em dias entre os toques da cadência.",

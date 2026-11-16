@@ -9,7 +9,7 @@ import { buildImportRows, importPayload, importable, type ImportRow } from "@/li
 export const Route = createFileRoute("/_authenticated/importar")({
   head: () => ({
     meta: [
-      { title: "Importar conexões — Cadência Outbound" },
+      { title: "Importar conexões — Outbound NTec" },
       {
         name: "description",
         content: "Cole a lista de conexões aceitas do LinkedIn e importe os novos contatos.",

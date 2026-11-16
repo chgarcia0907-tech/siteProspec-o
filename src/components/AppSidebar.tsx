@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Marca } from "@/components/Marca";
 import { cn } from "@/lib/utils";
 
 type Item = { to: string; label: string; icon: LucideIcon; count?: number | undefined };
@@ -61,7 +62,7 @@ export function AppSidebar({
         to="/hoje"
         className="flex h-16 items-center px-5 font-display text-card-title font-bold text-heading"
       >
-        Cadência <span className="ml-1 text-primary">Outbound</span>
+        <Marca />
       </Link>
       <nav aria-label="Navegação principal" className="flex-1 space-y-6 overflow-y-auto px-3 py-2">
         {groups.map((g) => (

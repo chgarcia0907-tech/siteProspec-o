@@ -12,13 +12,13 @@ import { VARIAVEIS } from "@/components/templateVars";
 export const Route = createFileRoute("/_authenticated/modelos")({
   head: () => ({
     meta: [
-      { title: "Modelos de mensagem — Cadência Outbound" },
+      { title: "Modelos de mensagem — Outbound NTec" },
       {
         name: "description",
         content:
           "Os modelos da cadência de prospecção: o padrão da equipe e as cadências de cada setor.",
       },
-      { property: "og:title", content: "Modelos — Cadência Outbound" },
+      { property: "og:title", content: "Modelos — Outbound NTec" },
       {
         property: "og:description",
         content:

@@ -10,12 +10,12 @@ import { useCompanies, useContacts, useSectorTemplates, useSectors } from "@/hoo
 export const Route = createFileRoute("/_authenticated/empresas")({
   head: () => ({
     meta: [
-      { title: "Empresas — Cadência Outbound" },
+      { title: "Empresas — Outbound NTec" },
       {
         name: "description",
         content: "Cadastre as empresas prospectadas na semana e o setor de cada uma.",
       },
-      { property: "og:title", content: "Empresas — Cadência Outbound" },
+      { property: "og:title", content: "Empresas — Outbound NTec" },
       {
         property: "og:description",
         content: "Cadastre as empresas prospectadas na semana e o setor de cada uma.",

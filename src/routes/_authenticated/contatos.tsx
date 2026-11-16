@@ -33,12 +33,12 @@ const PAGE_SIZE = 50;
 export const Route = createFileRoute("/_authenticated/contatos")({
   head: () => ({
     meta: [
-      { title: "Contatos — Cadência Outbound" },
+      { title: "Contatos — Outbound NTec" },
       {
         name: "description",
         content: "Tabela de contatos com datas previstas, envios marcados e situação da cadência.",
       },
-      { property: "og:title", content: "Contatos — Cadência Outbound" },
+      { property: "og:title", content: "Contatos — Outbound NTec" },
       {
         property: "og:description",
         content: "Tabela de contatos com datas previstas, envios marcados e situação da cadência.",

@@ -75,12 +75,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Cadência Outbound" },
+      { title: "Outbound NTec" },
       {
         name: "description",
         content: "Controle a cadência de mensagens de prospecção no LinkedIn e WhatsApp.",
       },
-      { property: "og:title", content: "Cadência Outbound" },
+      { property: "og:title", content: "Outbound NTec" },
       {
         property: "og:description",
         content: "Controle a cadência de mensagens de prospecção no LinkedIn e WhatsApp.",
