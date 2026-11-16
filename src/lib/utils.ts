@@ -9,7 +9,18 @@ import { extendTailwindMerge } from "tailwind-merge";
 const twMerge = extendTailwindMerge({
   extend: {
     theme: {
-      text: ["title", "section", "card-title", "body", "dense", "caption", "kpi"],
+      text: [
+        "title",
+        "section",
+        "card-title",
+        "body",
+        "dense",
+        "caption",
+        "kpi",
+        "display",
+        "statement",
+        "lead",
+      ],
     },
   },
 });

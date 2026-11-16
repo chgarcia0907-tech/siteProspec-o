@@ -156,6 +156,24 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
   - Edição detalhada no menu da linha, não em inputs na tabela inteira.
 - **Setores e cadências**: um editor com uma aba por etapa (status "própria"/"padrão"), código, mensagem, variáveis clicáveis e pré-visualização ao lado. Um botão "Salvar setor e cadência".
 
+## 7a. Páginas públicas (`/` e `/auth`)
+
+As duas páginas sem login seguem a TasteSkill (`design-taste-frontend`) por cima deste design
+system: mesmas cores e fontes, outra escala.
+
+- **Motivo:** uma pasta por etapa de `STEPS` (`FolderStack`, `src/components/inicio/`), na cor
+  do canal (`bg-linkedin`/`bg-whatsapp`, texto preto), empilhadas com a primeira na frente. A aba
+  tem o formato `folder-tab`; ele volta na moldura das telas, nas abas do login e no nome do rodapé.
+- **Escala só destas páginas:** `text-display` (título de cartaz), `text-statement` (frase de
+  destaque, até 3 linhas) e `text-lead` (texto corrido, 20px). Nas telas do app continue com a
+  escala da seção 3.
+- **Sem eyebrow, sem monoespaçada, sem sombra parada:** a sombra fica só no formulário aberto
+  sobre o campo azul do fim da página.
+- **Recortes da interface** levam `data-ui` e usam os componentes reais (`StatusBadge`,
+  `ChannelBadge`) com dados de exemplo.
+- **Movimento:** `rise-in` no topo (sem script) e `reveal` nas seções (`Reveal.tsx`), que só
+  esconde depois que o script arma a seção.
+
 ## 8. Acessibilidade
 
 - Contraste mínimo 4,5:1 para texto (3:1 a partir de 24 px). Os pares deste documento já passam.

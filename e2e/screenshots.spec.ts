@@ -58,7 +58,12 @@ const VIEWPORTS = {
   desktop: { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 },
 } as const;
 
-async function snap(page: import("@playwright/test").Page, dir: string, name: string) {
+async function snap(
+  page: import("@playwright/test").Page,
+  dir: string,
+  name: string,
+  maxHeight = MAX_HEIGHT,
+) {
   await page.waitForLoadState("networkidle");
   // Espera os "Carregando…" sumirem antes da foto.
   await page
@@ -71,7 +76,7 @@ async function snap(page: import("@playwright/test").Page, dir: string, name: st
   await page.screenshot({
     path: `docs/redesign/screenshots/${dir}/${name}.png`,
     fullPage: true,
-    clip: { x: 0, y: 0, width, height: Math.min(height, MAX_HEIGHT) },
+    clip: { x: 0, y: 0, width, height: Math.min(height, maxHeight) },
     animations: "disabled",
   });
 }
@@ -80,7 +85,13 @@ for (const [dir, device] of Object.entries(VIEWPORTS)) {
   visitor.describe(`${dir}: visitante`, () => {
     visitor.use(device);
     visitor.beforeEach(({ page }) => page.clock.setFixedTime(new Date(`${TODAY}T12:00:00-03:00`)));
-    visitor("00-inicio", ({ page }) => page.goto("/").then(() => snap(page, dir, "00-inicio")));
+    visitor("00-inicio", async ({ page }) => {
+      await page.goto("/");
+      // As seções entram ao aparecer na tela: rola até o fim para todas aparecerem na foto.
+      for (let y = 0; y < 8; y++) await page.mouse.wheel(0, 900);
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await snap(page, dir, "00-inicio", 6000);
+    });
     visitor("01-entrar", ({ page }) => page.goto("/auth").then(() => snap(page, dir, "01-entrar")));
   });
 
