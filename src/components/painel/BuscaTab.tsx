@@ -62,7 +62,7 @@ export function BuscaTab({ ask }: { ask: Ask }) {
       </form>
       <DateRangePicker today={today} range={range} onChange={setRange} />
       {range && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-caption text-muted-foreground">
           Período: <strong>{range.label}</strong> ({formatBR(range.from)}
           {range.to !== range.from ? ` a ${formatBR(range.to)}` : ""}) · contatos importados ou com
           envio/avanço no funil nesse intervalo
@@ -70,10 +70,10 @@ export function BuscaTab({ ask }: { ask: Ask }) {
       )}
       {enabled &&
         (res.isLoading ? (
-          <p className="text-sm text-muted-foreground">Buscando…</p>
+          <p className="text-dense text-muted-foreground">Buscando…</p>
         ) : (
           <>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               {n} resultados
               {n >= limit ? ` (mostrando os ${limit} primeiros)` : ""}
             </p>
@@ -106,7 +106,7 @@ function DateRangePicker({
   const yesterday = addDaysISO(today, -1);
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
+    <div className="flex flex-wrap items-center gap-2 text-dense">
       <span className="text-muted-foreground">Dia:</span>
       <Button
         size="sm"

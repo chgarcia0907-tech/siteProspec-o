@@ -124,6 +124,29 @@ export const renamePeriod = createServerFn({ method: "POST" })
   });
 
 /**
+ * Muda a data de início de um período ativo (ex.: o ciclo da equipe passou a contar de outro dia).
+ * Só recorta o que entra nas métricas; nenhum contato ou placar é apagado.
+ */
+export const setPeriodStart = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: uuid, start: isoDate }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const db = await admin();
+    const { spParts } = await import("./cadencia");
+    if (data.start > spParts().iso) fail("A data de início não pode ser no futuro.");
+    const { data: rows, error } = await db
+      .from("periods")
+      .update({ started_at: `${data.start}T00:00:00-03:00` })
+      .eq("id", data.id)
+      .eq("status", "active")
+      .select("id");
+    if (error) fail("Falha ao alterar o início");
+    if (!rows?.length) fail("Só dá para alterar o início de um período ativo.");
+    return { ok: true };
+  });
+
+/**
  * Encerra o período e grava o placar oficial congelado.
  * Exige digitar o nome exato do período. A troca active→closed é condicional (só uma chamada vence)
  * e a constraint única de period_snapshots impede placar duplicado.

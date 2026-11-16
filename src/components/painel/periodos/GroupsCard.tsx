@@ -31,17 +31,17 @@ export function GroupsCard({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm">Grupos e subgrupos</CardTitle>
+        <CardTitle>Grupos e subgrupos</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {groups.length === 0 && (
-          <p className="text-xs text-muted-foreground">Nenhum grupo criado neste período.</p>
+          <p className="text-caption text-muted-foreground">Nenhum grupo criado neste período.</p>
         )}
         {groups.map((gr) => (
-          <div key={gr.id} className="space-y-2 rounded-md border p-2">
+          <div key={gr.id} className="space-y-2 rounded-lg border bg-surface-inset p-3">
             <div className="flex items-center gap-2">
               <span className="font-medium">{gr.name}</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-caption text-muted-foreground">
                 {members.filter((m) => m.group_id === gr.id).length} membros
               </span>
               <Button

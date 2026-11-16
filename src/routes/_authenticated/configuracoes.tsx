@@ -29,32 +29,39 @@ function Configuracoes() {
   const saveMsgName = useSaveMessageName();
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
-        <p className="text-sm text-muted-foreground">Seus nomes e intervalos da cadência.</p>
+    <div className="space-y-6">
+      <header>
+        <p className="eyebrow">Referência</p>
+        <h1 className="mt-1 text-title font-bold">Configurações</h1>
+        <p className="mt-2 text-body text-muted-foreground">
+          Seus nomes, como as mensagens falam de você e os intervalos da cadência.
+        </p>
+      </header>
+      <div className="grid grid-cols-2 items-start gap-6">
+        <div className="space-y-6">
+          <NameCard
+            id="nome-completo"
+            title="Nome na plataforma"
+            description="Exibido nos relatórios da equipe."
+            initial={profile ? (profile.display_name ?? "") : undefined}
+            required
+            saving={saveName.isPending}
+            onSave={(v, done) => saveName.mutate(v, done)}
+            savedMessage="Nome salvo"
+          />
+          <NameCard
+            id="nome-mensagens"
+            title="Nome nas mensagens"
+            description="Assinatura nas mensagens ([NOME] ou [NOME + SOBRENOME]). Se vazio, usa o nome da plataforma."
+            initial={profile ? (profile.message_name ?? "") : undefined}
+            saving={saveMsgName.isPending}
+            onSave={(v, done) => saveMsgName.mutate(v, done)}
+            savedMessage="Nome das mensagens salvo"
+          />
+          <GenderCard gender={profile?.gender} />
+        </div>
+        <IntervalsCard />
       </div>
-      <NameCard
-        id="nome-completo"
-        title="Nome na plataforma"
-        description="Exibido nos relatórios da equipe."
-        initial={profile ? (profile.display_name ?? "") : undefined}
-        required
-        saving={saveName.isPending}
-        onSave={(v, done) => saveName.mutate(v, done)}
-        savedMessage="Nome salvo"
-      />
-      <NameCard
-        id="nome-mensagens"
-        title="Nome nas mensagens"
-        description="Assinatura nas mensagens ([NOME] ou [NOME + SOBRENOME]). Se vazio, usa o nome da plataforma."
-        initial={profile ? (profile.message_name ?? "") : undefined}
-        saving={saveMsgName.isPending}
-        onSave={(v, done) => saveMsgName.mutate(v, done)}
-        savedMessage="Nome das mensagens salvo"
-      />
-      <GenderCard gender={profile?.gender} />
-      <IntervalsCard />
       <AdminArea />
     </div>
   );

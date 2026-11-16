@@ -45,7 +45,9 @@ export function NewPeriodButton({
       >
         Novo período
       </Button>
-      {disabledReason && <span className="text-xs text-muted-foreground">{disabledReason}</span>}
+      {disabledReason && (
+        <span className="text-caption text-muted-foreground">{disabledReason}</span>
+      )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -81,13 +83,13 @@ export function NewPeriodButton({
                 <option value="ciclo">Ciclo da equipe (ranking semanal e geral)</option>
                 <option value="competicao">Competição (estilo Hacka)</option>
               </NativeSelect>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 {kind === "ciclo"
                   ? "Só os membros entram no ranking, e contam todos os contatos deles pela data de cada etapa (leads antigos que avançam também pontuam)."
                   : "Contam só os contatos importados durante o período."}
               </p>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               Novos cadastros entram automaticamente neste período, sem grupo. Membros já existentes
               você adiciona depois.
             </p>

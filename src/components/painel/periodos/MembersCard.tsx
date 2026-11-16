@@ -1,7 +1,8 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+import { TablePagination } from "@/components/TablePagination";
+import { paginate } from "@/lib/paginate";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,12 +35,15 @@ export function MembersCard({
   const sel = useSelection();
   const [target, setTarget] = useState<Allocation>(NO_ALLOCATION);
   const shown = onlyUnalloc ? scope.unallocated : scope.members;
+  const [page, setPage] = useState(0);
+  // Períodos grandes podem ter muitos membros: 50 por página, como as outras tabelas.
+  const paged = paginate(shown, page, 50);
 
   return (
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-center gap-2 pb-2">
-        <CardTitle className="text-sm">Membros do período</CardTitle>
-        <label className="flex items-center gap-1 text-xs">
+        <CardTitle>Membros do período</CardTitle>
+        <label className="flex items-center gap-1 text-caption">
           <Checkbox checked={onlyUnalloc} onCheckedChange={(v) => onOnlyUnallocChange(!!v)} /> Só
           sem grupo
         </label>
@@ -49,7 +53,7 @@ export function MembersCard({
       </CardHeader>
       <CardContent className="space-y-2">
         {sel.size > 0 && (
-          <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/50 p-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/35 bg-primary-soft px-3 py-2 text-dense">
             <span>{sel.size} selecionados</span>
             <GroupSubgroupSelect
               groups={scope.groups}
@@ -99,9 +103,9 @@ export function MembersCard({
             </Button>
           </div>
         )}
-        <div className="overflow-x-auto rounded-md border">
-          <table className="table-dense w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+        <div className="overflow-x-auto rounded-xl border bg-card">
+          <table className="table-dense w-full text-dense">
+            <thead className="bg-surface-inset text-left text-caption text-muted-foreground">
               <tr>
                 <th className="w-8 p-2">
                   <Checkbox
@@ -119,8 +123,8 @@ export function MembersCard({
               </tr>
             </thead>
             <tbody>
-              {shown.map((m) => (
-                <tr key={m.id} className="border-t">
+              {paged.pageRows.map((m) => (
+                <tr key={m.id} className="border-t transition-colors hover:bg-surface-inset">
                   <td className="p-2">
                     <Checkbox
                       checked={sel.has(m.user_id)}
@@ -128,14 +132,14 @@ export function MembersCard({
                       aria-label={`Selecionar ${m.name}`}
                     />
                   </td>
-                  <td className="p-2 font-medium">{m.name}</td>
+                  <td className="p-2 font-semibold text-heading">{m.name}</td>
                   <td className="p-2">
                     {m.group_id ? (
                       scope.groupName.get(m.group_id)
                     ) : (
-                      <Badge variant="outline" className="text-muted-foreground">
+                      <span className="rounded-sm bg-warning-soft px-2 py-0.5 text-caption font-semibold text-warning-text">
                         Sem grupo
-                      </Badge>
+                      </span>
                     )}
                   </td>
                   <td className="p-2 text-muted-foreground">
@@ -154,6 +158,7 @@ export function MembersCard({
             </tbody>
           </table>
         </div>
+        <TablePagination paged={paged} onPage={setPage} noun="membros" />
       </CardContent>
     </Card>
   );

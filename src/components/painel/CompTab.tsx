@@ -27,7 +27,7 @@ export function CompTab() {
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Período da competição</CardTitle>
+          <CardTitle>Período da competição</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap items-end gap-3">
           <div className="space-y-1">
@@ -52,7 +52,7 @@ export function CompTab() {
             Salvar período
           </Button>
           {data?.primeiroAt && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               1º AT: {data.primeiroAt.hunter} em {formatBR(data.primeiroAt.data)}
             </p>
           )}

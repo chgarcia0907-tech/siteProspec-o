@@ -12,7 +12,7 @@ export function PeriodosTab({ ask }: { ask: Ask }) {
   const [pid, setPid] = useState<string | null>(null);
   const active = data?.periods.find((p) => p.status === "active");
   const period = data?.periods.find((p) => p.id === (pid ?? active?.id ?? data?.periods[0]?.id));
-  if (isLoading || !data) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+  if (isLoading || !data) return <p className="text-dense text-muted-foreground">Carregando…</p>;
 
   return (
     <div className="space-y-4">

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_OFFSETS } from "./cadencia";
 import {
+  clampToCycle,
   businessDaysBetween,
   computeDashboard,
   deltaPct,
@@ -550,4 +551,26 @@ describe("campo de meta", () => {
     ["-2", undefined],
     ["dez", undefined],
   ] as const)("%j", (text, value) => expect(parseGoalNumber(text)).toBe(value));
+});
+
+describe("clampToCycle", () => {
+  const ciclo = { start: "2026-11-09", end: null };
+  it("não deixa o intervalo começar antes do ciclo", () => {
+    expect(clampToCycle({ from: "2026-10-18", to: "2026-11-16" }, ciclo)).toEqual({
+      from: "2026-11-09",
+      to: "2026-11-16",
+    });
+    expect(clampToCycle({ from: "2026-11-16", to: "2026-11-22" }, ciclo)).toEqual({
+      from: "2026-11-16",
+      to: "2026-11-22",
+    });
+  });
+  it("corta no fim de um ciclo encerrado e devolve null fora dele", () => {
+    const fechado = { start: "2026-11-09", end: "2026-11-30" };
+    expect(clampToCycle({ from: "2026-11-20", to: "2026-12-10" }, fechado)).toEqual({
+      from: "2026-11-20",
+      to: "2026-11-30",
+    });
+    expect(clampToCycle({ from: "2026-11-02", to: "2026-11-08" }, ciclo)).toBeNull();
+  });
 });

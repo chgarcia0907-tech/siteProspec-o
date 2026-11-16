@@ -65,7 +65,9 @@ test.describe("Painel · Indicadores", () => {
     const um = metas.getByRole("row", { name: /^Hunter Um/ });
     await expect(um).toContainText("0 / 20");
     await expect(um).toContainText("Abaixo");
-    await expect(metas.getByRole("row", { name: /^Equipe/ })).toContainText("1 / 2,4");
+    // A equipe do ciclo ativo tem 2 membros (Hunter Um e Hunter Dois; "Sem Contatos" não é
+    // membro), então a meta da equipe é 2 × 0,8 = 1,6 ATs.
+    await expect(metas.getByRole("row", { name: /^Equipe/ })).toContainText("1 / 1,6");
     await expect(
       page.getByText("Hunter Um: abaixo da meta de mensagens: 0 de 20 (0%)"),
     ).toBeVisible();

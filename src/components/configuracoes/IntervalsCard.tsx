@@ -22,7 +22,7 @@ export function IntervalsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Intervalos da cadência (dias úteis)</CardTitle>
+        <CardTitle>Intervalos da cadência (dias úteis)</CardTitle>
         <CardDescription>
           Padrão: 0, 1, 2, 3 e 4 dias úteis. Fins de semana não contam, e cada etapa é contada a
           partir do envio da anterior.
@@ -45,7 +45,7 @@ export function IntervalsCard() {
               value={form[KEYS[i]!]}
               onChange={(e) => setForm({ ...form, [KEYS[i]!]: Number(e.target.value) })}
             />
-            <span className="text-sm text-muted-foreground">dias úteis</span>
+            <span className="text-dense text-muted-foreground">dias úteis</span>
           </div>
         ))}
         <div className="flex gap-2 pt-2">

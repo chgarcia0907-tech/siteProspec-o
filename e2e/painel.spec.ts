@@ -1,4 +1,4 @@
-import { expect, mutations, test } from "./helpers";
+import { expect, mutations, seed, test } from "./helpers";
 
 test.describe("Painel do administrador", () => {
   test("lista hunters e contatos de cada um", async ({ page }) => {
@@ -54,5 +54,22 @@ test.describe("Painel do administrador", () => {
     await expect(
       page.getByPlaceholder("Nome ou empresa (opcional com filtro de data)"),
     ).toBeVisible();
+  });
+
+  test("a tabela de contatos do hunter pagina e as ações destrutivas ficam na zona de risco", async ({
+    page,
+  }) => {
+    await seed(60);
+    await page.goto("/painel?aba=hunters");
+    await page.getByRole("button", { name: /Hunter Um/ }).click();
+    await expect(page.getByText("1–50 de 68 contatos")).toBeVisible();
+    await expect(page.locator("main tbody tr")).toHaveCount(50);
+    await page.getByRole("button", { name: "Próxima" }).click();
+    await expect(page.locator("main tbody tr")).toHaveCount(18);
+    const risco = page.getByRole("region", { name: "Zona de risco" });
+    await expect(risco.getByRole("button", { name: "Limpar todos deste hunter" })).toBeVisible();
+    // Com contatos, a conta não pode ser excluída: o botão fica travado e a tela explica.
+    await expect(risco.getByRole("button", { name: "Excluir hunter" })).toBeDisabled();
+    await expect(risco).toContainText("transfira ou exclua os 68 contatos dele antes");
   });
 });

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Overview, OverviewPeriod } from "@/hooks/usePainel";
 import { spParts } from "@/lib/cadencia";
-import { closePeriod } from "@/lib/periodos.functions";
+import { closePeriod, setPeriodStart } from "@/lib/periodos.functions";
 import type { Ask } from "@/components/useConfirm";
 import { AddMembersDialog } from "./AddMembersDialog";
 import { GroupsCard } from "./GroupsCard";
@@ -33,13 +33,13 @@ export function PeriodDetail({
       <PeriodHeader period={period} members={scope.members.length} ask={ask} />
 
       {scope.unallocated.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3 rounded-md border border-warning/50 bg-warning/10 p-3 text-sm">
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-warning-border bg-warning-soft/60 px-4 py-3 text-dense text-warning-text">
           <span className="font-medium">
             {scope.unallocated.length}{" "}
             {scope.unallocated.length === 1 ? "membro aguardando" : "membros aguardando"} alocação
             em grupo
           </span>
-          <Button size="sm" variant="outline" onClick={() => setOnlyUnalloc(true)}>
+          <Button size="sm" variant="ghost" onClick={() => setOnlyUnalloc(true)}>
             Mostrar
           </Button>
         </div>
@@ -79,13 +79,18 @@ function PeriodHeader({
   ask: Ask;
 }) {
   const close = useServerFn(closePeriod);
-  const { refresh } = usePeriodActions();
+  const saveStart = useServerFn(setPeriodStart);
+  const { run, refresh } = usePeriodActions();
   const [endDate, setEndDate] = useState(spParts().iso);
+  const currentStart = new Date(period.started_at).toLocaleDateString("sv-SE", {
+    timeZone: "America/Sao_Paulo",
+  });
+  const [startDate, setStartDate] = useState(currentStart);
   const closed = period.status === "closed";
 
   return (
     <Card>
-      <CardContent className="flex flex-wrap items-center gap-3 pt-6 text-sm">
+      <CardContent className="flex flex-wrap items-center gap-3 pt-6 text-dense">
         <span className="font-semibold">{period.name}</span>
         <Badge variant={closed ? "secondary" : "default"}>{closed ? "Encerrado" : "Ativo"}</Badge>
         <Badge variant="outline">{period.kind === "ciclo" ? "Ciclo" : "Competição"}</Badge>
@@ -97,8 +102,36 @@ function PeriodHeader({
           · {members} membros
         </span>
         {!closed && (
+          <span className="flex items-center gap-2">
+            <Label htmlFor="start-date" className="text-caption text-muted-foreground">
+              Conta desde
+            </Label>
+            <Input
+              id="start-date"
+              type="date"
+              className="h-8 w-[150px]"
+              value={startDate}
+              max={spParts().iso}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!startDate || startDate === currentStart}
+              onClick={() =>
+                run(
+                  () => saveStart({ data: { id: period.id, start: startDate } }),
+                  "Início do período atualizado",
+                )
+              }
+            >
+              Salvar início
+            </Button>
+          </span>
+        )}
+        {!closed && (
           <span className="ml-auto flex items-center gap-2">
-            <Label htmlFor="end-date" className="text-xs text-muted-foreground">
+            <Label htmlFor="end-date" className="text-caption text-muted-foreground">
               Conta até
             </Label>
             <Input

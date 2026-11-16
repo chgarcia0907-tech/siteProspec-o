@@ -6,9 +6,9 @@ export function ScoringRules() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Como a pontuação é calculada</CardTitle>
+        <CardTitle>Como a pontuação é calculada</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 text-sm text-muted-foreground">
+      <CardContent className="space-y-2 text-dense text-muted-foreground">
         <p>
           <b>Etapas do funil (cumulativas):</b>{" "}
           {FUNNEL.map((f) => `${f.label} +${f.points}`).join(" · ")}. Um projeto vendido soma{" "}

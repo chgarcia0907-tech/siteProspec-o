@@ -14,6 +14,8 @@ type Shot = {
   seed?: number;
   /** Texto colado no primeiro campo antes da foto (ex.: a pré-visualização da importação). */
   paste?: string;
+  /** Botão clicado antes da foto (ex.: abrir o editor de um setor). */
+  click?: RegExp;
 };
 
 /** Conexões de exemplo: uma empresa citada no headline, uma cadastrada e uma sem pistas. */
@@ -41,6 +43,12 @@ const SHOTS: Shot[] = [
   { name: "10-painel-hunters", path: "/painel", tab: "Hunters" },
   { name: "11-painel-periodos", path: "/painel", tab: "Períodos e grupos" },
   { name: "12-painel-setores", path: "/painel", tab: "Setores e cadências" },
+  {
+    name: "12-painel-setores-editor",
+    path: "/painel",
+    tab: "Setores e cadências",
+    click: /Varejo/,
+  },
   { name: "13-painel-competicao", path: "/painel", tab: "Competição" },
   { name: "14-painel-busca", path: "/painel", tab: "Busca geral" },
 ];
@@ -90,6 +98,7 @@ for (const [dir, device] of Object.entries(VIEWPORTS)) {
           // Tira o foco do teclado, para o anel de foco não aparecer na foto.
           await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
         }
+        if (shot.click) await page.getByRole("button", { name: shot.click }).click();
         await snap(page, dir, shot.name);
       });
     }

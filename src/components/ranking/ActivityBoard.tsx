@@ -11,7 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { NativeSelect } from "@/components/ui/native-select";
 import { STEPS, addDaysISO, formatBR, todayISO, type StepDef } from "@/lib/cadencia";
+import { activeCycleScope, clampStart, onlyCycleMembers } from "@/lib/ranking";
 
 type SentKey = `enviadas${StepDef["n"]}`;
 type Row = {
@@ -31,10 +33,39 @@ const PERIODS = {
   mes: { label: "Mês", days: 29 },
 } as const;
 
-/** Mensagens enviadas por etapa e hunter (função SQL `ranking`), por hoje/semana/mês. */
+/** Ciclo ativo da equipe (membros e início), para recortar as métricas de atividade. */
+function useActiveCycle() {
+  return useQuery({
+    queryKey: ["active-cycle-scope"],
+    queryFn: async () => {
+      const { data: periods, error } = await supabase
+        .from("periods")
+        .select("id, status, kind, started_at")
+        .eq("status", "active");
+      if (error) throw error;
+      const cycle = (periods ?? []).find((p) => p.kind === "ciclo");
+      if (!cycle) return null;
+      const { data: members, error: e2 } = await supabase
+        .from("period_members")
+        .select("period_id, user_id")
+        .eq("period_id", cycle.id);
+      if (e2) throw e2;
+      return activeCycleScope(periods ?? [], members ?? []);
+    },
+  });
+}
+
+/**
+ * Mensagens enviadas por etapa e hunter (função SQL `ranking`), por hoje/semana/mês.
+ * Com um ciclo ativo, mostra só os membros dele e só a partir do início do ciclo;
+ * "Todos os hunters" mostra o histórico completo (nada é apagado).
+ */
 export function ActivityBoard() {
   const [period, setPeriod] = useState<keyof typeof PERIODS>("hoje");
-  const start = addDaysISO(todayISO(), -PERIODS[period].days);
+  const [todos, setTodos] = useState(false);
+  const { data: cycle } = useActiveCycle();
+  const scope = todos ? null : (cycle ?? null);
+  const start = clampStart(addDaysISO(todayISO(), -PERIODS[period].days), scope);
 
   const { data, isLoading } = useQuery({
     queryKey: ["ranking", start],
@@ -44,32 +75,45 @@ export function ActivityBoard() {
       return (data ?? []) as Row[];
     },
   });
-  const rows = [...(data ?? [])].sort((a, b) => totalSent(b) - totalSent(a));
+  const rows = onlyCycleMembers(data ?? [], scope).sort((a, b) => totalSent(b) - totalSent(a));
   const cols = STEPS.length + 5;
 
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4 pt-4">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Atividade</h2>
-          <p className="text-sm text-muted-foreground">
-            Mensagens enviadas por etapa — período a partir de {formatBR(start)}.
+          <h2 className="text-section font-semibold">Atividade</h2>
+          <p className="text-dense text-muted-foreground">
+            Mensagens enviadas por etapa — período a partir de {formatBR(start)}
+            {scope ? ", só a equipe do ciclo atual" : ""}.
           </p>
         </div>
-        <Tabs value={period} onValueChange={(v) => setPeriod(v as keyof typeof PERIODS)}>
-          <TabsList>
-            {Object.entries(PERIODS).map(([key, p]) => (
-              <TabsTrigger key={key} value={key}>
-                {p.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        <div className="flex flex-wrap items-center gap-2">
+          {cycle && (
+            <NativeSelect
+              aria-label="Hunters exibidos"
+              value={todos ? "todos" : "ciclo"}
+              onChange={(e) => setTodos(e.target.value === "todos")}
+            >
+              <option value="ciclo">Equipe do ciclo</option>
+              <option value="todos">Todos os hunters</option>
+            </NativeSelect>
+          )}
+          <Tabs value={period} onValueChange={(v) => setPeriod(v as keyof typeof PERIODS)}>
+            <TabsList>
+              {Object.entries(PERIODS).map(([key, p]) => (
+                <TabsTrigger key={key} value={key}>
+                  {p.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Métricas de atividade</CardTitle>
+          <CardTitle>Métricas de atividade</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto rounded-lg border">
