@@ -5,6 +5,7 @@ export type CompContact = {
   user_id: string;
   sent1_at: string | null;
   created_at: string;
+  period_id: string | null;
 } & Record<FunnelField, string | null> &
   Partial<Record<FunnelRegisteredField, string | null>>;
 
@@ -13,6 +14,7 @@ export const COMP_CONTACT_COLUMNS = [
   "user_id",
   "sent1_at",
   "created_at",
+  "period_id",
   ...FUNNEL.flatMap((f) => [f.field, f.registeredField]),
 ].join(", ");
 

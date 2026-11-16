@@ -26,6 +26,7 @@ const CO1 = "co1";
 const blank: DashContact = {
   id: "",
   user_id: H1,
+  period_id: null,
   name: "",
   company: "",
   company_id: null,

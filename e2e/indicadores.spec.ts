@@ -1,4 +1,4 @@
-import { expect, mutations, test } from "./helpers";
+import { expect, mutations, seedHackathon, test } from "./helpers";
 
 const U2 = "22222222-2222-4222-8222-222222222222";
 const GOAL_EQUIPE = "14141414-0000-4000-8000-000000000001";
@@ -23,6 +23,15 @@ test.describe("Indicadores", () => {
     await expect(tile("Hunters parados (2+ dias úteis)")).toContainText("2");
     await expect(page.getByText("Hunter Dois: sem envio há 6 dias úteis")).toBeVisible();
     await expect(page.getByText("09/11/2026 a 15/11/2026 · comparado com")).toBeVisible();
+  });
+
+  test("card do Hackathon avançado agora não conta nos números do ciclo", async ({ page }) => {
+    // Um card do Hackathon (encerrado) ganhou AT hoje: a AT dele não pode entrar no ciclo atual.
+    await seedHackathon(true);
+    await page.goto("/indicadores");
+    const ats = page.getByRole("group", { name: "ATs marcadas", exact: true });
+    // Sem o Hackathon o valor é 1 (a AT do João); com a AT do card dele seria 2.
+    await expect(ats).toContainText(/ATs marcadas\s*1(?!\d)/);
   });
 
   test("lista os atrasados do hunter e a etapa que gerou a AT", async ({ page }) => {

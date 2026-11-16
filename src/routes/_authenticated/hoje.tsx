@@ -11,7 +11,7 @@ import { DEFAULT_OFFSETS, STEPS, todayISO } from "@/lib/cadencia";
 import {
   buildQueues,
   dayProgress,
-  hackathonPeriodIds,
+  hackathonPeriods,
   missingForMessage,
   splitHackathon,
 } from "@/lib/fila";
@@ -52,10 +52,10 @@ function Hoje() {
   const { data: allContacts, isPending: contactsPending, isError, refetch } = useContacts();
   const periods = usePeriods();
   const isPending = contactsPending || periods.isPending;
-  const hackathonIds = useMemo(() => hackathonPeriodIds(periods.data), [periods.data]);
+  const hackathon = useMemo(() => hackathonPeriods(periods.data), [periods.data]);
   const split = useMemo(
-    () => (allContacts ? splitHackathon(allContacts, hackathonIds) : undefined),
-    [allContacts, hackathonIds],
+    () => (allContacts ? splitHackathon(allContacts, hackathon) : undefined),
+    [allContacts, hackathon],
   );
   const contacts = split && (showHackathon ? allContacts : split.current);
   const hackathonCount = split?.hackathon.length ?? 0;
@@ -149,7 +149,7 @@ function Hoje() {
                 step={step}
                 items={queues[step.n]}
                 actions={actions}
-                hackathonIds={hackathonIds}
+                hackathonPeriods={hackathon}
               />
             )}
           </TabsContent>

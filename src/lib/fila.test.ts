@@ -3,7 +3,8 @@ import { DEFAULT_OFFSETS, STEPS, type Contact } from "./cadencia";
 import {
   buildQueues,
   dayProgress,
-  hackathonPeriodIds,
+  hackathonPeriods,
+  isHackathonContact,
   markSentPatch,
   missingForMessage,
   splitHackathon,
@@ -133,23 +134,34 @@ describe("progresso do dia", () => {
 });
 
 describe("contatos do Hackathon", () => {
+  const CLOSED = "2026-10-24T02:59:59+00:00";
   const periods = [
-    { id: "hacka-fechado", status: "closed", kind: "competicao" },
-    { id: "hacka-ativo", status: "active", kind: "competicao" },
-    { id: "ciclo", status: "active", kind: "ciclo" },
+    { id: "hacka-fechado", status: "closed", kind: "competicao", closed_at: CLOSED },
+    { id: "hacka-ativo", status: "active", kind: "competicao", closed_at: null },
+    { id: "ciclo", status: "active", kind: "ciclo", closed_at: null },
   ];
+  const mk = (name: string, period_id: string | null, created_at: string) =>
+    c({ name, period_id, created_at } as Partial<Contact>);
 
   it("só períodos de competição encerrados contam como Hackathon", () => {
-    expect([...hackathonPeriodIds(periods)]).toEqual(["hacka-fechado"]);
-    expect(hackathonPeriodIds(undefined).size).toBe(0);
+    expect([...hackathonPeriods(periods).keys()]).toEqual(["hacka-fechado"]);
+    expect(hackathonPeriods(undefined).size).toBe(0);
   });
 
-  it("separa os contatos e mantém os sem período na fila", () => {
-    const ids = hackathonPeriodIds(periods);
-    const a = c({ name: "hacka", period_id: "hacka-fechado" } as Partial<Contact>);
-    const b = c({ name: "ciclo", period_id: "ciclo" } as Partial<Contact>);
-    const d = c({ name: "sem-periodo", period_id: null } as Partial<Contact>);
-    const { current, hackathon } = splitHackathon([a, b, d], ids);
+  it("contato criado depois do encerramento, mesmo carimbado no Hackathon, é contato novo", () => {
+    const h = hackathonPeriods(periods);
+    const antigo = mk("antigo", "hacka-fechado", "2026-10-20T12:00:00+00:00");
+    const novo = mk("novo", "hacka-fechado", "2026-10-30T12:00:00+00:00");
+    expect(isHackathonContact(antigo, h)).toBe(true);
+    expect(isHackathonContact(novo, h)).toBe(false);
+  });
+
+  it("separa os contatos e mantém os sem período e os do ciclo", () => {
+    const h = hackathonPeriods(periods);
+    const a = mk("hacka", "hacka-fechado", "2026-10-10T12:00:00+00:00");
+    const b = mk("ciclo", "ciclo", "2026-11-10T12:00:00+00:00");
+    const d = mk("sem-periodo", null, "2026-10-10T12:00:00+00:00");
+    const { current, hackathon } = splitHackathon([a, b, d], h);
     expect(names(current.map((contact) => ({ contact })))).toEqual(["ciclo", "sem-periodo"]);
     expect(hackathon).toEqual([a]);
   });

@@ -1,4 +1,4 @@
-import { expect, mutations, test } from "./helpers";
+import { expect, mutations, seedHackathon, test } from "./helpers";
 
 // O ranking é só do administrador: fica na aba "Competição" do painel.
 test.describe("Ranking (painel › Competição)", () => {
@@ -8,6 +8,31 @@ test.describe("Ranking (painel › Competição)", () => {
     const row = page.getByRole("row", { name: /Hunter Um/ }).first();
     await expect(row).toContainText("Squad Azul / Dupla 1");
     await expect(page.getByRole("columnheader", { name: "Aprov. verbais" }).first()).toBeVisible();
+  });
+
+  test("card do Hackathon avançado agora não pontua no ciclo nem na competição geral", async ({
+    page,
+  }) => {
+    const linha = async () =>
+      (await page
+        .getByRole("row", { name: /Hunter Um/ })
+        .first()
+        .textContent()) ?? "";
+    const geral = () =>
+      page.locator("main select").first().selectOption({ label: "Competição geral" });
+    await page.goto("/painel?aba=competicao");
+    const cicloAntes = await linha();
+    await geral();
+    await expect(page.locator("main select").first()).toHaveValue("geral");
+    await page.waitForLoadState("networkidle");
+    const geralAntes = await linha();
+
+    await seedHackathon(true); // AT registrada hoje num card do Hackathon encerrado
+
+    await page.goto("/painel?aba=competicao");
+    await expect(page.getByRole("row", { name: /Hunter Um/ }).first()).toHaveText(cicloAntes);
+    await geral();
+    await expect(page.getByRole("row", { name: /Hunter Um/ }).first()).toHaveText(geralAntes);
   });
 
   test("período encerrado mostra o placar oficial congelado", async ({ page }) => {

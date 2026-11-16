@@ -38,6 +38,7 @@ export type DashContact = Pick<
   | "sector"
   | "status"
   | "created_at"
+  | "period_id"
   | "step1_date"
   | "respondeu_em"
   | "resposta_etapa"
@@ -58,6 +59,7 @@ export const DASH_CONTACT_COLUMNS = [
   "sector",
   "status",
   "created_at",
+  "period_id",
   "step1_date",
   "respondeu_em",
   "resposta_etapa",

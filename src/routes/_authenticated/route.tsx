@@ -7,7 +7,7 @@ import { useMemo } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useContacts, usePeriods, useHolidays, useSettings } from "@/hooks/useCadencia";
 import { DEFAULT_OFFSETS, todayISO } from "@/lib/cadencia";
-import { buildQueues, dayProgress, hackathonPeriodIds, splitHackathon } from "@/lib/fila";
+import { buildQueues, dayProgress, hackathonPeriods, splitHackathon } from "@/lib/fila";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -64,7 +64,7 @@ function usePendingToday(): number | undefined {
   return useMemo(() => {
     if (!allContacts || !periods) return undefined;
     // O Hackathon encerrado fica fora das filas (e do contador) até o hunter pedir para vê-lo.
-    const { current: contacts } = splitHackathon(allContacts, hackathonPeriodIds(periods));
+    const { current: contacts } = splitHackathon(allContacts, hackathonPeriods(periods));
     const ref = todayISO();
     const queues = buildQueues(contacts, settings ?? DEFAULT_OFFSETS, holidays, ref);
     return dayProgress(contacts, queues, ref).pending;
