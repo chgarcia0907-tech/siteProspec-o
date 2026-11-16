@@ -235,7 +235,7 @@ export const painelDashboard = createServerFn({ method: "POST" })
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     const { fetchAll } = await import("./fetch-all");
     const { adminIds } = await import("./competition.server");
-    const { computeDashboard, DASH_CONTACT_COLUMNS } = await import("./dashboard");
+    const { computeDashboard, clampToCycle, DASH_CONTACT_COLUMNS } = await import("./dashboard");
 
     const [
       profiles,
@@ -284,9 +284,22 @@ export const painelDashboard = createServerFn({ method: "POST" })
     const mem = new Map(
       members.filter((m) => m.period_id === period?.id).map((m) => [m.user_id, m]),
     );
+    const spDay = (ts: string) =>
+      new Date(ts).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+    // Ciclo da equipe: só os membros dele e só dentro das datas do ciclo. Quem está fora
+    // continua na base (e nos outros períodos); só não entra nestes números.
+    const cycle =
+      period?.kind === "ciclo"
+        ? {
+            name: period.name,
+            start: spDay(period.started_at),
+            end: period.closed_at ? spDay(period.closed_at) : null,
+          }
+        : null;
+    const range = cycle ? clampToCycle(data, cycle) : { from: data.from, to: data.to };
 
     const everyone = profiles
-      .filter((p) => !admins.has(p.id))
+      .filter((p) => !admins.has(p.id) && (!cycle || mem.has(p.id)))
       .map((p) => {
         const m = mem.get(p.id);
         return {
@@ -301,12 +314,13 @@ export const painelDashboard = createServerFn({ method: "POST" })
       .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
     const hunters = everyone.filter(
       (h) =>
+        !!range &&
         (!data.groupId || h.groupId === data.groupId) &&
         (!data.subgroupId || h.subgroupId === data.subgroupId) &&
         (!data.hunterId || h.id === data.hunterId),
     );
     const ids = hunters.map((h) => h.id);
-    const filtered = hunters.length !== everyone.length;
+    const filtered = !!cycle || hunters.length !== everyone.length;
 
     const [contacts, companies, settings, holidays] = await Promise.all([
       ids.length === 0
@@ -351,8 +365,8 @@ export const painelDashboard = createServerFn({ method: "POST" })
       hunters,
       offsets: Object.fromEntries(settings.map(({ user_id, ...o }) => [user_id, o])),
       holidays: new Set((holidays.data ?? []).map((h) => h.date)),
-      from: data.from,
-      to: data.to,
+      from: range?.from ?? data.from,
+      to: range?.to ?? data.to,
       today: data.today,
       channel: data.channel,
       sectorId: data.sectorId,
@@ -360,11 +374,10 @@ export const painelDashboard = createServerFn({ method: "POST" })
       templateCodes,
     });
 
-    const spDay = (ts: string) =>
-      new Date(ts).toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
     return {
       dashboard,
       periodId: period?.id ?? null,
+      cycle: cycle && { ...cycle, members: everyone.length, outside: !range },
       goals: goals.data ?? [],
       options: {
         periods: allPeriods.map((p) => ({
