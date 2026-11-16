@@ -957,3 +957,16 @@ export function parseGoalNumber(text: string): number | null | undefined {
   if (!/^\d+(\.\d+)?$/.test(t)) return undefined;
   return Number(t);
 }
+
+/**
+ * Intervalo dos indicadores dentro de um ciclo: não começa antes do início nem passa do fim.
+ * Devolve null quando o intervalo escolhido fica todo fora do ciclo (nada a mostrar).
+ */
+export function clampToCycle(
+  range: { from: string; to: string },
+  cycle: { start: string; end: string | null },
+): { from: string; to: string } | null {
+  const from = range.from < cycle.start ? cycle.start : range.from;
+  const to = cycle.end && range.to > cycle.end ? cycle.end : range.to;
+  return from <= to ? { from, to } : null;
+}

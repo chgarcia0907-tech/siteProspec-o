@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Overview, OverviewPeriod } from "@/hooks/usePainel";
 import { spParts } from "@/lib/cadencia";
-import { closePeriod } from "@/lib/periodos.functions";
+import { closePeriod, setPeriodStart } from "@/lib/periodos.functions";
 import type { Ask } from "@/components/useConfirm";
 import { AddMembersDialog } from "./AddMembersDialog";
 import { GroupsCard } from "./GroupsCard";
@@ -79,8 +79,13 @@ function PeriodHeader({
   ask: Ask;
 }) {
   const close = useServerFn(closePeriod);
-  const { refresh } = usePeriodActions();
+  const saveStart = useServerFn(setPeriodStart);
+  const { run, refresh } = usePeriodActions();
   const [endDate, setEndDate] = useState(spParts().iso);
+  const currentStart = new Date(period.started_at).toLocaleDateString("sv-SE", {
+    timeZone: "America/Sao_Paulo",
+  });
+  const [startDate, setStartDate] = useState(currentStart);
   const closed = period.status === "closed";
 
   return (
@@ -96,6 +101,34 @@ function PeriodHeader({
             : ""}{" "}
           · {members} membros
         </span>
+        {!closed && (
+          <span className="flex items-center gap-2">
+            <Label htmlFor="start-date" className="text-xs text-muted-foreground">
+              Conta desde
+            </Label>
+            <Input
+              id="start-date"
+              type="date"
+              className="h-8 w-[150px]"
+              value={startDate}
+              max={spParts().iso}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!startDate || startDate === currentStart}
+              onClick={() =>
+                run(
+                  () => saveStart({ data: { id: period.id, start: startDate } }),
+                  "Início do período atualizado",
+                )
+              }
+            >
+              Salvar início
+            </Button>
+          </span>
+        )}
         {!closed && (
           <span className="ml-auto flex items-center gap-2">
             <Label htmlFor="end-date" className="text-caption text-muted-foreground">
