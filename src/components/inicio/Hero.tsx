@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DEFAULT_OFFSETS, STEPS, plannedDates, spParts } from "@/lib/cadencia";
@@ -14,7 +14,10 @@ const NOT_SENT = Object.fromEntries(STEPS.map((s) => [s.sentField, null]));
  * mensagem nas abas, com a mesma conta (`plannedDates`) das telas do app.
  */
 export function Hero() {
-  const [aceite, setAceite] = useState(() => spParts().iso);
+  // O "hoje" só é lido no navegador: no servidor o relógio (e o fuso) pode ser outro, e a
+  // diferença faria o React descartar o HTML da página na hidratação.
+  const [aceite, setAceite] = useState("");
+  useEffect(() => setAceite(spParts().iso), []);
   const dates = plannedDates(
     { step1_date: aceite || null, ...NOT_SENT } as Parameters<typeof plannedDates>[0],
     DEFAULT_OFFSETS,
