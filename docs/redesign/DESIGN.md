@@ -156,6 +156,15 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
   - Edição detalhada no menu da linha, não em inputs na tabela inteira.
 - **Setores e cadências**: um editor com uma aba por etapa (status "própria"/"padrão"), código, mensagem, variáveis clicáveis e pré-visualização ao lado. Um botão "Salvar setor e cadência".
 
+## 6b. Início do hunter (`/inicio`)
+
+Prancheta "Início" do Claude Design. Responde primeiro "a equipe está perto da meta de ATs?" e
+depois "o que eu faço hoje?". Números de destaque com tokens próprios desta tela: `text-hero`
+(48/52, título), `text-giant` (120/96, ATs da equipe), `text-numeral` (96/88, conversão) e
+`text-big` (64/60, envios e atrasados). Cores pelo design system: AT do hunter em `bg-primary`,
+AT da equipe em `bg-primary-soft`, vaga livre em `bg-surface-inset`, atrasados em
+`bg-destructive-soft`.
+
 ## 6a. Nome da plataforma
 
 O nome é **Outbound NTec**, com "NTec" em `text-primary`. Use sempre o componente `Marca`

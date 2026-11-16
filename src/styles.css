@@ -91,6 +91,19 @@
   --text-caption--line-height: 1rem;
   --text-kpi: 2.5rem;
   --text-kpi--line-height: 2.875rem;
+  /* Números e título de destaque da tela Início (painel do hunter). */
+  --text-hero: 3rem;
+  --text-hero--line-height: 3.25rem;
+  --text-hero--letter-spacing: -0.03em;
+  --text-giant: 7.5rem;
+  --text-giant--line-height: 6rem;
+  --text-giant--letter-spacing: -0.05em;
+  --text-numeral: 6rem;
+  --text-numeral--line-height: 5.5rem;
+  --text-numeral--letter-spacing: -0.05em;
+  --text-big: 4rem;
+  --text-big--line-height: 3.75rem;
+  --text-big--letter-spacing: -0.04em;
   /* Só nas páginas públicas (/ e /auth): título de cartaz, frase de destaque e texto corrido. */
   --text-display: clamp(4rem, 7.4vw, 8.5rem);
   --text-display--line-height: 0.92;

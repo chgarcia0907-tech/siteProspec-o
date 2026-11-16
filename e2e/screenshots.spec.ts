@@ -32,6 +32,7 @@ const COLADO = [
 ].join("\n");
 
 const SHOTS: Shot[] = [
+  { name: "15-inicio", path: "/inicio", seed: 60 },
   { name: "02-hoje", path: "/hoje", seed: 60 },
   { name: "03-contatos", path: "/contatos", seed: 60 },
   { name: "04-empresas", path: "/empresas" },

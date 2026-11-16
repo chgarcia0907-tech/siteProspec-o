@@ -8,6 +8,9 @@ describe("cn", () => {
     // Escala das páginas públicas (o nome no rodapé e o título de cartaz).
     expect(cn("text-mark", "text-primary-foreground")).toBe("text-mark text-primary-foreground");
     expect(cn("text-display text-heading")).toBe("text-display text-heading");
+    // Números de destaque da tela Início.
+    expect(cn("text-giant", "text-heading")).toBe("text-giant text-heading");
+    expect(cn("text-big text-destructive-text")).toBe("text-big text-destructive-text");
   });
 
   it("um tamanho novo substitui o anterior; uma cor nova substitui a anterior", () => {

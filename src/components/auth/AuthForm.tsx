@@ -12,7 +12,7 @@ export type AuthMode = "login" | "signup";
 
 /**
  * Formulário de entrada e cadastro, usado em /auth e no fim da página inicial. O admin vai para
- * /painel e o hunter para /hoje; no cadastro sem sessão, pede a confirmação do e-mail.
+ * /painel e o hunter para /inicio; no cadastro sem sessão, pede a confirmação do e-mail.
  */
 export function AuthForm({ mode, idPrefix = "" }: { mode: AuthMode; idPrefix?: string }) {
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ export function AuthForm({ mode, idPrefix = "" }: { mode: AuthMode; idPrefix?: s
           _user_id: signIn.user.id,
           _role: "admin",
         });
-        navigate({ to: isAdmin ? "/painel" : "/hoje", replace: true });
+        navigate({ to: isAdmin ? "/painel" : "/inicio", replace: true });
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -49,7 +49,7 @@ export function AuthForm({ mode, idPrefix = "" }: { mode: AuthMode; idPrefix?: s
         });
         if (error) throw error;
         if (data.session) {
-          navigate({ to: "/hoje", replace: true });
+          navigate({ to: "/inicio", replace: true });
         } else {
           toast.success("Conta criada. Confirme o e-mail pelo link que enviamos para entrar.");
         }
