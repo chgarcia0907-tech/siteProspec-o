@@ -15,7 +15,7 @@ export function GenderCard({ gender }: { gender: string | undefined }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Gênero para as mensagens</CardTitle>
+        <CardTitle>Gênero para as mensagens</CardTitle>
         <CardDescription>
           Define [CONSULTOR] (consultor/consultora) e [OBRIGADO] (obrigado/obrigada).
         </CardDescription>

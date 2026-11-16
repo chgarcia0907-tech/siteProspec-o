@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { adminDeleteContacts, adminStatus, adminVerify } from "@/lib/admin.functions";
 import { HolidaysAdmin } from "@/components/configuracoes/HolidaysAdmin";
+import { useConfirm } from "@/components/useConfirm";
+import { Lock } from "lucide-react";
 
 function failMsg(r: { status: string; remaining?: number; lockedUntil?: string }) {
   if (r.status === "not_configured") return "Senha de administrador ainda não configurada";
@@ -22,25 +24,28 @@ function failMsg(r: { status: string; remaining?: number; lockedUntil?: string }
   return "Não foi possível concluir.";
 }
 
+/**
+ * Área do administrador (senha): feriados e, isolada numa zona de risco no fim, a exclusão de
+ * contatos, que pede a palavra EXCLUIR no diálogo padrão (useConfirm).
+ */
 export function AdminArea() {
   const qc = useQueryClient();
   const status = useServerFn(adminStatus);
   const verify = useServerFn(adminVerify);
   const del = useServerFn(adminDeleteContacts);
   const { data: st } = useQuery({ queryKey: ["admin_status"], queryFn: () => status() });
+  const { ask, dialog } = useConfirm();
 
   const [password, setPassword] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [counts, setCounts] = useState<{ mine: number; all: number } | null>(null);
   const [scope, setScope] = useState<"mine" | "all">("mine");
-  const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const lock = () => {
     setUnlocked(false);
     setPassword("");
     setCounts(null);
-    setConfirming(false);
   };
 
   async function unlock() {
@@ -57,40 +62,46 @@ export function AdminArea() {
   }
 
   async function runDelete() {
-    setBusy(true);
-    try {
-      const r = await del({ data: { password, scope } });
-      if (r.status === "ok") {
-        toast.success(`${r.deleted} contatos excluídos`);
-        qc.invalidateQueries();
-        const v = await verify({ data: { password } });
-        if (v.status === "ok") setCounts(v.counts);
-        setConfirming(false);
-      } else {
-        toast.error(failMsg(r));
-        lock();
-      }
-    } finally {
-      setBusy(false);
+    const r = await del({ data: { password, scope } });
+    if (r.status === "ok") {
+      toast.success(`${r.deleted} contatos excluídos`);
+      qc.invalidateQueries();
+      const v = await verify({ data: { password } });
+      if (v.status === "ok") setCounts(v.counts);
+    } else {
+      toast.error(failMsg(r));
+      lock();
     }
   }
 
   const n = scope === "mine" ? (counts?.mine ?? 0) : (counts?.all ?? 0);
 
   return (
-    <Card className="border-dashed">
-      <CardHeader>
-        <CardTitle className="text-sm text-muted-foreground">Área do administrador</CardTitle>
-        <CardDescription>Exclusão de contatos e feriados.</CardDescription>
+    <Card>
+      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
+        <div className="space-y-1">
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="size-4 text-subtle-foreground" strokeWidth={1.75} aria-hidden />
+            Área do administrador
+          </CardTitle>
+          <CardDescription>
+            Feriados e exclusão de contatos. Exige a senha de administrador.
+          </CardDescription>
+        </div>
+        {unlocked && (
+          <Button variant="ghost" size="sm" onClick={lock}>
+            Sair da área do administrador
+          </Button>
+        )}
       </CardHeader>
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-6">
         {st && !st.configured ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-dense text-muted-foreground">
             Senha de administrador ainda não configurada
           </p>
         ) : !unlocked ? (
           <form
-            className="flex gap-2"
+            className="flex max-w-md gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               unlock();
@@ -104,21 +115,30 @@ export function AdminArea() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="off"
             />
-            <Button type="submit" variant="outline" disabled={!password || busy}>
+            <Button type="submit" variant="secondary" disabled={!password || busy}>
               Entrar
             </Button>
           </form>
         ) : (
           <>
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Excluir contatos</p>
-              <RadioGroup
-                value={scope}
-                onValueChange={(v) => {
-                  setScope(v as "mine" | "all");
-                  setConfirming(false);
-                }}
-              >
+            <HolidaysAdmin
+              password={password}
+              onFail={(r) => {
+                toast.error(failMsg(r));
+                lock();
+              }}
+            />
+            <section
+              aria-label="Zona de risco"
+              className="space-y-3 rounded-lg border border-destructive-border p-4"
+            >
+              <div>
+                <p className="text-dense font-semibold text-destructive-text">Zona de risco</p>
+                <p className="text-dense text-muted-foreground">
+                  Excluir contatos apaga também as datas e o funil deles. Não dá para desfazer.
+                </p>
+              </div>
+              <RadioGroup value={scope} onValueChange={(v) => setScope(v as "mine" | "all")}>
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="mine" id="sc-mine" />
                   <Label htmlFor="sc-mine">Apenas meus contatos ({counts?.mine ?? 0})</Label>
@@ -128,42 +148,26 @@ export function AdminArea() {
                   <Label htmlFor="sc-all">Contatos de TODOS os hunters ({counts?.all ?? 0})</Label>
                 </div>
               </RadioGroup>
-              {!confirming ? (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  disabled={n === 0}
-                  onClick={() => setConfirming(true)}
-                >
-                  Excluir contatos
-                </Button>
-              ) : (
-                <div className="flex flex-wrap items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
-                  <span>
-                    {n} contatos {scope === "all" ? "de TODOS os hunters" : "seus"} serão excluídos
-                    permanentemente.
-                  </span>
-                  <Button variant="destructive" size="sm" disabled={busy} onClick={runDelete}>
-                    Confirmar exclusão
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-                    Cancelar
-                  </Button>
-                </div>
-              )}
-            </div>
-            <HolidaysAdmin
-              password={password}
-              onFail={(r) => {
-                toast.error(failMsg(r));
-                lock();
-              }}
-            />
-            <Button variant="ghost" size="sm" onClick={lock}>
-              Sair da área do administrador
-            </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={n === 0}
+                onClick={() =>
+                  ask({
+                    title: `Excluir ${n} contatos?`,
+                    desc: `${n} contatos ${scope === "all" ? "de TODOS os hunters" : "seus"} serão excluídos permanentemente.`,
+                    word: "EXCLUIR",
+                    action: "Excluir contatos",
+                    run: runDelete,
+                  })
+                }
+              >
+                Excluir contatos
+              </Button>
+            </section>
           </>
         )}
+        {dialog}
       </CardContent>
     </Card>
   );

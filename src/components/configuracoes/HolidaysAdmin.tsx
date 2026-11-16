@@ -60,8 +60,8 @@ export function HolidaysAdmin({
 
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium">Feriados</p>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-dense font-semibold text-heading">Feriados</p>
+      <p className="text-dense text-muted-foreground">
         Feriados não contam como dia útil na cadência. Inclua emendas, recessos e anos futuros.
       </p>
       <form
@@ -88,8 +88,8 @@ export function HolidaysAdmin({
       </form>
       {byYear.map(([year, items]) => (
         <div key={year} className="space-y-1">
-          <p className="text-xs font-semibold text-muted-foreground">{year}</p>
-          <ul className="divide-y rounded-md border text-sm">
+          <p className="text-caption font-semibold text-subtle-foreground">{year}</p>
+          <ul className="divide-y rounded-lg border bg-surface-inset text-dense">
             {items.map((h) => (
               <li key={h.date} className="flex items-center justify-between gap-2 px-3 py-1.5">
                 <span>
@@ -97,7 +97,7 @@ export function HolidaysAdmin({
                   {h.name}
                 </span>
                 <Button
-                  variant="ghost"
+                  variant="destructive-ghost"
                   size="icon"
                   className="h-7 w-7"
                   aria-label={`Remover ${h.name}`}

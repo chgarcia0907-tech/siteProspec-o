@@ -41,4 +41,21 @@ test.describe("Configurações", () => {
     const intervalos = writes.find((m) => m.table === "settings");
     expect(JSON.parse(intervalos!.body)).toMatchObject({ offset2: 2 });
   });
+
+  test("excluir contatos fica na zona de risco e exige digitar EXCLUIR", async ({ page }) => {
+    await page.goto("/configuracoes");
+    await page.getByLabel("Senha de administrador").fill("e2e-admin");
+    await page.getByRole("button", { name: "Entrar" }).click();
+    const risco = page.getByRole("region", { name: "Zona de risco" });
+    await risco.getByRole("button", { name: "Excluir contatos" }).click();
+    const dialog = page.getByRole("alertdialog");
+    const confirmar = dialog.getByRole("button", { name: "Excluir contatos" });
+    await expect(confirmar).toBeDisabled();
+    await dialog.getByLabel(/Digite/).fill("EXCLUIR");
+    await confirmar.click();
+    await expect(page.getByText(/contatos excluídos/)).toBeVisible();
+    const apagou = (await mutations()).filter((m) => m.method === "DELETE");
+    expect(apagou).toMatchObject([{ table: "contacts" }]);
+    expect(apagou[0]!.query).toContain("user_id=eq.");
+  });
 });
