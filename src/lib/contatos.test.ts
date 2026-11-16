@@ -5,7 +5,10 @@ import {
   cadenceMarks,
   contactsCsvRows,
   filterContacts,
+  manualAtError,
+  manualAtRow,
   nextSend,
+  sameNameContacts,
   withSyncedStatus,
 } from "./contatos";
 
@@ -145,5 +148,49 @@ describe("próximo envio e marcadores da cadência", () => {
       expect(nextSend(x, DEFAULT_OFFSETS, sem, hoje)).toBeNull();
     const concluido = c({ status: "concluido", ...enviados });
     expect(cadenceMarks(concluido, null)).toEqual(Array(5).fill("enviada"));
+  });
+});
+
+describe("contato manual com AT por e-mail", () => {
+  const base = {
+    name: "  Maria Souza ",
+    job_title: " Diretora ",
+    sector: "TI",
+    phone: "",
+    company_id: null,
+    company: " Acme ",
+    atDate: "2026-11-10",
+  };
+
+  it("exige nome e data da AT; a data pode ser futura (reunião agendada)", () => {
+    expect(manualAtError(base)).toBeNull();
+    expect(manualAtError({ ...base, atDate: "2026-11-18" })).toBeNull();
+    expect(manualAtError({ ...base, name: "  " })).toMatch(/nome/);
+    expect(manualAtError({ ...base, atDate: "" })).toMatch(/data da AT/);
+  });
+
+  it("acha contato de mesmo nome sem considerar acento nem caixa", () => {
+    const lista = [c({ id: "1", name: "José Álvares" }), c({ id: "2", name: "Outra Pessoa" })];
+    expect(sameNameContacts(lista, " jose alvares ").map((x) => x.id)).toEqual(["1"]);
+    expect(sameNameContacts(lista, "")).toEqual([]);
+  });
+
+  it("monta a linha como respondeu, com AT registrada e origem em outro canal", () => {
+    const row = manualAtRow(base, "2026-11-12T15:00:00.000Z");
+    expect(row).toMatchObject({
+      name: "Maria Souza",
+      job_title: "Diretora",
+      company: "Acme",
+      status: "respondeu",
+      at_marcada_em: "2026-11-10",
+      at_registrado_em: "2026-11-12T15:00:00.000Z",
+      resposta_etapa: 0,
+    });
+  });
+
+  it("com empresa cadastrada, não envia o texto livre (o trigger copia o nome)", () => {
+    const row = manualAtRow({ ...base, company_id: "co-1" });
+    expect(row.company_id).toBe("co-1");
+    expect("company" in row).toBe(false);
   });
 });

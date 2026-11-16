@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AddContactButton } from "@/components/contatos/AddContactDialog";
 import { AutoFillButton } from "@/components/contatos/AutoFillButton";
 import { BulkActions } from "@/components/contatos/BulkActions";
 import { ContactsTable } from "@/components/contatos/ContactsTable";
@@ -96,7 +97,12 @@ function Contatos() {
           setMissing(v);
           setPage(0);
         }}
-        actions={<AutoFillButton contacts={contacts ?? []} companies={companies ?? []} />}
+        actions={
+          <div className="flex items-center gap-2">
+            <AddContactButton companies={companies ?? []} contacts={contacts ?? []} />
+            <AutoFillButton contacts={contacts ?? []} companies={companies ?? []} />
+          </div>
+        }
         onExport={() =>
           downloadCsv(`contatos-${todayISO()}.csv`, contactsCsvRows(rows, offsets, holidays))
         }

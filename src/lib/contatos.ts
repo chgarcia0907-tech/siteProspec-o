@@ -3,6 +3,7 @@ import {
   STATUS_LABEL,
   STEPS,
   computedStatus,
+  OUTRO_CANAL,
   formatBR,
   isActive,
   plannedDates,
@@ -116,4 +117,50 @@ export function cadenceMarks(contact: Contact, next: NextSend | null): StepMark[
     if (next?.step.n === s.n) return next.late ? "atrasada" : "proxima";
     return "futura";
   });
+}
+
+/** Dados do formulário "Adicionar contato" (AT marcada fora da cadência, ex.: por e-mail). */
+export type ManualAtInput = {
+  name: string;
+  job_title: string;
+  sector: string;
+  phone: string;
+  company_id: string | null;
+  /** Empresa em texto livre, quando não há empresa cadastrada vinculada. */
+  company: string;
+  /** Dia da AT (AAAA-MM-DD). */
+  atDate: string;
+};
+
+/** Erro do formulário (null = pode salvar): nome e data da AT são obrigatórios. A data pode ser futura (reunião agendada). */
+export function manualAtError(input: ManualAtInput): string | null {
+  if (!input.name.trim()) return "Informe o nome do contato.";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.atDate)) return "Informe a data da AT.";
+  return null;
+}
+
+/** Contatos já cadastrados com o mesmo nome (sem acento nem caixa), para avisar de duplicidade. */
+export function sameNameContacts(contacts: readonly Contact[], name: string): Contact[] {
+  const term = fold(name).trim();
+  return term ? contacts.filter((c) => fold(c.name).trim() === term) : [];
+}
+
+/**
+ * Linha para inserir um contato cuja AT foi marcada fora da cadência (e-mail): entra como
+ * "respondeu", com a AT na data informada, registrada agora (conta no placar no dia do cadastro)
+ * e com a origem "outro canal". Não gera envios nem entra nas filas.
+ */
+export function manualAtRow(input: ManualAtInput, now: string = new Date().toISOString()) {
+  return {
+    name: input.name.trim(),
+    job_title: input.job_title.trim(),
+    sector: input.sector,
+    phone: input.phone.trim(),
+    company_id: input.company_id,
+    ...(input.company_id ? {} : { company: input.company.trim() }),
+    status: "respondeu" as const,
+    at_marcada_em: input.atDate,
+    at_registrado_em: now,
+    resposta_etapa: OUTRO_CANAL,
+  };
 }
