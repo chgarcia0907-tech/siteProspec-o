@@ -1,4 +1,4 @@
-import { expect, MOCK, mutations, test, TODAY } from "./helpers";
+import { expect, MOCK, mutations, seedHackathon, test, TODAY } from "./helpers";
 
 test.describe("Envios de hoje", () => {
   test("monta uma fila por etapa, com atrasados destacados", async ({ page }) => {
@@ -13,6 +13,28 @@ test.describe("Envios de hoje", () => {
     await tab("WhatsApp 1").click();
     await expect(page.getByText("Bruno Lima")).toBeVisible();
     await expect(page.getByText("Atrasado · previsto 06/11")).toBeVisible();
+  });
+
+  test("contatos do Hackathon saem das filas e podem ser exibidos", async ({ page }) => {
+    await seedHackathon();
+    await page.goto("/hoje");
+    const nav = page.getByRole("navigation", { name: "Navegação principal" });
+    await expect(nav.getByRole("link", { name: /Envios de hoje/ })).toContainText("4");
+    const linkedin1 = page.getByRole("tab", { name: /^LinkedIn 1/ });
+    await expect(linkedin1).toHaveText(/LinkedIn 1\s*2/);
+    await expect(page.getByText("Hugo Hacka")).toHaveCount(0);
+    await expect(page.getByText("1 contato do Hackathon está fora das filas.")).toBeVisible();
+
+    await page.getByRole("button", { name: "Mostrar contatos do Hackathon" }).click();
+    await expect(page.getByText("Mostrando também 1 contato do Hackathon.")).toBeVisible();
+    await expect(linkedin1).toHaveText(/LinkedIn 1\s*3/);
+    await expect(page.getByText("Hugo Hacka")).toBeVisible();
+    await expect(
+      page.getByRole("article", { name: "Hugo Hacka" }).getByText("Hackathon"),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Ocultar contatos do Hackathon" }).click();
+    await expect(linkedin1).toHaveText(/LinkedIn 1\s*2/);
   });
 
   test("marcar como enviado grava a data e a situação", async ({ page }) => {

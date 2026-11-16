@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_OFFSETS, STEPS, type Contact } from "./cadencia";
-import { buildQueues, dayProgress, markSentPatch, missingForMessage } from "./fila";
+import {
+  buildQueues,
+  dayProgress,
+  hackathonPeriodIds,
+  markSentPatch,
+  missingForMessage,
+  splitHackathon,
+} from "./fila";
 
 let id = 0;
 const c = (over: Partial<Contact>) =>
@@ -122,5 +129,28 @@ describe("progresso do dia", () => {
   it("sem contatos, tudo zero", () => {
     const queues = buildQueues([], DEFAULT_OFFSETS, new Set(), ref);
     expect(dayProgress([], queues, ref)).toEqual({ done: 0, pending: 0, late: 0, total: 0 });
+  });
+});
+
+describe("contatos do Hackathon", () => {
+  const periods = [
+    { id: "hacka-fechado", status: "closed", kind: "competicao" },
+    { id: "hacka-ativo", status: "active", kind: "competicao" },
+    { id: "ciclo", status: "active", kind: "ciclo" },
+  ];
+
+  it("só períodos de competição encerrados contam como Hackathon", () => {
+    expect([...hackathonPeriodIds(periods)]).toEqual(["hacka-fechado"]);
+    expect(hackathonPeriodIds(undefined).size).toBe(0);
+  });
+
+  it("separa os contatos e mantém os sem período na fila", () => {
+    const ids = hackathonPeriodIds(periods);
+    const a = c({ name: "hacka", period_id: "hacka-fechado" } as Partial<Contact>);
+    const b = c({ name: "ciclo", period_id: "ciclo" } as Partial<Contact>);
+    const d = c({ name: "sem-periodo", period_id: null } as Partial<Contact>);
+    const { current, hackathon } = splitHackathon([a, b, d], ids);
+    expect(names(current.map((contact) => ({ contact })))).toEqual(["ciclo", "sem-periodo"]);
+    expect(hackathon).toEqual([a]);
   });
 });

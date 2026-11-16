@@ -27,6 +27,11 @@ export async function seed(n: number) {
   await fetch(`${MOCK}/__seed?n=${n}`, { method: "POST" });
 }
 
+/** Acrescenta um contato do Hackathon (período de competição encerrado) ao hunter logado. */
+export async function seedHackathon() {
+  await fetch(`${MOCK}/__seed?hackathon=1`, { method: "POST" });
+}
+
 /** Página com o hunter "Hunter Um" logado, relógio em 12/11/2026 e banco simulado zerado. */
 export const test = base.extend<{ page: Page }>({
   page: async ({ page, context }, provide) => {

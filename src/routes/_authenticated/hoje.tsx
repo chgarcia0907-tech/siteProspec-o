@@ -6,9 +6,15 @@ import { useQueueActions } from "@/components/hoje/useQueueActions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useContacts, useHolidays, useSettings } from "@/hooks/useCadencia";
+import { useContacts, useHolidays, usePeriods, useSettings } from "@/hooks/useCadencia";
 import { DEFAULT_OFFSETS, STEPS, todayISO } from "@/lib/cadencia";
-import { buildQueues, dayProgress, missingForMessage } from "@/lib/fila";
+import {
+  buildQueues,
+  dayProgress,
+  hackathonPeriodIds,
+  missingForMessage,
+  splitHackathon,
+} from "@/lib/fila";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/hoje")({
@@ -42,7 +48,17 @@ function diaPorExtenso(iso: string): string {
 function Hoje() {
   const [ref, setRef] = useState(todayISO());
   const [tab, setTab] = useState("1");
-  const { data: contacts, isPending, isError, refetch } = useContacts();
+  const [showHackathon, setShowHackathon] = useState(false);
+  const { data: allContacts, isPending: contactsPending, isError, refetch } = useContacts();
+  const periods = usePeriods();
+  const isPending = contactsPending || periods.isPending;
+  const hackathonIds = useMemo(() => hackathonPeriodIds(periods.data), [periods.data]);
+  const split = useMemo(
+    () => (allContacts ? splitHackathon(allContacts, hackathonIds) : undefined),
+    [allContacts, hackathonIds],
+  );
+  const contacts = split && (showHackathon ? allContacts : split.current);
+  const hackathonCount = split?.hackathon.length ?? 0;
   const { data: settings } = useSettings();
   const holidays = useHolidays();
   const offsets = settings ?? DEFAULT_OFFSETS;
@@ -83,6 +99,24 @@ function Hoje() {
         </div>
       </header>
 
+      {hackathonCount > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-surface-inset px-4 py-3 text-dense">
+          <p className="text-muted-foreground">
+            {showHackathon
+              ? `Mostrando também ${hackathonCount} ${hackathonCount === 1 ? "contato" : "contatos"} do Hackathon.`
+              : `${hackathonCount} ${hackathonCount === 1 ? "contato do Hackathon está" : "contatos do Hackathon estão"} fora das filas.`}
+          </p>
+          <Button
+            variant="secondary"
+            size="sm"
+            aria-pressed={showHackathon}
+            onClick={() => setShowHackathon((v) => !v)}
+          >
+            {showHackathon ? "Ocultar contatos do Hackathon" : "Mostrar contatos do Hackathon"}
+          </Button>
+        </div>
+      )}
+
       <DayProgressBar progress={progress} missing={missing} />
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -111,7 +145,12 @@ function Hoje() {
             ) : isError ? (
               <QueueError onRetry={() => refetch()} />
             ) : (
-              <QueueList step={step} items={queues[step.n]} actions={actions} />
+              <QueueList
+                step={step}
+                items={queues[step.n]}
+                actions={actions}
+                hackathonIds={hackathonIds}
+              />
             )}
           </TabsContent>
         ))}

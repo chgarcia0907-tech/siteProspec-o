@@ -14,10 +14,13 @@ export function QueueList({
   step,
   items,
   actions,
+  hackathonIds,
 }: {
   step: StepDef;
   items: QueueItem[];
   actions: QueueActions;
+  /** Períodos de Hackathon encerrados, para marcar os cartões desses contatos. */
+  hackathonIds?: Set<string>;
 }) {
   const [visible, setVisible] = useState(BATCH);
   if (items.length === 0) {
@@ -35,7 +38,13 @@ export function QueueList({
   return (
     <div className="space-y-3">
       {items.slice(0, visible).map((item) => (
-        <QueueCard key={item.contact.id} step={step} item={item} actions={actions} />
+        <QueueCard
+          key={item.contact.id}
+          step={step}
+          item={item}
+          actions={actions}
+          hackathon={!!item.contact.period_id && !!hackathonIds?.has(item.contact.period_id)}
+        />
       ))}
       {rest > 0 && (
         <div className="flex items-center justify-center gap-3 pt-2 text-dense text-muted-foreground">
