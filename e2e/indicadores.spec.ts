@@ -5,13 +5,16 @@ const GOAL_EQUIPE = "14141414-0000-4000-8000-000000000001";
 
 // Hoje é 12/11/2026 (quinta). Na semana de 09 a 15/11 ninguém enviou mensagem; a única AT
 // registrada é a do João (Hunter Dois, depois do WhatsApp 1). Bruno, Diego e Karen estão atrasados.
-test.describe("Painel · Indicadores", () => {
+test.describe("Indicadores", () => {
+  test("o endereço antigo da aba leva ao menu Indicadores", async ({ page }) => {
+    await page.goto("/painel?aba=indicadores");
+    await expect(page).toHaveURL(/\/indicadores$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Indicadores");
+  });
+
   test("abre na semana atual com os números da equipe", async ({ page }) => {
-    await page.goto("/painel");
-    await expect(page.getByRole("tab", { name: "Indicadores" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    await page.goto("/indicadores");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Indicadores");
     const tile = (name: string) => page.getByRole("group", { name, exact: true });
     await expect(tile("ATs marcadas")).toContainText("1");
     await expect(tile("ATs marcadas")).toContainText("antes: 2");
@@ -23,7 +26,7 @@ test.describe("Painel · Indicadores", () => {
   });
 
   test("lista os atrasados do hunter e a etapa que gerou a AT", async ({ page }) => {
-    await page.goto("/painel");
+    await page.goto("/indicadores");
     await page.getByRole("button", { name: "Hunter Dois" }).click();
     const late = page.getByRole("row", { name: /^Karen Luz/ });
     await expect(late).toContainText("WhatsApp 1");
@@ -39,7 +42,7 @@ test.describe("Painel · Indicadores", () => {
   });
 
   test("filtros de intervalo e de grupo recalculam os números", async ({ page }) => {
-    await page.goto("/painel");
+    await page.goto("/indicadores");
     const tile = (name: string) => page.getByRole("group", { name, exact: true });
     await page.getByRole("button", { name: "Semana passada" }).click();
     await expect(page.getByText("02/11/2026 a 08/11/2026 · comparado com")).toBeVisible();
@@ -54,7 +57,7 @@ test.describe("Painel · Indicadores", () => {
   });
 
   test("respostas e metas com semáforo", async ({ page }) => {
-    await page.goto("/painel");
+    await page.goto("/indicadores");
     // A AT do João conta como resposta nesta semana; Elisa e Iara responderam na anterior.
     await expect(page.getByRole("group", { name: "Respostas", exact: true })).toContainText(
       "antes: 2",
@@ -74,7 +77,7 @@ test.describe("Painel · Indicadores", () => {
   });
 
   test("editor de metas grava a meta da equipe e a exceção de um hunter", async ({ page }) => {
-    await page.goto("/painel");
+    await page.goto("/indicadores");
     await page.getByRole("button", { name: "Configurar metas" }).click();
     const equipe = page.getByRole("group", { name: "Metas: Equipe (padrão)" });
     const ats = equipe.getByLabel("ATs por semana (Equipe (padrão))");
@@ -119,7 +122,7 @@ test.describe("Painel · Indicadores", () => {
   test("responde primeiro se a equipe está no ritmo e deixa o detalhe em abas", async ({
     page,
   }) => {
-    await page.goto("/painel");
+    await page.goto("/indicadores");
     await expect(
       page.getByRole("heading", { name: "A equipe está no ritmo desta semana?" }),
     ).toBeVisible();

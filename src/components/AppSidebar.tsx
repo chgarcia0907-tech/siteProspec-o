@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import {
   Building2,
+  ChartColumn,
   FileText,
   House,
   LayoutDashboard,
@@ -52,7 +53,10 @@ export function AppSidebar({
       ? [
           {
             title: "Administração",
-            items: [{ to: "/painel", label: "Painel Admin", icon: LayoutDashboard }],
+            items: [
+              { to: "/indicadores", label: "Indicadores", icon: ChartColumn },
+              { to: "/painel", label: "Painel Admin", icon: LayoutDashboard },
+            ],
           },
         ]
       : []),
