@@ -146,6 +146,12 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   cada AT dos outros e a meta somada (`ats_semana` de cada hunter, com a herança de `resolveGoal`).
   A equipe é a dos Indicadores (ciclo ativo: só os membros). Envios, atrasados e conversão usam os
   contatos do próprio hunter, com `buildQueues`/`dayProgress` (mesma conta de Envios de hoje).
+- Contato manual (botão "Adicionar contato" em Contatos): serve para AT marcada fora da cadência, como
+  por e-mail. Regra em `manualAtRow`/`manualAtError` (`contatos.ts`), gravação por `useAddContact`.
+  O contato entra como `respondeu`, com `at_marcada_em` na data informada (pode ser futura),
+  `at_registrado_em` agora (pontua no dia do cadastro) e `resposta_etapa = 0` (outro canal; o painel
+  não separa e-mail de ligação). Nome repetido só gera aviso: para um lead já importado, o caminho
+  é "Avançar no funil" no contato existente.
 - Recorte do ciclo: quando o período escolhido nos Indicadores é um ciclo, `painelDashboard` usa só
   os membros dele e corta o intervalo nas datas do ciclo (`clampToCycle` em `dashboard.ts`); outros
   períodos no filtro mostram o histórico. Atrasados também respeitam o ciclo: etapa pendente prevista

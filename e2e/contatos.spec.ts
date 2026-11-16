@@ -161,4 +161,30 @@ test.describe("Contatos", () => {
     expect(JSON.parse((await mutations())[0]!.body)).toMatchObject({ sent2_at: TODAY });
     await expect(page.getByRole("checkbox", { name: "WhatsApp 1 enviada" })).toBeChecked();
   });
+
+  test("adiciona um contato com AT marcada por e-mail", async ({ page }) => {
+    await page.goto("/contatos");
+    await page.getByRole("button", { name: "Adicionar contato" }).click();
+    const dialog = page.getByRole("dialog", { name: "Adicionar contato" });
+    const registrar = dialog.getByRole("button", { name: "Registrar AT" });
+    await expect(registrar).toBeDisabled();
+    await dialog.getByLabel("Nome *").fill("bruno lima");
+    await expect(dialog.getByRole("alert")).toContainText("Já existe um contato com esse nome");
+    await dialog.getByLabel("Nome *").fill("Marina Prado");
+    await expect(dialog.getByRole("alert")).toHaveCount(0);
+    await dialog.getByLabel("Cargo na empresa").fill("Diretora");
+    await dialog.getByPlaceholder("Nome da empresa").fill("Zeta");
+    await dialog.getByLabel("Data da AT *").fill("2026-11-18");
+    await registrar.click();
+    await expect(page.getByText("AT registrada para Marina Prado")).toBeVisible();
+    const [m] = await mutations();
+    expect(m).toMatchObject({ method: "POST", table: "contacts" });
+    expect(JSON.parse(m!.body)).toMatchObject({
+      name: "Marina Prado",
+      company: "Zeta",
+      status: "respondeu",
+      at_marcada_em: "2026-11-18",
+      resposta_etapa: 0,
+    });
+  });
 });
