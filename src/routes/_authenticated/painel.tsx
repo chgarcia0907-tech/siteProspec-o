@@ -29,12 +29,12 @@ export const Route = createFileRoute("/_authenticated/painel")({
     isAba(s["aba"]) ? { aba: s["aba"] } : {},
   head: () => ({
     meta: [
-      { title: "Painel do administrador — Cadência Outbound" },
+      { title: "Painel do administrador — Outbound NTec" },
       {
         name: "description",
         content: "Indicadores das cadências, hunters, competição e contatos de toda a equipe.",
       },
-      { property: "og:title", content: "Painel do administrador — Cadência Outbound" },
+      { property: "og:title", content: "Painel do administrador — Outbound NTec" },
       {
         property: "og:description",
         content: "Indicadores das cadências, hunters, competição e contatos de toda a equipe.",

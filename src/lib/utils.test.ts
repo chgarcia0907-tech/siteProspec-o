@@ -5,6 +5,9 @@ describe("cn", () => {
   it("mantém o tamanho do design system junto com a cor do texto", () => {
     expect(cn("text-kpi text-heading")).toBe("text-kpi text-heading");
     expect(cn("text-dense", "text-heading")).toBe("text-dense text-heading");
+    // Escala das páginas públicas (o nome no rodapé e o título de cartaz).
+    expect(cn("text-mark", "text-primary-foreground")).toBe("text-mark text-primary-foreground");
+    expect(cn("text-display text-heading")).toBe("text-display text-heading");
   });
 
   it("um tamanho novo substitui o anterior; uma cor nova substitui a anterior", () => {

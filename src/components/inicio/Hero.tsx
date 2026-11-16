@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DEFAULT_OFFSETS, STEPS, plannedDates, spParts } from "@/lib/cadencia";
+import { Marca } from "@/components/Marca";
 import { FolderStack } from "./FolderStack";
 
 /** Etapa sem envio: só a data da conexão define a previsão. */
@@ -26,7 +27,7 @@ export function Hero() {
   return (
     <section className="flex h-svh min-h-[760px] flex-col" aria-labelledby="inicio-titulo">
       <header className="flex items-center justify-between px-8 py-6">
-        <span className="font-display text-lead font-bold text-heading">Cadência Outbound</span>
+        <Marca className="text-lead" />
         <Link
           to="/auth"
           className="rounded-md px-3 py-2 text-lead text-heading transition-colors hover:bg-control focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
@@ -43,8 +44,8 @@ export function Hero() {
           className="rise-in mx-auto mt-6 max-w-[46ch] text-lead text-foreground"
           style={{ "--i": 1 } as React.CSSProperties}
         >
-          Cole as conexões aceitas no LinkedIn. A Cadência Outbound diz quem recebe cada mensagem,
-          no LinkedIn ou no WhatsApp, a cada dia útil, até a reunião ser marcada.
+          Cole as conexões aceitas no LinkedIn. O Outbound NTec diz quem recebe cada mensagem, no
+          LinkedIn ou no WhatsApp, a cada dia útil, até a reunião ser marcada.
         </p>
       </div>
 

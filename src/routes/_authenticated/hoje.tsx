@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/hoje")({
   head: () => ({
     meta: [
-      { title: "Envios de hoje — Cadência Outbound" },
+      { title: "Envios de hoje — Outbound NTec" },
       {
         name: "description",
         content: "Veja quem precisa receber cada mensagem hoje e quem está atrasado.",

@@ -18,6 +18,7 @@ const twMerge = extendTailwindMerge({
         "caption",
         "kpi",
         "display",
+        "mark",
         "statement",
         "lead",
       ],

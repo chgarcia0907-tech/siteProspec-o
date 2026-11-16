@@ -1,4 +1,4 @@
-# Design system · Cadência Outbound (tema escuro NTec)
+# Design system · Outbound NTec (tema escuro)
 
 Referência visual: canvas "Cadência Outbound · Redesign NTec" no Claude Design (14 pranchetas).
 Tokens: `src/styles.css`. Este documento dá as regras que os tokens sozinhos não carregam.
@@ -155,6 +155,12 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
   - Cadência: 5 marcadores, um por etapa de `STEPS`. Enviada = preenchida na cor do canal; próxima = contorno; atrasada = contorno `destructive`.
   - Edição detalhada no menu da linha, não em inputs na tabela inteira.
 - **Setores e cadências**: um editor com uma aba por etapa (status "própria"/"padrão"), código, mensagem, variáveis clicáveis e pré-visualização ao lado. Um botão "Salvar setor e cadência".
+
+## 6a. Nome da plataforma
+
+O nome é **Outbound NTec**, com "NTec" em `text-primary`. Use sempre o componente `Marca`
+(`src/components/Marca.tsx`) na navegação lateral e nas páginas públicas; nos títulos das abas
+do navegador, o texto simples "Outbound NTec".
 
 ## 7a. Páginas públicas (`/` e `/auth`)
 

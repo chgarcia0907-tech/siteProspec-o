@@ -14,9 +14,9 @@ const DESCRICAO =
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cadência Outbound — do aceite à reunião" },
+      { title: "Outbound NTec — do aceite à reunião" },
       { name: "description", content: DESCRICAO },
-      { property: "og:title", content: "Cadência Outbound" },
+      { property: "og:title", content: "Outbound NTec" },
       { property: "og:description", content: DESCRICAO },
     ],
   }),

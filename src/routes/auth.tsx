@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type CSSProperties } from "react";
 import { AuthForm, type AuthMode } from "@/components/auth/AuthForm";
 import { FolderStack } from "@/components/inicio/FolderStack";
+import { Marca } from "@/components/Marca";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -10,12 +11,12 @@ export const Route = createFileRoute("/auth")({
     s["modo"] === "cadastro" ? { modo: "cadastro" } : {},
   head: () => ({
     meta: [
-      { title: "Entrar — Cadência Outbound" },
+      { title: "Entrar — Outbound NTec" },
       {
         name: "description",
         content: "Acesse sua conta de hunter para ver seus contatos e filas.",
       },
-      { property: "og:title", content: "Entrar — Cadência Outbound" },
+      { property: "og:title", content: "Entrar — Outbound NTec" },
       {
         property: "og:description",
         content: "Acesse sua conta de hunter para ver seus contatos e filas.",
@@ -43,10 +44,10 @@ function AuthPage() {
 
   return (
     <div className="grid h-svh min-h-[720px] min-w-[1024px] grid-cols-[minmax(0,1fr)_minmax(460px,40%)] bg-background">
-      <section className="flex flex-col" aria-label="Cadência Outbound">
+      <section className="flex flex-col" aria-label="Outbound NTec">
         <header className="flex items-center justify-between px-8 py-6">
-          <Link to="/" className="font-display text-lead font-bold text-heading">
-            Cadência Outbound
+          <Link to="/" className="text-lead">
+            <Marca />
           </Link>
         </header>
         <p
