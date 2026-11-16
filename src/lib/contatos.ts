@@ -2,6 +2,7 @@
 import {
   STATUS_LABEL,
   STEPS,
+  stepApplies,
   computedStatus,
   OUTRO_CANAL,
   formatBR,
@@ -101,19 +102,20 @@ export function nextSend(
   today: string,
 ): NextSend | null {
   if (!isActive(contact)) return null;
-  const step = STEPS.find((s) => !contact[s.sentField]);
+  const step = STEPS.find((s) => !contact[s.sentField] && stepApplies(contact, s));
   if (!step) return null;
   const date = plannedDates(contact, offsets, holidays)[step.n] ?? null;
   return { step, date, late: !!date && date < today };
 }
 
 /** Marcador de cada etapa na coluna Cadência (DESIGN.md, seção 7). */
-export type StepMark = "enviada" | "proxima" | "atrasada" | "futura";
+export type StepMark = "enviada" | "proxima" | "atrasada" | "futura" | "dispensada";
 
 /** Um marcador por etapa de `STEPS`: enviada, a próxima (ou atrasada) e as futuras. */
 export function cadenceMarks(contact: Contact, next: NextSend | null): StepMark[] {
   return STEPS.map((s) => {
     if (contact[s.sentField]) return "enviada";
+    if (!stepApplies(contact, s)) return "dispensada";
     if (next?.step.n === s.n) return next.late ? "atrasada" : "proxima";
     return "futura";
   });

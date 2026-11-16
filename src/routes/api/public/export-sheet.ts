@@ -5,6 +5,7 @@ import {
   DEFAULT_OFFSETS,
   STATUS_LABEL,
   STEPS,
+  stepApplies,
   computedStatus,
   plannedDates,
   type Contact,
@@ -66,7 +67,9 @@ export const Route = createFileRoute("/api/public/export-sheet")({
             const planned = plannedDates(c, offs.get(c.user_id) ?? DEFAULT_OFFSETS, holidays);
             const status = computedStatus(c as Contact);
             const active = status === "aguardando" || status === "em_cadencia";
-            const next = active ? STEPS.find((s) => !c[s.sentField]) : undefined;
+            const next = active
+              ? STEPS.find((s) => !c[s.sentField] && stepApplies(c, s))
+              : undefined;
             return {
               hunter: names.get(c.user_id) ?? "",
               nome: c.name ?? "",

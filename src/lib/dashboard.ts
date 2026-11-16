@@ -7,6 +7,7 @@ import {
   ENTRY_CHANNEL_LABEL,
   FUNNEL,
   STEPS,
+  stepApplies,
   addDaysISO,
   computedStatus,
   entryChannel,
@@ -43,6 +44,7 @@ export type DashContact = Pick<
   | "respondeu_em"
   | "resposta_etapa"
   | "resposta_modelo"
+  | "sem_whatsapp"
   | StepDef["sentField"]
   | FunnelField
   | FunnelRegisteredField
@@ -56,6 +58,7 @@ export const DASH_CONTACT_COLUMNS = [
   "company",
   "company_id",
   "phone",
+  "sem_whatsapp",
   "sector",
   "status",
   "created_at",
@@ -376,7 +379,7 @@ function lateStep(
 ) {
   if (!isActive(c)) return null;
   for (const s of STEPS) {
-    if (c[s.sentField]) continue;
+    if (c[s.sentField] || !stepApplies(c, s)) continue;
     const p = planned[s.n];
     if (s.n === 1 && !c.step1_date) return null; // aguardando início, não atrasado
     if (!p || p >= today) return null;
@@ -545,7 +548,10 @@ export function computeDashboard(input: DashInput): Dashboard {
       const p = planned[s.n];
       if (!inR(p, from, dueEnd)) continue;
       // Etapa só é devida depois que a anterior saiu: um atraso não conta de novo nas seguintes.
-      if (s.n > 1 && !c[STEPS[s.n - 2]!.sentField]) continue;
+      if (!stepApplies(c, s)) continue;
+      // (a etapa dispensada não segura as seguintes: vale a anterior que faz parte da cadência)
+      const before = STEPS.slice(0, s.n - 1).filter((x) => stepApplies(c, x));
+      if (before.length && !c[before[before.length - 1]!.sentField]) continue;
       const d = day(c[s.sentField]);
       if (!d && !active) continue; // contato saiu da cadência: a etapa não era mais devida
       r.due++;
@@ -577,7 +583,11 @@ export function computeDashboard(input: DashInput): Dashboard {
       }
       const whatsappPending = STEPS.some(
         (s) =>
-          s.channel === "whatsapp" && !c[s.sentField] && !!planned[s.n] && planned[s.n]! <= today,
+          s.channel === "whatsapp" &&
+          stepApplies(c, s) &&
+          !c[s.sentField] &&
+          !!planned[s.n] &&
+          planned[s.n]! <= today,
       );
       if (status === "em_cadencia" && whatsappPending && onlyDigits(c.phone).length < 10) {
         r.noPhone++;

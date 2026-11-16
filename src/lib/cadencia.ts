@@ -155,12 +155,23 @@ export function plannedDates(
   return out;
 }
 
+/**
+ * A etapa faz parte da cadência do contato? Quem não tem WhatsApp (`sem_whatsapp`) não recebe as
+ * etapas de WhatsApp: elas saem das filas, dos atrasados e da conclusão. As datas previstas das
+ * etapas seguintes não mudam (seguem encadeadas como antes).
+ */
+export function stepApplies(c: { sem_whatsapp?: boolean | null }, step: StepDef): boolean {
+  return !(c.sem_whatsapp && step.channel === "whatsapp");
+}
+
 /** Campos que definem a situação calculada do contato. */
-export type StatusInput = Pick<Contact, "status" | "step1_date" | StepDef["sentField"]>;
+export type StatusInput = Pick<Contact, "status" | "step1_date" | StepDef["sentField"]> & {
+  sem_whatsapp?: boolean | null;
+};
 
 export function computedStatus(c: StatusInput): ContactStatus {
   if (c.status === "respondeu" || c.status === "descartado") return c.status;
-  const allSent = STEPS.every((s) => c[s.sentField]);
+  const allSent = STEPS.every((s) => !stepApplies(c, s) || c[s.sentField]);
   if (allSent) return "concluido";
   if (c.step1_date || c.sent1_at) return "em_cadencia";
   return "aguardando";

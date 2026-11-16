@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChannelBadge } from "@/components/StatusBadge";
 import { FunnelBadge, FunnelControl } from "@/components/Funnel";
 import { Button } from "@/components/ui/button";
-import { onlyDigits, type StepDef } from "@/lib/cadencia";
+import { onlyDigits, type Contact, type StepDef } from "@/lib/cadencia";
 import { missingForMessage, type QueueItem } from "@/lib/fila";
 import { cn } from "@/lib/utils";
 import { CompanyFix } from "./CompanyFix";
@@ -27,11 +27,14 @@ export function QueueCard({
   step,
   item: { contact, planned, late },
   actions,
+  onEdit,
   hackathon = false,
 }: {
   step: StepDef;
   item: QueueItem;
   actions: QueueActions;
+  /** Abre a edição completa do contato (a mesma de Contatos). */
+  onEdit?: ((contact: Contact) => void) | undefined;
   /** Contato de um Hackathon encerrado, exibido só quando o hunter pede. */
   hackathon?: boolean;
 }) {
@@ -119,6 +122,16 @@ export function QueueCard({
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
+              {onEdit && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`Editar ${contact.name}`}
+                  onClick={() => onEdit(contact)}
+                >
+                  Editar
+                </Button>
+              )}
               <FunnelControl
                 contact={contact}
                 onPatch={(p) => actions.patchContact(contact, p, "Funil atualizado")}
