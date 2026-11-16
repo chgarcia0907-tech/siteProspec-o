@@ -4,8 +4,9 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { useProfile, useSectorTemplates, useSectors, useTemplates } from "@/hooks/useCadencia";
 import { STEPS, renderTemplate } from "@/lib/cadencia";
 import { pickTemplate } from "@/lib/fila";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChannelBadge } from "@/components/StatusBadge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import { EXEMPLO, ModeloEtapa, VARIAVEIS } from "@/components/modelos/ModeloEtapa";
 
 export const Route = createFileRoute("/_authenticated/modelos")({
   head: () => ({
@@ -27,83 +28,102 @@ export const Route = createFileRoute("/_authenticated/modelos")({
   component: Modelos,
 });
 
-const EXEMPLO = {
-  name: "Mariana Souza",
-  company: "Acme Indústria",
-  sector: "Operações",
-  job_title: "Gerente de Operações",
-};
-
 function Modelos() {
   const { data: templates } = useTemplates();
   const { data: profile } = useProfile();
   const { data: sectors } = useSectors();
   const { data: sectorTemplates } = useSectorTemplates();
   const [sectorId, setSectorId] = useState("");
+  const [tab, setTab] = useState("1");
   const hunter = {
     name: profile?.message_name?.trim() || profile?.display_name || "Seu Nome",
     gender: (profile?.gender === "f" ? "f" : "m") as "m" | "f",
   };
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Modelos</h1>
-        <p className="text-sm text-muted-foreground">
-          Modelos da equipe (somente leitura). Contatos de empresas cadastradas recebem a cadência
-          do setor da empresa; etapas sem mensagem do setor usam o modelo padrão. Variáveis: [FIRST
-          NAME], [EMPRESA], [CARGO], [DOR_DO_SETOR], [NOME], [CONSULTOR], [OBRIGADO], [JANELA] e
-          [SAUDACAO]. Pré-visualização com o contato de exemplo {EXEMPLO.name} · {EXEMPLO.job_title}{" "}
-          · {EXEMPLO.company} (setor {EXEMPLO.sector}).
-        </p>
-      </div>
-      <NativeSelect
-        aria-label="Cadência"
-        className="w-72"
-        value={sectorId}
-        onChange={(e) => setSectorId(e.target.value)}
-      >
-        <option value="">Modelo padrão da equipe</option>
-        {(sectors ?? [])
-          .filter((s) => s.active)
-          .map((s) => (
-            <option key={s.id} value={s.id}>
-              Setor: {s.name}
-            </option>
-          ))}
-      </NativeSelect>
-      {STEPS.map((step) => {
-        const t = pickTemplate(step, sectorId || null, sectorTemplates, templates);
-        return (
-          <Card key={step.n}>
-            <CardHeader className="flex-row items-center gap-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <ChannelBadge channel={step.channel}>{step.label}</ChannelBadge>
-                <span className="text-xs font-mono text-muted-foreground">{t?.code}</span>
-                {sectorId && t && !t.fromSector && (
-                  <span className="text-xs font-normal text-muted-foreground">
-                    (sem mensagem do setor — modelo padrão)
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">Referência · somente leitura</p>
+          <h1 className="mt-1 text-title font-bold">Modelos</h1>
+          <p className="mt-2 max-w-3xl text-body text-muted-foreground">
+            Contatos de empresas cadastradas recebem a cadência do setor da empresa; etapas sem
+            mensagem do setor usam o modelo padrão da equipe.
+          </p>
+        </div>
+        <NativeSelect
+          aria-label="Cadência"
+          className="w-72"
+          value={sectorId}
+          onChange={(e) => setSectorId(e.target.value)}
+        >
+          <option value="">Modelo padrão da equipe</option>
+          {(sectors ?? [])
+            .filter((s) => s.active)
+            .map((s) => (
+              <option key={s.id} value={s.id}>
+                Setor: {s.name}
+              </option>
+            ))}
+        </NativeSelect>
+      </header>
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="h-auto flex-wrap">
+          {STEPS.map((step) => {
+            const t = pickTemplate(step, sectorId || null, sectorTemplates, templates);
+            return (
+              <TabsTrigger key={step.n} value={String(step.n)} className="gap-2">
+                <span
+                  aria-hidden
+                  className={cn(
+                    "size-2 rounded-full",
+                    step.channel === "linkedin" ? "bg-linkedin" : "bg-whatsapp",
+                  )}
+                />
+                {step.label}
+                {sectorId && t && (
+                  <span
+                    className={cn(
+                      "text-caption font-semibold",
+                      t.fromSector ? "text-success" : "text-subtle-foreground",
+                    )}
+                  >
+                    {t.fromSector ? "própria" : "padrão"}
                   </span>
                 )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <div>
-                <p className="mb-1 text-xs font-medium text-muted-foreground">Modelo</p>
-                <div className="whitespace-pre-wrap rounded-md border bg-muted/40 p-3 text-sm">
-                  {t?.body ?? "Carregando..."}
-                </div>
-              </div>
-              <div>
-                <p className="mb-1 text-xs font-medium text-muted-foreground">Pré-visualização</p>
-                <div className="whitespace-pre-wrap rounded-md border bg-card p-3 text-sm">
-                  {t ? renderTemplate(t.body, EXEMPLO, hunter) : ""}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+        {STEPS.map((step) => {
+          const t = pickTemplate(step, sectorId || null, sectorTemplates, templates);
+          return (
+            <TabsContent key={step.n} value={String(step.n)}>
+              <ModeloEtapa
+                step={step}
+                template={t}
+                sectorChosen={!!sectorId}
+                preview={t ? renderTemplate(t.body, EXEMPLO, hunter) : ""}
+              />
+            </TabsContent>
+          );
+        })}
+      </Tabs>
+
+      <section aria-label="Variáveis" className="space-y-2">
+        <p className="text-dense font-semibold text-heading">Variáveis que os modelos aceitam</p>
+        <div className="flex flex-wrap gap-2">
+          {VARIAVEIS.map((v) => (
+            <code
+              key={v}
+              className="rounded-sm bg-primary-soft px-2 py-0.5 font-mono text-caption text-primary-text-strong"
+            >
+              {v}
+            </code>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
