@@ -6,7 +6,10 @@ const SETOR_VAREJO = "12121212-0000-4000-8000-000000000001";
 test.describe("Empresas", () => {
   test("lista as empresas por semana, com setor e contatos vinculados", async ({ page }) => {
     await page.goto("/empresas");
-    await expect(page.getByText("Semana de 09/11/2026 a 15/11/2026")).toBeVisible();
+    // O título da semana na lista (o eyebrow do topo repete o mesmo texto).
+    await expect(
+      page.getByRole("heading", { name: /^Semana de 09\/11\/2026 a 15\/11\/2026/ }),
+    ).toBeVisible();
     await expect(page.getByText("· 1 empresa", { exact: true })).toBeVisible();
     await expect(page.getByPlaceholder("Empresa")).toHaveValue("Delta");
     await expect(page.getByText("1 contato", { exact: true })).toBeVisible();
@@ -20,11 +23,11 @@ test.describe("Empresas", () => {
     await page.getByLabel("Empresas (uma por linha)").fill("Zeta\ndelta\nÔmega");
     await expect(page.getByText("2 novas · 1 já cadastrada")).toBeVisible();
     // Setor inativo não aparece para o hunter.
-    // O primeiro seletor é o do formulário; os seguintes são os das empresas da lista.
-    const setor = page.getByRole("combobox", { name: "Setor da empresa" }).first();
+    const form = page.getByRole("form", { name: "Cadastrar empresas" });
+    const setor = form.getByRole("combobox", { name: "Setor da empresa" });
     await expect(setor.locator("option", { hasText: "Saúde" })).toHaveCount(0);
     await setor.selectOption({ label: "Varejo" });
-    await page.getByRole("button", { name: "Cadastrar" }).click();
+    await form.getByRole("button", { name: "Cadastrar" }).click();
     await expect(page.getByText("2 empresas cadastradas")).toBeVisible();
 
     const [m] = await mutations();
@@ -75,5 +78,18 @@ test.describe("Empresas", () => {
       body: "Olá, [FIRST NAME]! Varejo [NA_EMPRESA].",
     });
     expect(rows[3]).toMatchObject({ step: 4, code: "VAR4" });
+  });
+
+  test("excluir pela lixeira pede confirmação e explica o que acontece com os contatos", async ({
+    page,
+  }) => {
+    await page.goto("/empresas");
+    await page.getByRole("button", { name: "Excluir Delta" }).click();
+    const dialog = page.getByRole("alertdialog");
+    await expect(dialog).toContainText("Excluir Delta?");
+    await expect(dialog).toContainText("1 contatos vinculados continuam cadastrados");
+    await dialog.getByRole("button", { name: "Excluir" }).click();
+    await expect.poll(async () => (await mutations()).length).toBe(1);
+    expect((await mutations())[0]).toMatchObject({ method: "DELETE", table: "companies" });
   });
 });

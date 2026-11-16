@@ -66,18 +66,18 @@ export function CompanyForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Cadastrar empresas</CardTitle>
+        <CardTitle>Cadastrar empresas</CardTitle>
       </CardHeader>
       <CardContent>
         {!sectors ? (
-          <p className="text-sm text-muted-foreground">Carregando os setores…</p>
+          <p className="text-dense text-muted-foreground">Carregando os setores…</p>
         ) : noSectors ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-dense text-muted-foreground">
             Nenhum setor cadastrado ainda. Peça ao administrador para criar os setores no Painel
             Admin.
           </p>
         ) : (
-          <form className="grid gap-4 md:grid-cols-[1fr_auto]" onSubmit={submit}>
+          <form className="grid gap-4" onSubmit={submit} aria-label="Cadastrar empresas">
             <div className="space-y-1.5">
               <Label htmlFor="empresas">Empresas (uma por linha)</Label>
               <Textarea
@@ -88,13 +88,13 @@ export function CompanyForm({
                 onChange={(e) => setText(e.target.value)}
               />
               {names.length > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-caption text-muted-foreground">
                   {fresh.length} nova{fresh.length === 1 ? "" : "s"}
                   {repeated > 0 && ` · ${repeated} já cadastrada${repeated === 1 ? "" : "s"}`}
                 </p>
               )}
             </div>
-            <div className="flex flex-col gap-3 md:w-64">
+            <div className="flex flex-col gap-3">
               <div className="space-y-1.5">
                 <Label>Setor</Label>
                 <IndustrySelect
@@ -118,11 +118,15 @@ export function CompanyForm({
                   value={day}
                   onChange={(e) => setDay(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-caption text-muted-foreground">
                   {formatBR(week)} a {formatBR(weekEndISO(week))}
                 </p>
               </div>
-              <Button type="submit" disabled={add.isPending || fresh.length === 0 || !sectorId}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={add.isPending || fresh.length === 0 || !sectorId}
+              >
                 Cadastrar
               </Button>
             </div>

@@ -3,6 +3,8 @@ import { useMemo } from "react";
 import { CompanyForm } from "@/components/empresas/CompanyForm";
 import { CompanyList } from "@/components/empresas/CompanyList";
 import { useConfirm } from "@/components/useConfirm";
+import { formatBR, todayISO } from "@/lib/cadencia";
+import { weekEndISO, weekStartISO } from "@/lib/empresas";
 import { useCompanies, useContacts, useSectorTemplates, useSectors } from "@/hooks/useCadencia";
 
 export const Route = createFileRoute("/_authenticated/empresas")({
@@ -29,6 +31,7 @@ function Empresas() {
   const { data: sectorTemplates } = useSectorTemplates();
   const { data: contacts } = useContacts();
   const { ask, dialog } = useConfirm();
+  const semana = weekStartISO(todayISO());
 
   const contactCount = useMemo(() => {
     const m = new Map<string, number>();
@@ -38,23 +41,30 @@ function Empresas() {
   }, [contacts]);
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Empresas</h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="space-y-6">
+      <header>
+        <p className="eyebrow">
+          Semana de {formatBR(semana)} a {formatBR(weekEndISO(semana))}
+        </p>
+        <h1 className="mt-1 text-title font-bold">Empresas</h1>
+        <p className="mt-2 max-w-3xl text-body text-muted-foreground">
           Cadastre as empresas que você prospecta na semana e escolha o setor de cada uma. Os
           contatos vinculados a uma empresa recebem a cadência de mensagens do setor em Envios de
           hoje.
         </p>
+      </header>
+      <div className="grid grid-cols-[minmax(0,1fr)_340px] items-start gap-6">
+        <CompanyList
+          companies={companies ?? []}
+          sectors={sectors ?? []}
+          sectorTemplates={sectorTemplates ?? {}}
+          contactCount={contactCount}
+          ask={ask}
+        />
+        <div className="sticky top-8">
+          <CompanyForm sectors={sectors} existing={companies ?? []} />
+        </div>
       </div>
-      <CompanyForm sectors={sectors} existing={companies ?? []} />
-      <CompanyList
-        companies={companies ?? []}
-        sectors={sectors ?? []}
-        sectorTemplates={sectorTemplates ?? {}}
-        contactCount={contactCount}
-        ask={ask}
-      />
       {dialog}
     </div>
   );
