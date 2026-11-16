@@ -3,6 +3,7 @@ import { ChannelBadge } from "@/components/StatusBadge";
 import { FunnelBadge, FunnelControl } from "@/components/Funnel";
 import { Button } from "@/components/ui/button";
 import { onlyDigits, type Contact, type StepDef } from "@/lib/cadencia";
+import { withSyncedStatus } from "@/lib/contatos";
 import { missingForMessage, type QueueItem } from "@/lib/fila";
 import { cn } from "@/lib/utils";
 import { CompanyFix } from "./CompanyFix";
@@ -150,6 +151,21 @@ export function QueueCard({
                   onClick={() => actions.openWhatsApp(contact, step)}
                 >
                   Abrir WhatsApp
+                </Button>
+              )}
+              {step.channel === "whatsapp" && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>
+                    actions.patchContact(
+                      contact,
+                      withSyncedStatus(contact, { sem_whatsapp: true }),
+                      `${contact.name} saiu das etapas de WhatsApp`,
+                    )
+                  }
+                >
+                  Sem WhatsApp
                 </Button>
               )}
               <Button size="sm" disabled={leaving} onClick={markSent}>
