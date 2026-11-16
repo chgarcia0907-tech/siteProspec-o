@@ -7,9 +7,9 @@ import { Atrasados } from "@/components/semana/Atrasados";
 import { AtsDaSemana } from "@/components/semana/AtsDaSemana";
 import { Conversao } from "@/components/semana/Conversao";
 import { EnviosHoje } from "@/components/semana/EnviosHoje";
-import { useContacts, useHolidays, useProfile, useSettings } from "@/hooks/useCadencia";
+import { useContacts, useHolidays, usePeriods, useProfile, useSettings } from "@/hooks/useCadencia";
 import { addDaysISO, DEFAULT_OFFSETS, todayISO } from "@/lib/cadencia";
-import { buildQueues, dayProgress } from "@/lib/fila";
+import { buildQueues, dayProgress, hackathonPeriodIds, splitHackathon } from "@/lib/fila";
 import { conversion, lateRows, undatedL1, weekOf } from "@/lib/inicio";
 import { inicioResumo } from "@/lib/inicio.functions";
 
@@ -40,6 +40,7 @@ function Inicio() {
   const lastWeek = weekOf(addDaysISO(week.from, -1));
   const { data: profile } = useProfile();
   const { data: contacts } = useContacts();
+  const { data: periods } = usePeriods();
   const { data: settings } = useSettings();
   const holidays = useHolidays();
   const resumoFn = useServerFn(inicioResumo);
@@ -51,11 +52,13 @@ function Inicio() {
   });
 
   const fila = useMemo(() => {
-    if (!contacts) return undefined;
-    const queues = buildQueues(contacts, settings ?? DEFAULT_OFFSETS, holidays, today);
+    if (!contacts || !periods) return undefined;
+    // Envios e atrasados ignoram o Hackathon encerrado (como em Envios de hoje).
+    const { current } = splitHackathon(contacts, hackathonPeriodIds(periods));
+    const queues = buildQueues(current, settings ?? DEFAULT_OFFSETS, holidays, today);
     return {
       queues,
-      progress: dayProgress(contacts, queues, today),
+      progress: dayProgress(current, queues, today),
       late: lateRows(queues, holidays, today),
       undated: undatedL1(queues),
       now: conversion(contacts, week),
@@ -63,7 +66,7 @@ function Inicio() {
     };
     // week e lastWeek derivam de today.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contacts, settings, holidays, today]);
+  }, [contacts, periods, settings, holidays, today]);
 
   const nome = profile?.display_name?.trim() || profile?.email?.split("@")[0] || "";
   const r = resumo.data;

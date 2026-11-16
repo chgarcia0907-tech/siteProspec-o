@@ -24,6 +24,21 @@ export function useContacts() {
   });
 }
 
+/** Períodos (leitura liberada a todo logado); a fila usa para separar o Hackathon encerrado. */
+export function usePeriods() {
+  return useQuery({
+    queryKey: ["periods-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("periods")
+        .select("id, name, status, started_at, kind")
+        .order("started_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function useSettings() {
   return useQuery({
     queryKey: ["settings"],

@@ -380,6 +380,21 @@ export function seedContacts(count) {
   );
 }
 
+/** Contato do hunter logado de um período de competição encerrado (Hackathon), com envio pendente. */
+export function hackathonContact() {
+  return ct(U1, {
+    name: "Hugo Hacka",
+    headline: "CEO na Omega",
+    company: "Omega",
+    sector: "Indústria",
+    job_title: "CEO",
+    connected_at: "2026-10-05",
+    step1_date: "2026-10-06",
+    status: "em_cadencia",
+    period_id: P0,
+  });
+}
+
 export const RPC = {
   has_role: true,
   ranking: [
