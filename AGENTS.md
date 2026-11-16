@@ -153,6 +153,14 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   `at_registrado_em` agora (pontua no dia do cadastro) e `resposta_etapa = 0` (outro canal; o painel
   não separa e-mail de ligação). Nome repetido só gera aviso: para um lead já importado, o caminho
   é "Avançar no funil" no contato existente.
+- Cards do Hackathon fora das métricas atuais: `isHackathonContact` (`fila.ts`) = contato carimbado num
+  período `competicao` **encerrado** e criado até o `closed_at` dele (quem entrou depois, mesmo carimbado
+  com o último período, é contato novo). Ficam fora de Envios de hoje (com botão para exibi-los), do
+  contador da navegação, de envios/atrasados/conversão do Início, das ATs da semana (`inicioResumo`), dos
+  Indicadores (salvo quando o filtro é a própria competição) e do placar do ciclo e da competição geral
+  (`loadCompetition`; só o período `competicao` os mantém). Na tabela Atividade, `public.ranking()` ignora só
+  os eventos posteriores ao encerramento, o histórico do Hackathon continua. Regra do TS e do SQL
+  andam juntas: ao mudar uma, revise a outra.
 - Recorte do ciclo: quando o período escolhido nos Indicadores é um ciclo, `painelDashboard` usa só
   os membros dele e corta o intervalo nas datas do ciclo (`clampToCycle` em `dashboard.ts`); outros
   períodos no filtro mostram o histórico. Atrasados também respeitam o ciclo: etapa pendente prevista

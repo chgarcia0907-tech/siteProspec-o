@@ -11,6 +11,7 @@ import {
 } from "./competition";
 import { spParts } from "./cadencia";
 import { fetchAll, type PageResult } from "./fetch-all";
+import { hackathonPeriods, splitHackathon, type PeriodInfo } from "./fila";
 
 export type CompRowG = CompRow & { grupo: string; subgrupo: string };
 export type WeekBoardG = { inicio: string; fim: string; parcial: boolean; rows: CompRowG[] };
@@ -73,7 +74,7 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
   const memberIds = members.map((m) => m.user_id);
 
   // 2) Só os contatos que podem pontuar (ver isRelevantContact); no ciclo, só dos membros.
-  const [contacts, periodOwners] = await Promise.all([
+  const [allContacts, periodOwners, allPeriods] = await Promise.all([
     ciclo && memberIds.length === 0
       ? Promise.resolve([] as CompContact[])
       : fetchAll((a, b) => {
@@ -92,7 +93,16 @@ export async function loadCompetition(periodId?: string | null): Promise<CompRes
           db.from("contacts").select("user_id").eq("period_id", periodId).order("id").range(a, b),
         )
       : Promise.resolve([] as { user_id: string }[]),
+    db.from("periods").select("id, status, kind, closed_at"),
   ]);
+  // Os cards do Hackathon encerrado ficam de fora do ciclo (que conta todos os contatos dos membros
+  // pela data de cada etapa) e da competição geral: um card avançado agora não pode pontuar nos
+  // placares atuais. Só o placar da própria competição (período `competicao`) os mantém.
+  const ownCompetition = !!periodId && period?.kind === "competicao";
+  const contacts = ownCompetition
+    ? allContacts
+    : splitHackathon(allContacts, hackathonPeriods((allPeriods.data as PeriodInfo[] | null) ?? []))
+        .current;
 
   const pname = new Map(profiles.map((h) => [h.id, h.display_name?.trim() || h.email || "Hunter"]));
   let hunters: { id: string; name: string }[];

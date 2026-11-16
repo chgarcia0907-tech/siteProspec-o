@@ -12,32 +12,44 @@ import {
 import type { SectorTemplates, TemplateText } from "./empresas";
 
 /** Período como a regra do Hackathon precisa enxergar (subconjunto de `periods`). */
-export type PeriodInfo = { id: string; status: string; kind: string };
+export type PeriodInfo = { id: string; status: string; kind: string; closed_at?: string | null };
+
+/** Período do Hackathon encerrado → quando encerrou. */
+export type HackathonPeriods = Map<string, string>;
 
 /**
- * Ids dos períodos do Hackathon já encerrados (`kind = 'competicao'`). Os contatos carimbados
- * neles ficam fora das filas de envio; um Hackathon ainda ativo não entra, para não esconder
- * o trabalho em andamento.
+ * Períodos do Hackathon já encerrados (`kind = 'competicao'` e `status = 'closed'`), com a data de
+ * encerramento. Um Hackathon ainda ativo não entra, para não esconder o trabalho em andamento.
  */
-export function hackathonPeriodIds(periods: PeriodInfo[] | undefined): Set<string> {
-  return new Set(
-    (periods ?? [])
-      .filter((p) => p.kind === "competicao" && p.status === "closed")
-      .map((p) => p.id),
-  );
+export function hackathonPeriods(periods: readonly PeriodInfo[] | undefined): HackathonPeriods {
+  const out: HackathonPeriods = new Map();
+  for (const p of periods ?? [])
+    if (p.kind === "competicao" && p.status === "closed" && p.closed_at) out.set(p.id, p.closed_at);
+  return out;
+}
+
+/**
+ * O contato é do Hackathon: carimbado num período de competição encerrado **e** criado até o
+ * encerramento. Quem foi importado depois (sem período ativo, o carimbo cai no último período)
+ * é contato novo e segue contando.
+ */
+export function isHackathonContact(
+  c: { period_id: string | null; created_at: string },
+  hackathon: HackathonPeriods,
+): boolean {
+  const closed = c.period_id ? hackathon.get(c.period_id) : undefined;
+  return !!closed && Date.parse(c.created_at) <= Date.parse(closed);
 }
 
 /** Separa os contatos do Hackathon (arquivados) dos demais. */
-export function splitHackathon(
-  contacts: Contact[],
-  hackathonIds: Set<string>,
-): { current: Contact[]; hackathon: Contact[] } {
-  const current: Contact[] = [];
-  const hackathon: Contact[] = [];
-  for (const c of contacts) {
-    (c.period_id && hackathonIds.has(c.period_id) ? hackathon : current).push(c);
-  }
-  return { current, hackathon };
+export function splitHackathon<T extends { period_id: string | null; created_at: string }>(
+  contacts: readonly T[],
+  hackathon: HackathonPeriods,
+): { current: T[]; hackathon: T[] } {
+  const current: T[] = [];
+  const archived: T[] = [];
+  for (const c of contacts) (isHackathonContact(c, hackathon) ? archived : current).push(c);
+  return { current, hackathon: archived };
 }
 
 export type QueueItem = { contact: Contact; planned: string | null; late: boolean };

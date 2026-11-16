@@ -137,7 +137,7 @@ http
         return send(res, 200, { ok: true });
       }
       if (url.pathname === "/__seed" && url.searchParams.get("hackathon")) {
-        db.contacts.push(hackathonContact());
+        db.contacts.push(hackathonContact(url.searchParams.get("hackathon") === "at"));
         return send(res, 200, { ok: true });
       }
       if (url.pathname === "/__seed") {

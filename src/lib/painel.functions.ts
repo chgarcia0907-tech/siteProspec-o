@@ -236,6 +236,7 @@ export const painelDashboard = createServerFn({ method: "POST" })
     const { fetchAll } = await import("./fetch-all");
     const { adminIds } = await import("./competition.server");
     const { computeDashboard, clampToCycle, DASH_CONTACT_COLUMNS } = await import("./dashboard");
+    const { hackathonPeriods, splitHackathon } = await import("./fila");
 
     const [
       profiles,
@@ -322,7 +323,7 @@ export const painelDashboard = createServerFn({ method: "POST" })
     const ids = hunters.map((h) => h.id);
     const filtered = !!cycle || hunters.length !== everyone.length;
 
-    const [contacts, companies, settings, holidays] = await Promise.all([
+    const [allContacts, companies, settings, holidays] = await Promise.all([
       ids.length === 0
         ? Promise.resolve([] as DashContact[])
         : fetchAll((a, b) => {
@@ -348,6 +349,12 @@ export const painelDashboard = createServerFn({ method: "POST" })
       db.from("holidays").select("date"),
     ]);
 
+    // Com um ciclo (ou sem período), os cards do Hackathon encerrado não entram nos números atuais.
+    // Escolhendo a própria competição no filtro, o histórico dela continua inteiro.
+    const contacts =
+      period?.kind === "competicao"
+        ? allContacts
+        : splitHackathon(allContacts, hackathonPeriods(allPeriods)).current;
     const sectorSteps: Record<string, number[]> = {};
     const templateCodes: TemplateCodes = { defaults: {}, sectors: {} };
     for (const t of templates.data ?? [])

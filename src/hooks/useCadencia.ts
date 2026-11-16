@@ -32,7 +32,7 @@ export function usePeriods() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("periods")
-        .select("id, name, status, started_at, kind")
+        .select("id, name, status, started_at, closed_at, kind")
         .order("started_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
