@@ -81,7 +81,8 @@ export function IndicadoresTab() {
         <p className="rounded-lg border bg-card px-4 py-2 text-dense text-muted-foreground">
           Ciclo <span className="font-semibold text-heading">{q.data.cycle.name}</span>: só os{" "}
           {q.data.cycle.members} membros do ciclo, a partir de {formatBR(q.data.cycle.start)}
-          {q.data.cycle.end ? ` até ${formatBR(q.data.cycle.end)}` : ""}.
+          {q.data.cycle.end ? ` até ${formatBR(q.data.cycle.end)}` : ""}. Pendências previstas antes
+          do início do ciclo não contam como atrasadas.
           {q.data.cycle.outside
             ? " O intervalo escolhido fica fora do ciclo, então não há números para mostrar."
             : " Para ver o histórico anterior, escolha outro período no filtro."}
