@@ -6,6 +6,7 @@ import {
   advancePatch,
   entryChannel,
   funnelIndex,
+  needsResponseKind,
   needsResponseOrigin,
   responseOriginChoices,
   responseOriginLabel,
@@ -112,6 +113,27 @@ describe("pontuação derivada do funil", () => {
     const row = r.rows[0]!;
     expect(row.pontos_funil).toBe(FUNNEL_MAX_POINTS);
     for (const f of FUNNEL) expect(row[f.countKey]).toBe(1);
+  });
+});
+
+describe("resposta positiva ou negativa", () => {
+  it("pergunta ao marcar 'respondeu' num contato que ainda não respondeu", () => {
+    expect(needsResponseKind({ status: "em_cadencia" }, { status: "respondeu" })).toBe(true);
+    expect(needsResponseKind({ status: "concluido" }, { status: "respondeu" })).toBe(true);
+  });
+
+  it("não pergunta quando o tipo vem junto, já respondeu ou é outra situação", () => {
+    expect(
+      needsResponseKind(
+        { status: "em_cadencia" },
+        { status: "respondeu", resposta_tipo: "negativa" },
+      ),
+    ).toBe(false);
+    expect(needsResponseKind({ status: "respondeu" }, { status: "respondeu" })).toBe(false);
+    expect(needsResponseKind({ status: "em_cadencia" }, { status: "aguardando" })).toBe(false);
+    expect(needsResponseKind({ status: "em_cadencia" }, { at_marcada_em: "2026-11-12" })).toBe(
+      false,
+    );
   });
 });
 

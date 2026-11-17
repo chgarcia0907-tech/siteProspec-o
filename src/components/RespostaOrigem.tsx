@@ -14,23 +14,29 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   ENTRY_CHANNEL_LABEL,
   OUTRO_CANAL,
+  RESPOSTA_TIPO_LABEL,
+  needsResponseKind,
   needsResponseOrigin,
   responseOriginChoices,
   type Contact,
+  type RespostaTipo,
 } from "@/lib/cadencia";
 
 type Pending = { contact: Contact; patch: Partial<Contact>; apply: (p: Partial<Contact>) => void };
 
 /**
- * Pergunta ao hunter qual mensagem gerou a resposta antes de gravar "respondeu" ou a AT.
+ * Pergunta ao hunter qual mensagem gerou a resposta antes de gravar "respondeu" ou a AT e, ao
+ * marcar "respondeu", se a resposta foi positiva ou negativa.
  * `guard(contato, patch, aplicar)` aplica direto quando não precisa perguntar; senão abre o
- * diálogo e só aplica (com `resposta_etapa`) depois da escolha. Cancelar não grava nada.
+ * diálogo e só aplica (com `resposta_etapa` e/ou `resposta_tipo`) depois da escolha. Cancelar
+ * não grava nada.
  */
 export function useResponseOrigin() {
   const [pending, setPending] = useState<Pending | null>(null);
   const guard = useCallback(
     (contact: Contact, patch: Partial<Contact>, apply: (p: Partial<Contact>) => void) => {
-      if (needsResponseOrigin(contact, patch)) setPending({ contact, patch, apply });
+      if (needsResponseOrigin(contact, patch) || needsResponseKind(contact, patch))
+        setPending({ contact, patch, apply });
       else apply(patch);
     },
     [],
@@ -47,53 +53,82 @@ function ResponseOriginDialog({
   onClose: () => void;
 }) {
   const [choice, setChoice] = useState("");
+  const [kind, setKind] = useState<RespostaTipo | "">("");
+  const askOrigin = !!pending && needsResponseOrigin(pending.contact, pending.patch);
+  const askKind = !!pending && needsResponseKind(pending.contact, pending.patch);
   const choices = pending ? responseOriginChoices(pending.contact) : [];
+  const reset = () => {
+    setChoice("");
+    setKind("");
+  };
   return (
     <Dialog
       open={!!pending}
       onOpenChange={(o) => {
         if (!o) onClose();
-        setChoice("");
+        reset();
       }}
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Qual mensagem gerou a resposta?</DialogTitle>
+          <DialogTitle>
+            {askOrigin ? "Qual mensagem gerou a resposta?" : "Como foi a resposta?"}
+          </DialogTitle>
           <DialogDescription>
-            {pending?.contact.name} respondeu. Escolha a mensagem que o lead respondeu: é assim que
-            o painel mostra qual canal e qual mensagem trazem mais reuniões.
+            {pending?.contact.name} respondeu.{" "}
+            {askOrigin
+              ? "Escolha a mensagem que o lead respondeu: é assim que o painel mostra qual canal e qual mensagem trazem mais reuniões."
+              : "Diga se o lead respondeu com interesse ou recusou."}
           </DialogDescription>
         </DialogHeader>
-        <RadioGroup
-          value={choice}
-          onValueChange={setChoice}
-          aria-label="Mensagem que gerou a resposta"
-        >
-          {choices.map((s, i) => (
+        {askKind && (
+          <RadioGroup
+            value={kind}
+            onValueChange={(v) => setKind(v as RespostaTipo)}
+            aria-label="Tipo de resposta"
+            className="flex gap-4"
+          >
+            {(Object.keys(RESPOSTA_TIPO_LABEL) as RespostaTipo[]).map((t) => (
+              <OriginOption key={t} id={`tipo-${t}`} value={t} label={RESPOSTA_TIPO_LABEL[t]} />
+            ))}
+          </RadioGroup>
+        )}
+        {askOrigin && (
+          <RadioGroup
+            value={choice}
+            onValueChange={setChoice}
+            aria-label="Mensagem que gerou a resposta"
+          >
+            {choices.map((s, i) => (
+              <OriginOption
+                key={s.n}
+                value={String(s.n)}
+                label={s.label}
+                note={i === 0 ? "última enviada" : undefined}
+              />
+            ))}
             <OriginOption
-              key={s.n}
-              value={String(s.n)}
-              label={s.label}
-              note={i === 0 ? "última enviada" : undefined}
+              value={String(OUTRO_CANAL)}
+              label={ENTRY_CHANNEL_LABEL.outro}
+              note="ligação, e-mail, indicação…"
             />
-          ))}
-          <OriginOption
-            value={String(OUTRO_CANAL)}
-            label={ENTRY_CHANNEL_LABEL.outro}
-            note="ligação, e-mail, indicação…"
-          />
-        </RadioGroup>
+          </RadioGroup>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
           <Button
-            disabled={!choice}
+            disabled={(askOrigin && !choice) || (askKind && !kind)}
             onClick={() => {
               if (!pending) return;
-              pending.apply({ ...pending.patch, resposta_etapa: Number(choice) });
+              pending.apply({
+                ...pending.patch,
+                ...(askOrigin ? { resposta_etapa: Number(choice) } : {}),
+                ...(askKind && kind ? { resposta_tipo: kind } : {}),
+              });
               onClose();
-              setChoice("");
+              reset();
             }}
           >
             Salvar
@@ -105,15 +140,17 @@ function ResponseOriginDialog({
 }
 
 function OriginOption({
+  id = undefined,
   value,
   label,
   note,
 }: {
+  id?: string | undefined;
   value: string;
   label: string;
   note?: string | undefined;
 }) {
-  const id = `origem-${value}`;
+  id ??= `origem-${value}`;
   return (
     <div className="flex items-center gap-2">
       <RadioGroupItem value={value} id={id} />
@@ -156,5 +193,35 @@ export function ResponseOriginSelect({
         <option value={OUTRO_CANAL}>{ENTRY_CHANNEL_LABEL.outro}</option>
       </NativeSelect>
     </label>
+  );
+}
+
+/** Troca entre resposta positiva e negativa de um contato que respondeu. */
+export function ResponseKindSelect({
+  contact,
+  onPatch,
+}: {
+  contact: Contact;
+  onPatch: (p: Partial<Contact>) => void;
+}) {
+  if (contact.status !== "respondeu") return null;
+  return (
+    <NativeSelect
+      aria-label="Tipo de resposta"
+      className="h-8 w-36"
+      value={contact.resposta_tipo ?? ""}
+      onChange={(e) => onPatch({ resposta_tipo: e.target.value as RespostaTipo })}
+    >
+      {!contact.resposta_tipo && (
+        <option value="" disabled>
+          Positiva ou negativa?
+        </option>
+      )}
+      {(Object.keys(RESPOSTA_TIPO_LABEL) as RespostaTipo[]).map((t) => (
+        <option key={t} value={t}>
+          {RESPOSTA_TIPO_LABEL[t]}
+        </option>
+      ))}
+    </NativeSelect>
   );
 }

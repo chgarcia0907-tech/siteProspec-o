@@ -18,6 +18,14 @@ import {
 /** Situações na ordem em que aparecem nos filtros e seletores. */
 export const CONTACT_STATUSES = Object.keys(STATUS_LABEL) as ContactStatus[];
 
+/**
+ * Situações que o hunter escolhe na edição do contato. "Descartado" saiu: quem recusou vira
+ * "Respondeu" com resposta negativa. Contato que já está descartado continua mostrando a situação.
+ */
+export function statusOptions(current: ContactStatus): ContactStatus[] {
+  return CONTACT_STATUSES.filter((s) => s !== "descartado" || s === current);
+}
+
 export type StatusFilter = "todos" | ContactStatus;
 
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();

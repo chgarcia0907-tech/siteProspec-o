@@ -125,6 +125,7 @@ export type Database = {
           respondeu_em: string | null;
           resposta_etapa: number | null;
           resposta_modelo: string | null;
+          resposta_tipo: string | null;
           sector: string;
           sem_whatsapp: boolean;
           sent1_at: string | null;
@@ -162,6 +163,7 @@ export type Database = {
           respondeu_em?: string | null;
           resposta_etapa?: number | null;
           resposta_modelo?: string | null;
+          resposta_tipo?: string | null;
           sector?: string;
           sem_whatsapp?: boolean;
           sent1_at?: string | null;
@@ -199,6 +201,7 @@ export type Database = {
           respondeu_em?: string | null;
           resposta_etapa?: number | null;
           resposta_modelo?: string | null;
+          resposta_tipo?: string | null;
           sector?: string;
           sem_whatsapp?: boolean;
           sent1_at?: string | null;

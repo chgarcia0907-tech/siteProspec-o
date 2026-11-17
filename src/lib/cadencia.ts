@@ -19,12 +19,13 @@ export const STEPS: StepDef[] = [
 
 /**
  * Linha de `contacts` vinda dos tipos gerados do Supabase (fonte única do esquema).
- * Só `status` e `company_gender` são estreitados para as uniões usadas no app
+ * Só `status`, `company_gender` e `resposta_tipo` são estreitados para as uniões usadas no app
  * (no banco são texto com CHECK).
  */
-export type Contact = Omit<Tables<"contacts">, "status" | "company_gender"> & {
+export type Contact = Omit<Tables<"contacts">, "status" | "company_gender" | "resposta_tipo"> & {
   status: ContactStatus;
   company_gender: CompanyGender;
+  resposta_tipo: RespostaTipo | null;
 };
 
 export type ContactStatus = "aguardando" | "em_cadencia" | "respondeu" | "concluido" | "descartado";
@@ -180,6 +181,27 @@ export function computedStatus(c: StatusInput): ContactStatus {
 export function isActive(c: Pick<Contact, "at_marcada_em" | "status">): boolean {
   if (c.at_marcada_em) return false; // AT marcada tira o contato das filas
   return c.status !== "respondeu" && c.status !== "descartado";
+}
+
+/* ------------------------ Resposta positiva ou negativa ----------------------- */
+
+/** `contacts.resposta_tipo`: o lead respondeu com interesse ou recusou. */
+export type RespostaTipo = "positiva" | "negativa";
+
+export const RESPOSTA_TIPO_LABEL: Record<RespostaTipo, string> = {
+  positiva: "Positiva",
+  negativa: "Negativa",
+};
+
+/**
+ * A mudança marca "respondeu" num contato que ainda não estava nessa situação: o hunter diz se a
+ * resposta foi positiva ou negativa (pergunta de novo se o contato voltou à cadência antes).
+ */
+export function needsResponseKind(
+  c: Pick<Contact, "status">,
+  patch: Partial<Pick<Contact, "status" | "resposta_tipo">>,
+): boolean {
+  return patch.status === "respondeu" && c.status !== "respondeu" && patch.resposta_tipo == null;
 }
 
 /* ------------------------ Mensagem que gerou a resposta ----------------------- */
