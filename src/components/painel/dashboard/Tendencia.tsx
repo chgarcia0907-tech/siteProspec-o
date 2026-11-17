@@ -1,4 +1,6 @@
 import { AlertCircle, AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
@@ -141,8 +143,12 @@ function Rate({ n, of, mature }: { n: number; of: number; mature: boolean }) {
   );
 }
 
-/** Lista do que precisa de ação hoje, mais urgente primeiro. */
+const ALERTS_SHOWN = 5;
+
+/** Lista do que precisa de ação hoje, mais urgente primeiro (os 5 primeiros; o resto abre sob demanda). */
 export function Alertas({ d }: { d: Dash }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? d.alerts : d.alerts.slice(0, ALERTS_SHOWN);
   return (
     <Section
       title={`Quem precisa de ajuda (${d.alerts.length})`}
@@ -151,26 +157,39 @@ export function Alertas({ d }: { d: Dash }) {
       {d.alerts.length === 0 ? (
         <p className="text-dense text-muted-foreground">Ninguém precisa de ajuda agora.</p>
       ) : (
-        <ul className="divide-y">
-          {d.alerts.map((a, i) => (
-            <li key={i} className="flex items-start gap-3 py-2 text-dense first:pt-0 last:pb-0">
-              <span
-                className={cn(
-                  "mt-px shrink-0 rounded-sm px-1.5 py-0.5 text-caption font-bold uppercase",
-                  a.level === "alta"
-                    ? "bg-destructive-soft text-destructive-text"
-                    : "bg-warning-soft text-warning-text",
-                )}
-              >
-                {a.level === "alta" ? "Alta" : "Média"}
-              </span>
-              <span>
-                {a.hunter && <strong className="text-heading">{a.hunter}: </strong>}
-                {a.text}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="divide-y">
+            {shown.map((a, i) => (
+              <li key={i} className="flex items-start gap-3 py-2.5 text-dense first:pt-0 last:pb-0">
+                <span
+                  className={cn(
+                    "mt-px w-14 shrink-0 rounded-sm py-0.5 text-center text-caption font-bold uppercase",
+                    a.level === "alta"
+                      ? "bg-destructive-soft text-destructive-text"
+                      : "bg-warning-soft text-warning-text",
+                  )}
+                >
+                  {a.level === "alta" ? "Alta" : "Média"}
+                </span>
+                <span>
+                  {a.hunter && <strong className="text-heading">{a.hunter}: </strong>}
+                  {a.text}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {d.alerts.length > ALERTS_SHOWN && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="mt-3 -ml-2.5"
+              aria-expanded={all}
+              onClick={() => setAll((v) => !v)}
+            >
+              {all ? "Mostrar só os mais urgentes" : `Ver todos os ${d.alerts.length}`}
+            </Button>
+          )}
+        </>
       )}
     </Section>
   );

@@ -163,6 +163,8 @@ export type HunterRow = {
   lastSend: string | null;
   /** Dias úteis desde o último envio (null = nunca enviou). */
   idleDays: number | null;
+  /** Conexões do intervalo: contatos importados do hunter (data de criação, fuso de SP). */
+  importados: number;
   started: number;
   finished: number;
   inProgress: number;
@@ -441,6 +443,7 @@ export function computeDashboard(input: DashInput): Dashboard {
         lateList: [],
         lastSend: null,
         idleDays: null,
+        importados: 0,
         started: 0,
         finished: 0,
         inProgress: 0,
@@ -635,7 +638,10 @@ export function computeDashboard(input: DashInput): Dashboard {
     }
     if (inR(resp, prev.from, prev.to)) kp.prev.respostas++;
     if (c.status === "respondeu" && !c.respondeu_em && !at) undatedResponses++;
-    if (inR(imported, from, to)) kp.cur.importados++;
+    if (inR(imported, from, to)) {
+      kp.cur.importados++;
+      r.importados++;
+    }
     if (inR(imported, prev.from, prev.to)) kp.prev.importados++;
 
     // Funil do intervalo, pela data de registro de cada etapa (mesmo critério do placar).

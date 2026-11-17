@@ -1,5 +1,6 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Info } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -78,21 +79,24 @@ export function IndicadoresTab() {
         </div>
       )}
       {q.data?.cycle && (
-        <p className="rounded-lg border bg-card px-4 py-2 text-dense text-muted-foreground">
-          Ciclo <span className="font-semibold text-heading">{q.data.cycle.name}</span>: só os{" "}
-          {q.data.cycle.members} membros do ciclo, a partir de {formatBR(q.data.cycle.start)}
-          {q.data.cycle.end ? ` até ${formatBR(q.data.cycle.end)}` : ""}. Pendências previstas antes
-          do início do ciclo não contam como atrasadas.
-          {q.data.cycle.outside
-            ? " O intervalo escolhido fica fora do ciclo, então não há números para mostrar."
-            : " Para ver o histórico anterior, escolha outro período no filtro."}
-        </p>
+        <div className="flex items-start gap-3 rounded-lg border bg-surface-inset px-4 py-3 text-dense text-muted-foreground">
+          <Info className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
+          <p>
+            Ciclo <span className="font-semibold text-heading">{q.data.cycle.name}</span>: só os{" "}
+            {q.data.cycle.members} membros do ciclo, a partir de {formatBR(q.data.cycle.start)}
+            {q.data.cycle.end ? ` até ${formatBR(q.data.cycle.end)}` : ""}. Pendências previstas
+            antes do início do ciclo não contam como atrasadas.
+            {q.data.cycle.outside
+              ? " O intervalo escolhido fica fora do ciclo, então não há números para mostrar."
+              : " Para ver o histórico anterior, escolha outro período no filtro."}
+          </p>
+        </div>
       )}
       {!d ? (
         !q.isError && (
           <div className="space-y-3" aria-busy="true">
             <p className="text-dense text-muted-foreground">Carregando indicadores…</p>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-[1.35fr_1fr_1fr_1fr] gap-4">
               {[0, 1, 2, 3].map((i) => (
                 <div key={i} className="h-28 rounded-xl border bg-card p-5">
                   <div className="h-3 w-24 rounded-sm bg-divider" />
@@ -103,7 +107,7 @@ export function IndicadoresTab() {
         )
       ) : (
         <div
-          className={cn("space-y-8 transition-opacity", q.isFetching && "opacity-60")}
+          className={cn("space-y-10 transition-opacity", q.isFetching && "opacity-60")}
           aria-busy={q.isFetching}
         >
           <section className="space-y-4" aria-labelledby="ritmo-titulo">
@@ -120,7 +124,7 @@ export function IndicadoresTab() {
             <KpisSecundarios d={d} />
           </section>
 
-          <div className="grid grid-cols-2 items-start gap-6">
+          <div className="grid grid-cols-2 items-stretch gap-6">
             <Alertas d={d} />
             <Metas d={d} data={q.data!} title={semana ? "Metas da semana" : "Metas do intervalo"} />
           </div>

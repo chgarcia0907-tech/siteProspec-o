@@ -85,6 +85,20 @@ test.describe("Indicadores", () => {
     ).toBeVisible();
   });
 
+  test("a lista de alertas mostra os 5 mais urgentes e abre o resto sob demanda", async ({
+    page,
+  }) => {
+    await page.goto("/indicadores");
+    const alertas = page.getByRole("region", { name: /^Quem precisa de ajuda/ });
+    await expect(alertas.getByRole("listitem")).toHaveCount(5);
+    await expect(alertas.getByText(/setor Varejo/)).toHaveCount(0);
+    await alertas.getByRole("button", { name: "Ver todos os 7" }).click();
+    await expect(alertas.getByRole("listitem")).toHaveCount(7);
+    await expect(alertas.getByText(/setor Varejo/)).toBeVisible();
+    await alertas.getByRole("button", { name: "Mostrar só os mais urgentes" }).click();
+    await expect(alertas.getByRole("listitem")).toHaveCount(5);
+  });
+
   test("editor de metas grava a meta da equipe e a exceção de um hunter", async ({ page }) => {
     await page.goto("/indicadores");
     await page.getByRole("button", { name: "Configurar metas" }).click();
@@ -156,5 +170,15 @@ test.describe("Indicadores", () => {
     await page.getByRole("button", { name: "Últimos 30 dias" }).click();
     await expect(page.getByRole("heading", { name: "A equipe está no ritmo?" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Metas do intervalo" })).toBeVisible();
+  });
+
+  test("a execução por hunter mostra a coluna de conexões", async ({ page }) => {
+    await page.goto("/indicadores");
+    await page.getByRole("tab", { name: "Execução por hunter", exact: true }).click();
+    const bloco = page.getByRole("region", { name: "Execução da cadência por hunter" });
+    await expect(bloco.getByRole("columnheader", { name: /Conexões/ })).toBeVisible();
+    // Um clique ordena pela coluna.
+    await bloco.getByRole("button", { name: "Conexões" }).click();
+    await expect(bloco.getByRole("button", { name: /Conexões/ })).toContainText("↓");
   });
 });

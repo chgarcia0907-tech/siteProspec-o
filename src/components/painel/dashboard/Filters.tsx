@@ -38,12 +38,12 @@ export function Filters({
   );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 rounded-xl border bg-card p-4">
       <div className="flex flex-wrap items-center gap-3">
         <div
           role="group"
           aria-label="Intervalo"
-          className="inline-flex rounded-lg border bg-card p-[3px]"
+          className="inline-flex rounded-lg border bg-surface-inset p-[3px]"
         >
           {(Object.keys(RANGE_LABEL) as RangePreset[]).map((p) => (
             <Segment
