@@ -8,6 +8,7 @@ import { dm, num, pctText, type Dash } from "./format";
 
 type SortKey =
   | "hunter"
+  | "importados"
   | "total"
   | "noPrazo"
   | "late"
@@ -19,6 +20,7 @@ type SortKey =
   | "conv";
 const SORT: Record<SortKey, (r: HunterRow) => number | string> = {
   hunter: (r) => r.hunter,
+  importados: (r) => r.importados,
   total: (r) => r.total,
   noPrazo: (r) => pct(r.onTime, r.due) ?? -1,
   late: (r) => r.late,
@@ -52,7 +54,7 @@ export function Execucao({ d }: { d: Dash }) {
       </button>
     </th>
   );
-  const cols = d.steps.length + 11;
+  const cols = d.steps.length + 12;
 
   return (
     <Section
@@ -64,6 +66,7 @@ export function Execucao({ d }: { d: Dash }) {
           <thead className="bg-surface-inset text-caption text-muted-foreground">
             <tr>
               {th("hunter", "Hunter")}
+              {th("importados", "Conexões", "Contatos importados no intervalo")}
               {d.steps.map((s) => (
                 <th key={s.n} className="p-2 text-right">
                   {s.label}
@@ -116,6 +119,9 @@ export function Execucao({ d }: { d: Dash }) {
                           {[r.grupo, r.subgrupo].filter(Boolean).join(" · ")}
                         </span>
                       )}
+                    </td>
+                    <td className="p-2 text-right font-semibold tabular-nums">
+                      {num(r.importados)}
                     </td>
                     {d.steps.map((s) => (
                       <td key={s.n} className="p-2 text-right tabular-nums">
