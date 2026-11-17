@@ -171,4 +171,14 @@ test.describe("Indicadores", () => {
     await expect(page.getByRole("heading", { name: "A equipe está no ritmo?" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Metas do intervalo" })).toBeVisible();
   });
+
+  test("a execução por hunter mostra a coluna de conexões", async ({ page }) => {
+    await page.goto("/indicadores");
+    await page.getByRole("tab", { name: "Execução por hunter", exact: true }).click();
+    const bloco = page.getByRole("region", { name: "Execução da cadência por hunter" });
+    await expect(bloco.getByRole("columnheader", { name: /Conexões/ })).toBeVisible();
+    // Um clique ordena pela coluna.
+    await bloco.getByRole("button", { name: "Conexões" }).click();
+    await expect(bloco.getByRole("button", { name: /Conexões/ })).toContainText("↓");
+  });
 });
