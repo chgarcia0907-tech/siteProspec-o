@@ -85,6 +85,20 @@ test.describe("Indicadores", () => {
     ).toBeVisible();
   });
 
+  test("a lista de alertas mostra os 5 mais urgentes e abre o resto sob demanda", async ({
+    page,
+  }) => {
+    await page.goto("/indicadores");
+    const alertas = page.getByRole("region", { name: /^Quem precisa de ajuda/ });
+    await expect(alertas.getByRole("listitem")).toHaveCount(5);
+    await expect(alertas.getByText(/setor Varejo/)).toHaveCount(0);
+    await alertas.getByRole("button", { name: "Ver todos os 7" }).click();
+    await expect(alertas.getByRole("listitem")).toHaveCount(7);
+    await expect(alertas.getByText(/setor Varejo/)).toBeVisible();
+    await alertas.getByRole("button", { name: "Mostrar só os mais urgentes" }).click();
+    await expect(alertas.getByRole("listitem")).toHaveCount(5);
+  });
+
   test("editor de metas grava a meta da equipe e a exceção de um hunter", async ({ page }) => {
     await page.goto("/indicadores");
     await page.getByRole("button", { name: "Configurar metas" }).click();
