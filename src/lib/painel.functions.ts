@@ -460,3 +460,22 @@ export const painelDeleteGoal = createServerFn({ method: "POST" })
     if (error) throw new Error("Falha ao remover a meta");
     return { ok: true as const };
   });
+
+/** Contatos de um hunter para a auditoria de conexões (todos, sem limite, só as colunas usadas). */
+export const painelAuditContacts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ hunterId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { fetchAll } = await import("./fetch-all");
+    const rows = await fetchAll((a, b) =>
+      supabaseAdmin
+        .from("contacts")
+        .select("id, name, headline, connected_at, created_at, status, sent1_at")
+        .eq("user_id", data.hunterId)
+        .order("id")
+        .range(a, b),
+    );
+    return { rows };
+  });
