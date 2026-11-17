@@ -107,7 +107,7 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
 - **Cartão de KPI**
   - Normal: `bg-card`, rótulo `text-dense text-muted-foreground`, valor `text-kpi text-heading`, comparação `text-dense` (queda em `destructive-text`, alta em `success`).
   - Em alerta: `bg-destructive-soft/50 border-destructive-border` e valor `text-destructive-text`.
-  - A métrica-guia (ATs marcadas) tem o rótulo em `text-primary`.
+  - A métrica-guia (ATs marcadas) tem o rótulo em `text-primary-text-strong`, fundo `bg-primary-soft` e valor em `text-big`. Na faixa de KPIs secundários o alerta usa só o fundo `bg-destructive-soft/50`, sem borda própria.
 - **Linha de alerta**: selo de severidade em maiúsculas ("Alta" `destructive-soft`, "Média" `warning-soft`) + frase com o nome em `text-heading`.
 - **Indicador de meta**: barra de 6 px (`bg-divider` + preenchimento) + "realizado / meta" + palavra.
   - Na meta: `success`.
@@ -146,9 +146,9 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
     - Cartão atrasado: `border-destructive-border`.
   - Rodapé: "Mostrando X de Y" + "Mostrar mais 50".
 - **Indicadores**
-  1. Filtros (segmentado de intervalo + datas + selects).
-  2. "A equipe está no ritmo desta semana?": 4 KPIs grandes (ATs marcadas, Mensagens enviadas, Conversão LinkedIn 1 → AT, Envios atrasados) + faixa de 6 KPIs secundários.
-  3. Duas colunas: "Quem precisa de ajuda" (alertas) e "Metas da semana".
+  1. Filtros (segmentado de intervalo + datas + selects, juntos num cartão).
+  2. "A equipe está no ritmo desta semana?": 4 KPIs grandes (ATs marcadas, a métrica-guia, em `bg-primary-soft` e `text-big`, mais larga; Mensagens enviadas, Conversão LinkedIn 1 → AT, Envios atrasados) + uma faixa única de 6 KPIs secundários (um cartão com divisórias, célula em alerta em `bg-destructive-soft/50`).
+  3. Duas colunas de mesma altura: "Quem precisa de ajuda" (5 alertas mais urgentes, "Ver todos" abre o resto; selo de severidade de largura fixa) e "Metas da semana" (a regra das metas vai em nota no rodapé).
   4. "Detalhamento" em abas internas: Execução por hunter, Envios por dia, Ritmo, Funil, Origem, Conversão, Tendência, Abastecimento.
 - **Contatos**: 9 colunas.
   - Colunas: ☐, Contato (nome + cargo), Empresa (+ "texto livre" ou setor), Área, Telefone, Cadência, Próximo envio, Situação, menu de ações.

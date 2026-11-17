@@ -170,6 +170,11 @@ describe("indicadores", () => {
     expect(d.kpis.parados).toBe(1);
   });
 
+  it("conta as conexões (contatos importados no intervalo) de cada hunter", () => {
+    expect(h1.importados).toBe(1);
+    expect(d.hunters.reduce((n, h) => n + h.importados, 0)).toBe(d.kpis.importados.value);
+  });
+
   it("mostra a execução da cadência por hunter", () => {
     expect(h1.sent).toEqual([1, 1, 0, 0, 0]);
     expect(h1.total).toBe(2);

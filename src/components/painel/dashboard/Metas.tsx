@@ -38,13 +38,6 @@ export function Metas({ d, data, title = "Metas" }: { d: Dash; data: DashData; t
           Configurar metas
         </Button>
       }
-      hint={
-        hasGoals
-          ? `Metas diárias e semanais convertidas para ${g.elapsedDays} dias úteis do intervalo${
-              g.partial ? " (até hoje, intervalo em andamento)" : ""
-            }. Na meta = 100% ou mais; perto = 70% ou mais (no prazo: até 10 pontos abaixo).`
-          : undefined
-      }
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
         {hasGoals &&
@@ -92,6 +85,13 @@ export function Metas({ d, data, title = "Metas" }: { d: Dash; data: DashData; t
           </table>
         </div>
       )}
+      {hasGoals && g.elapsedDays > 0 && (
+        <p className="mt-3 text-caption text-subtle-foreground">
+          Metas diárias e semanais convertidas para {g.elapsedDays} dias úteis do intervalo
+          {g.partial ? " (até hoje, intervalo em andamento)" : ""}. Na meta = 100% ou mais; perto =
+          70% ou mais (no prazo: até 10 pontos abaixo).
+        </p>
+      )}
       {editing && <GoalsDialog data={data} onClose={() => setEditing(false)} />}
     </Section>
   );
@@ -100,7 +100,7 @@ export function Metas({ d, data, title = "Metas" }: { d: Dash; data: DashData; t
 function GoalRow({ name, goals, strong }: { name: string; goals: GoalSet; strong?: boolean }) {
   return (
     <tr className={cn("border-t", strong && "bg-surface-inset font-semibold text-heading")}>
-      <td className="p-2">{name}</td>
+      <td className="p-2 whitespace-nowrap">{name}</td>
       {METRICS.map((m) => (
         <td key={m.key} className="p-2">
           <Progress p={goals[m.key]} unit={m.unit} />

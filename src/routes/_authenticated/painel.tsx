@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminGate } from "@/components/painel/AdminGate";
+import { AuditoriaTab } from "@/components/painel/AuditoriaTab";
 import { BuscaTab } from "@/components/painel/BuscaTab";
 import { CompTab } from "@/components/painel/CompTab";
 import { useConfirm } from "@/components/useConfirm";
@@ -8,7 +9,7 @@ import { HuntersTab } from "@/components/painel/HuntersTab";
 import { PeriodosTab } from "@/components/painel/periodos/PeriodosTab";
 import { SetoresTab } from "@/components/painel/setores/SetoresTab";
 
-const ABAS = ["hunters", "periodos", "setores", "competicao", "busca"] as const;
+const ABAS = ["hunters", "periodos", "setores", "competicao", "busca", "auditoria"] as const;
 type Aba = (typeof ABAS)[number];
 const isAba = (v: unknown): v is Aba => ABAS.includes(v as Aba);
 const ABA_LABEL: Record<Aba, string> = {
@@ -17,6 +18,7 @@ const ABA_LABEL: Record<Aba, string> = {
   setores: "Setores e cadências",
   competicao: "Competição",
   busca: "Busca geral",
+  auditoria: "Auditoria de conexões",
 };
 
 export const Route = createFileRoute("/_authenticated/painel")({
@@ -94,6 +96,9 @@ function PainelAdmin() {
         </TabsContent>
         <TabsContent value="busca">
           <BuscaTab ask={ask} />
+        </TabsContent>
+        <TabsContent value="auditoria">
+          <AuditoriaTab />
         </TabsContent>
       </Tabs>
       {dialog}

@@ -173,3 +173,8 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   também mostra só os membros e só desde o início do ciclo (`activeCycleScope`/`clampStart`/`onlyCycleMembers` em `ranking.ts`);
   "Todos os hunters" mostra o histórico completo. O início de um período ativo pode ser ajustado no
   painel (`setPeriodStart`), sem apagar dados.
+- Auditoria de conexões (`/painel?aba=auditoria`): o admin cola as conexões do LinkedIn de um
+  hunter e compara com os contatos dele (`painelAuditContacts`, has_role antes do service role).
+  O parser é o mesmo da importação (`parseLinkedInConnections`); a comparação é pura em
+  `src/lib/auditoria.ts`: casa por nome+headline, depois só nome (headline mudou) e por fim
+  primeiro+último nome (nome editado), sem reutilizar um contato. Não grava nada no banco.

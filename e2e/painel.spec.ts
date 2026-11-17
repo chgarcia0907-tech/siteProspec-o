@@ -72,4 +72,53 @@ test.describe("Painel do administrador", () => {
     await expect(risco.getByRole("button", { name: "Excluir hunter" })).toBeDisabled();
     await expect(risco).toContainText("transfira ou exclua os 68 contatos dele antes");
   });
+  test("auditoria de conexões mostra o que o hunter não importou", async ({ page }) => {
+    const colado = [
+      ["Ana Souza", "Diretora de Operações na Alfa", "3 de novembro de 2026"],
+      ["Bruno Lima", "CTO na Beta", "2 de novembro de 2026"],
+      ["Carla Maria Dias", "Gerente de TI", "10 de novembro de 2026"],
+      ["Nova Pessoa", "Sócia na Ômega", "10 de novembro de 2026"],
+      ["Velha Conhecida", "Analista", "1 de setembro de 2026"],
+    ]
+      .flatMap(([nome, headline, data]) => [
+        `Foto do perfil de ${nome}`,
+        nome!,
+        headline!,
+        `Conexão feita em ${data}`,
+      ])
+      .join("\n");
+    await page.goto("/painel?aba=auditoria");
+    await page
+      .getByLabel("Hunter", { exact: true })
+      .selectOption({ label: "Hunter Um (8 contatos)" });
+    await page.getByLabel("Texto copiado da página de conexões do LinkedIn").fill(colado);
+
+    await expect(page.getByRole("group", { name: "Conexões coladas" })).toContainText("5");
+    await expect(page.getByRole("group", { name: "Importadas", exact: true })).toContainText("3");
+    await expect(page.getByRole("group", { name: "Não importadas" })).toContainText(
+      "a mais antiga é de 01/09/2026",
+    );
+    await expect(
+      page.getByText("1 conexão dos últimos 30 dias ainda não foi importada por Hunter Um"),
+    ).toBeVisible();
+
+    // A lista abre nas não importadas, a mais recente primeiro.
+    const linhas = page.locator("main tbody").last().locator("tr");
+    await expect(linhas).toHaveCount(2);
+    await expect(linhas.nth(0)).toContainText("Nova Pessoa");
+    await expect(linhas.nth(1)).toContainText("Velha Conhecida");
+
+    // Headline mudada e nome editado ainda contam como importados.
+    await page.getByRole("button", { name: "Importadas (3)" }).click();
+    await expect(page.getByRole("row", { name: /Bruno Lima/ })).toContainText("headline mudou");
+    await expect(page.getByRole("row", { name: /Carla Maria Dias/ })).toContainText(
+      "nome parecido: cadastrada como “Carla Dias”",
+    );
+
+    await page.getByRole("button", { name: "Copiar lista de não importadas" }).click();
+    const copiado = await page.evaluate(() => navigator.clipboard.readText());
+    expect(copiado).toContain("Hunter Um (2):");
+    expect(copiado).toContain("- Nova Pessoa (conexão em 10/11/2026)");
+    expect(await mutations()).toEqual([]);
+  });
 });

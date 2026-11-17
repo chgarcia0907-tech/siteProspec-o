@@ -12,7 +12,7 @@ export function KpisPrincipais({ d }: { d: Dash }) {
   const conv = pct(k.ats.value, k.l1.value);
   const convPrev = pct(k.ats.prev ?? 0, k.l1.prev ?? 0);
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-[1.35fr_1fr_1fr_1fr] gap-4">
       <Tile label="ATs marcadas" kpi={k.ats} guide />
       <Tile label="Mensagens enviadas" kpi={k.envios} />
       <Tile
@@ -29,7 +29,7 @@ export function KpisPrincipais({ d }: { d: Dash }) {
 export function KpisSecundarios({ d }: { d: Dash }) {
   const k = d.kpis;
   return (
-    <div className="grid grid-cols-6 gap-3">
+    <div className="grid grid-cols-6 divide-x divide-border overflow-hidden rounded-xl border bg-card">
       <Tile small label="Respostas" kpi={k.respostas} />
       <Tile small label="LinkedIn" kpi={k.linkedin} />
       <Tile small label="WhatsApp" kpi={k.whatsapp} />
@@ -80,15 +80,16 @@ function Tile({
       role="group"
       aria-label={label}
       className={cn(
-        "rounded-xl border bg-card",
-        small ? "p-3" : "p-5",
-        alert && "border-destructive-border bg-destructive-soft/50",
+        small ? "px-4 py-3.5" : "rounded-xl border bg-card p-5",
+        guide && "border-primary/35 bg-primary-soft",
+        alert &&
+          (small ? "bg-destructive-soft/50" : "border-destructive-border bg-destructive-soft/50"),
       )}
     >
       <p
         className={cn(
           small ? "text-caption" : "text-dense",
-          guide ? "font-semibold text-primary" : "text-muted-foreground",
+          guide ? "font-semibold text-primary-text-strong" : "text-muted-foreground",
         )}
       >
         {label}
@@ -96,7 +97,7 @@ function Tile({
       <p
         className={cn(
           "font-display font-bold tabular-nums",
-          small ? "mt-1 text-section" : "mt-2 text-kpi",
+          small ? "mt-1 text-section" : guide ? "mt-3 text-big" : "mt-3 text-kpi",
           alert ? "text-destructive-text" : "text-heading",
         )}
       >
