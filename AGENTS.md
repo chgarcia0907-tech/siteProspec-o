@@ -127,6 +127,11 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   (descartar depois mantém a data; voltar para uma situação de cadência apaga). O painel usa
   `responseDate` (`dashboard.ts`): essa data, senão o registro da AT. Respostas marcadas antes da
   coluna existir ficam sem data e fora das contagens por período.
+- Resposta positiva ou negativa: ao marcar "respondeu", o mesmo diálogo da mensagem de origem pede
+  `contacts.resposta_tipo` (`positiva`/`negativa`; `needsResponseKind` em `cadencia.ts`), e a edição
+  do contato permite trocar depois. "Descartado" saiu das opções de situação da edição
+  (`statusOptions` em `contatos.ts`): recusa vira resposta negativa. A ação em massa "Marcar como
+  descartado" e o filtro continuam.
 - Mensagem que gerou a resposta: ao marcar "respondeu" ou a AT (`needsResponseOrigin` em
   `cadencia.ts`), o hunter escolhe a etapa (`contacts.resposta_etapa`, 1–5; 0 = outro canal) num
   diálogo obrigatório (`useResponseOrigin`, `src/components/RespostaOrigem.tsx`) e pode trocá-la
