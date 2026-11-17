@@ -41,7 +41,7 @@ export function Execucao({ d }: { d: Dash }) {
     return sort.desc ? -c : c;
   });
   const th = (key: SortKey, label: string, title?: string) => (
-    <th className="p-2 text-right first:text-left">
+    <th className="p-2 text-right first:sticky first:left-0 first:min-w-40 first:bg-surface-inset first:text-left">
       <button
         className="inline-flex items-center gap-0.5 hover:text-heading"
         title={title}
@@ -98,7 +98,7 @@ export function Execucao({ d }: { d: Dash }) {
               return (
                 <Fragment key={r.hunter_id}>
                   <tr className="border-t">
-                    <td className="p-2">
+                    <td className="sticky left-0 min-w-40 bg-card p-2 whitespace-nowrap">
                       <button
                         className="flex items-center gap-1 text-left font-medium"
                         aria-expanded={expanded}
