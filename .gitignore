@@ -38,3 +38,6 @@ dist-ssr
 test-results/
 playwright-report/
 .taste-skill/
+
+# Cache local do Supabase CLI
+supabase/.temp/
