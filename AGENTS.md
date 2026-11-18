@@ -183,3 +183,14 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   O parser é o mesmo da importação (`parseLinkedInConnections`); a comparação é pura em
   `src/lib/auditoria.ts`: casa por nome+headline, depois só nome (headline mudou) e por fim
   primeiro+último nome (nome editado), sem reutilizar um contato. Não grava nada no banco.
+- Registro de ATs (substitui a planilha "Registro de ATs - NTec"): `ats` tem uma linha por AT e
+  `at_eventos` é o log só de inserção (marcada, remarcada, no_show, realizada, cancelada,
+  etapa_pipedrive). `ats.status`, `agendada_atual` e `pipedrive_stage_id` são resumo mantido pelo
+  trigger `at_eventos_apply` (evento mais recente por `ocorrido_em`, então eventos fora de ordem não
+  estragam o resumo); `resumoAt` (`src/lib/ats.ts`) faz a mesma conta em TS: ao mudar uma, revise a
+  outra. Remarcações saem da contagem de eventos, nunca de um contador gravado. Fonte da verdade: a
+  plataforma manda nos dados da prospecção (o hunter dono edita); o Pipedrive manda no status
+  quando a AT tem `pipedrive_deal_id` (o app só registra eventos de AT sem card). Todos os logados
+  leem todas as ATs. `time_comercial` substitui a aba "Time" (login ↔ usuário e opção "Hunter" no
+  Pipedrive). Leitura das fichas do WhatsApp em `lerFicha` (mesmo formato da skill criar-card): na
+  dúvida, o campo fica em branco e o formulário pede. Ainda não entra na competição.
