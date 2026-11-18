@@ -194,3 +194,9 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   leem todas as ATs. `time_comercial` substitui a aba "Time" (login ↔ usuário e opção "Hunter" no
   Pipedrive). Leitura das fichas do WhatsApp em `lerFicha` (mesmo formato da skill criar-card): na
   dúvida, o campo fica em branco e o formulário pede. Ainda não entra na competição.
+- Carga da planilha de ATs (uma vez, na transição): `bun run db:carga-ats --ats ATs.csv --historico
+  Historico.csv --time Time.csv` mostra o plano e os avisos; com `--gravar` (e `SUPABASE_URL` +
+  `SUPABASE_SERVICE_ROLE_KEY`) grava `time_comercial`, `ats` (origem `planilha`) e o log. A lógica é
+  pura em `src/lib/cargaAts.ts` (`planoDeCarga`): completa no log o que a linha da aba ATs tem e o
+  Histórico não, confere com `resumoAt` e avisa em vez de adivinhar. Rodar de novo não duplica: AT
+  com o mesmo card fica como está.
