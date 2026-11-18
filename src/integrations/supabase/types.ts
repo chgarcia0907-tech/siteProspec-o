@@ -686,7 +686,7 @@ export type Database = {
           evento: string | null;
           id: number;
           objeto_id: number | null;
-          payload: NonNullable<Json>;
+          payload: Json;
           processado_em: string | null;
           recebido_em: string;
         };
@@ -695,7 +695,7 @@ export type Database = {
           evento?: string | null;
           id?: number;
           objeto_id?: number | null;
-          payload: NonNullable<Json>;
+          payload: Json;
           processado_em?: string | null;
           recebido_em?: string;
         };
@@ -704,7 +704,7 @@ export type Database = {
           evento?: string | null;
           id?: number;
           objeto_id?: number | null;
-          payload?: NonNullable<Json>;
+          payload?: Json;
           processado_em?: string | null;
           recebido_em?: string;
         };
