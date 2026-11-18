@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import {
   Building2,
+  CalendarCheck,
   ChartColumn,
   FileText,
   House,
@@ -39,6 +40,7 @@ export function AppSidebar({
         { to: "/hoje", label: "Envios de hoje", icon: Send, count: pendingToday },
         { to: "/empresas", label: "Empresas", icon: Building2 },
         { to: "/contatos", label: "Contatos", icon: Users },
+        { to: "/ats", label: "ATs", icon: CalendarCheck },
         { to: "/importar", label: "Importar conexões", icon: Upload },
       ],
     },

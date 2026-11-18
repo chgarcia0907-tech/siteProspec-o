@@ -36,6 +36,8 @@ const SHOTS: Shot[] = [
   { name: "02-hoje", path: "/hoje", seed: 60 },
   { name: "03-contatos", path: "/contatos", seed: 60 },
   { name: "04-empresas", path: "/empresas" },
+  { name: "16-ats", path: "/ats" },
+  { name: "16-ats-detalhe", path: "/ats", click: /^Abrir a AT de Alfa$/ },
   { name: "05-importar", path: "/importar" },
   { name: "05-importar-previa", path: "/importar", paste: COLADO },
   { name: "06-modelos", path: "/modelos" },
