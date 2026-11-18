@@ -479,6 +479,7 @@ const AT_SIGMA = "15151515-0000-4000-8000-000000000003";
 function at(o) {
   return {
     tipo: "diagnostico",
+    mensagem_ficha: null,
     contact_id: null,
     resposta_etapa: null,
     resposta_modelo: null,

@@ -23,6 +23,7 @@ import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedModelosRouteImport } from './routes/_authenticated/modelos'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
+import { Route as ApiPublicAtsRouteImport } from './routes/api/public/ats'
 import { Route as ApiPublicExportSheetRouteImport } from './routes/api/public/export-sheet'
 import { Route as ApiPublicPipedriveSincronizarRouteImport } from './routes/api/public/pipedrive/sincronizar'
 import { Route as ApiPublicPipedriveWebhookRouteImport } from './routes/api/public/pipedrive/webhook'
@@ -100,6 +101,11 @@ const AuthenticatedRankingRoute = AuthenticatedRankingRouteImport.update({
   path: '/ranking',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicAtsRoute = ApiPublicAtsRouteImport.update({
+  id: '/api/public/ats',
+  path: '/api/public/ats',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicExportSheetRoute = ApiPublicExportSheetRouteImport.update({
   id: '/api/public/export-sheet',
   path: '/api/public/export-sheet',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/modelos': typeof AuthenticatedModelosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/api/public/ats': typeof ApiPublicAtsRoute
   '/api/public/export-sheet': typeof ApiPublicExportSheetRoute
   '/api/public/pipedrive/sincronizar': typeof ApiPublicPipedriveSincronizarRoute
   '/api/public/pipedrive/webhook': typeof ApiPublicPipedriveWebhookRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/modelos': typeof AuthenticatedModelosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/api/public/ats': typeof ApiPublicAtsRoute
   '/api/public/export-sheet': typeof ApiPublicExportSheetRoute
   '/api/public/pipedrive/sincronizar': typeof ApiPublicPipedriveSincronizarRoute
   '/api/public/pipedrive/webhook': typeof ApiPublicPipedriveWebhookRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated/modelos': typeof AuthenticatedModelosRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
+  '/api/public/ats': typeof ApiPublicAtsRoute
   '/api/public/export-sheet': typeof ApiPublicExportSheetRoute
   '/api/public/pipedrive/sincronizar': typeof ApiPublicPipedriveSincronizarRoute
   '/api/public/pipedrive/webhook': typeof ApiPublicPipedriveWebhookRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/modelos'
     | '/painel'
     | '/ranking'
+    | '/api/public/ats'
     | '/api/public/export-sheet'
     | '/api/public/pipedrive/sincronizar'
     | '/api/public/pipedrive/webhook'
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/modelos'
     | '/painel'
     | '/ranking'
+    | '/api/public/ats'
     | '/api/public/export-sheet'
     | '/api/public/pipedrive/sincronizar'
     | '/api/public/pipedrive/webhook'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/_authenticated/modelos'
     | '/_authenticated/painel'
     | '/_authenticated/ranking'
+    | '/api/public/ats'
     | '/api/public/export-sheet'
     | '/api/public/pipedrive/sincronizar'
     | '/api/public/pipedrive/webhook'
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicAtsRoute: typeof ApiPublicAtsRoute
   ApiPublicExportSheetRoute: typeof ApiPublicExportSheetRoute
   ApiPublicPipedriveSincronizarRoute: typeof ApiPublicPipedriveSincronizarRoute
   ApiPublicPipedriveWebhookRoute: typeof ApiPublicPipedriveWebhookRoute
@@ -367,6 +380,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRankingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/ats': {
+      id: '/api/public/ats'
+      path: '/api/public/ats'
+      fullPath: '/api/public/ats'
+      preLoaderRoute: typeof ApiPublicAtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/export-sheet': {
       id: '/api/public/export-sheet'
       path: '/api/public/export-sheet'
@@ -440,6 +460,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicAtsRoute: ApiPublicAtsRoute,
   ApiPublicExportSheetRoute: ApiPublicExportSheetRoute,
   ApiPublicPipedriveSincronizarRoute: ApiPublicPipedriveSincronizarRoute,
   ApiPublicPipedriveWebhookRoute: ApiPublicPipedriveWebhookRoute,

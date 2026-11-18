@@ -46,6 +46,7 @@ export default defineConfig({
         PIPEDRIVE_WEBHOOK_USER: "pipedrive",
         PIPEDRIVE_WEBHOOK_PASSWORD: "e2e-webhook",
         CRON_SECRET: "e2e-cron",
+        ATS_INGEST_TOKEN: "e2e-skill",
       },
     },
   ],

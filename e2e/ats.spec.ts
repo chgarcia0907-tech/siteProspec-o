@@ -95,6 +95,7 @@ test.describe("ATs", () => {
       resposta_etapa: null,
       resposta_modelo: null,
       canal: "WhatsApp",
+      mensagem_ficha: "respondeu ao WhatsApp 1",
       empresa: "Beta",
       prospect: "Bruno Lima",
       cargo: "CTO",
