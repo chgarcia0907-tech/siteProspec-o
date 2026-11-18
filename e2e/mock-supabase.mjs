@@ -7,6 +7,7 @@
 // papel de admin).
 import http from "node:http";
 import {
+  PIPEDRIVE,
   RPC,
   SERVICE_KEY,
   U1,
@@ -151,6 +152,16 @@ http
       if (url.pathname === "/__seed") {
         db.contacts.push(...seedContacts(Number(url.searchParams.get("n") ?? 60)));
         return send(res, 200, { ok: true });
+      }
+      // Pipedrive simulado (API v2): card e tasks por id do card.
+      const pdDeal = /^\/pipedrive\/deals\/(\d+)$/.exec(url.pathname);
+      if (pdDeal) {
+        const deal = PIPEDRIVE.deals[pdDeal[1]];
+        return deal ? send(res, 200, { success: true, data: deal }) : send(res, 404, {});
+      }
+      if (url.pathname === "/pipedrive/activities") {
+        const acts = PIPEDRIVE.activities[url.searchParams.get("deal_id") ?? ""] ?? [];
+        return send(res, 200, { success: true, data: acts });
       }
       if (url.pathname === "/auth/v1/user") return send(res, 200, USER);
       if (url.pathname.startsWith("/auth/v1/")) return send(res, 200, {});

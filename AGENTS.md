@@ -56,7 +56,8 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   e as server functions derivam dele.
 - SQL que depende de uma versão do app já publicada (ex.: texto de modelos com tags novas)
   vai para `pendente-pos-publicacao/` e só roda depois do deploy.
-- Segredos de servidor (`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `SHEET_EXPORT_TOKEN`)
+- Segredos de servidor (`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `SHEET_EXPORT_TOKEN`,
+  `PIPEDRIVE_API_TOKEN`, `PIPEDRIVE_WEBHOOK_USER`, `PIPEDRIVE_WEBHOOK_PASSWORD`, `CRON_SECRET`)
   ficam nas variáveis de ambiente da Vercel, nunca no repositório.
 
 ## Organização do código
@@ -206,3 +207,17 @@ Historico.csv --time Time.csv` mostra o plano e os avisos; com `--gravar` (e `SU
   formulário e o contato do hunter é ligado pelo nome e empresa. Remarcar, no-show, realizada e
   cancelar só aparecem em AT sem card para o dono ou o admin (mesma regra da política do banco). Nos
   testes de ponta a ponta, `semAdmin()` (`e2e/helpers.ts`) tira o papel de admin do hunter logado.
+- Integração com o Pipedrive (status das ATs com card): regra pura em `src/lib/pipedrive.ts`
+  (`eventosDoPipedrive`), que olha o card (etapa, ganho/perdido) e a task "AT - 16h30 @hunter" (data,
+  hora do assunto e o campo nativo "Resultado"/outcome) e devolve os eventos que faltam no log, cada um
+  com `pipedrive_ref` único. Prioridade do desfecho: Resultado da task (Concluído → realizada, Não
+  compareceu → no_show, Cancelado → cancelada); depois card em etapa posterior à AT (31, 33–36) →
+  realizada; depois card perdido na etapa 108 → cancelada. Task aberta com outra data/hora →
+  remarcada (reabre AT com no-show). Na dúvida (task concluída sem resultado, card ainda na 108), nada
+  muda. Servidor em `src/lib/pipedrive.server.ts` (API v2 com `PIPEDRIVE_API_TOKEN`): o webhook
+  `/api/public/pipedrive/webhook` (basic auth `PIPEDRIVE_WEBHOOK_USER`/`PASSWORD`) guarda o payload em
+  `pipedrive_webhook_log` e sincroniza o card citado; `/api/public/pipedrive/sincronizar` (cron diário da
+  Vercel, `Authorization: Bearer CRON_SECRET`, configurado no `nitro()` do `vite.config.ts`, porque
+  com a Build Output API o `vercel.json` não vale) reconcilia as ATs com card agendadas ou dos últimos
+  30 dias. Nos testes de ponta a ponta, `PIPEDRIVE_API_URL` aponta para o Pipedrive simulado em
+  `e2e/mock-supabase.mjs` (dados em `PIPEDRIVE`, `e2e/fixtures.mjs`).
