@@ -3,7 +3,7 @@
 // as duas buscam o estado atual pela API v2 e gravam o que `eventosDoPipedrive` devolver.
 // Segredos (variáveis da Vercel): PIPEDRIVE_API_TOKEN, PIPEDRIVE_WEBHOOK_USER,
 // PIPEDRIVE_WEBHOOK_PASSWORD e CRON_SECRET.
-import { timingSafeEqual } from "crypto";
+import { verificarBasic, verificarBearer } from "./segredos.server";
 import {
   dealDoWebhook,
   eventosDoPipedrive,
@@ -30,29 +30,12 @@ async function pd<T>(path: string): Promise<T> {
   return body.data;
 }
 
-const iguais = (a: string, b: string) => {
-  const x = Buffer.from(a);
-  const y = Buffer.from(b);
-  return x.length === y.length && timingSafeEqual(x, y);
-};
-
 /** Basic auth configurado no webhook do Pipedrive ("HTTP auth" ao criar o webhook). */
-export function webhookAutorizado(request: Request): boolean {
-  const user = process.env["PIPEDRIVE_WEBHOOK_USER"] ?? "";
-  const pass = process.env["PIPEDRIVE_WEBHOOK_PASSWORD"] ?? "";
-  if (!user || !pass) return false;
-  const m = /^Basic\s+(.+)$/i.exec(request.headers.get("authorization") ?? "");
-  if (!m) return false;
-  const dado = Buffer.from(m[1]!, "base64").toString("utf8");
-  return iguais(dado, `${user}:${pass}`);
-}
+export const verificarWebhook = (request: Request) =>
+  verificarBasic(request, "PIPEDRIVE_WEBHOOK_USER", "PIPEDRIVE_WEBHOOK_PASSWORD");
 
 /** Cron da Vercel: `Authorization: Bearer <CRON_SECRET>`. */
-export function cronAutorizado(request: Request): boolean {
-  const segredo = process.env["CRON_SECRET"] ?? "";
-  if (!segredo) return false;
-  return iguais(request.headers.get("authorization") ?? "", `Bearer ${segredo}`);
-}
+export const verificarCron = (request: Request) => verificarBearer(request, "CRON_SECRET");
 
 export type ResultadoSync = {
   deal: number;

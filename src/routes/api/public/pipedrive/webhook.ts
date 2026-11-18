@@ -7,7 +7,11 @@ export const Route = createFileRoute("/api/public/pipedrive/webhook")({
     handlers: {
       POST: async ({ request }) => {
         const m = await import("@/lib/pipedrive.server");
-        if (!m.webhookAutorizado(request)) return new Response("Unauthorized", { status: 401 });
+        const v = m.verificarWebhook(request);
+        if (v !== "ok") {
+          const { respostaRecusa } = await import("@/lib/segredos.server");
+          return respostaRecusa(v, "PIPEDRIVE_WEBHOOK_USER e PIPEDRIVE_WEBHOOK_PASSWORD");
+        }
         let body: unknown = null;
         try {
           body = await request.json();
