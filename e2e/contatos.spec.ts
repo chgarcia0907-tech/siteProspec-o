@@ -96,7 +96,9 @@ test.describe("Contatos", () => {
     expect(JSON.parse(m!.body)).toEqual({ status: "descartado" });
   });
 
-  test("marcar 'respondeu' pergunta qual mensagem gerou a resposta", async ({ page }) => {
+  test("marcar 'respondeu' pergunta a mensagem e se a resposta foi positiva ou negativa", async ({
+    page,
+  }) => {
     await page.goto("/contatos");
     await page.getByRole("button", { name: "Editar Bruno Lima" }).click();
     const editor = page.getByRole("dialog", { name: "Bruno Lima" });
@@ -112,10 +114,29 @@ test.describe("Contatos", () => {
     expect(await mutations()).toEqual([]);
     await responder();
     await origem.getByLabel(/Outro canal/).check();
-    await origem.getByRole("button", { name: "Salvar" }).click();
+    // Sem dizer se foi positiva ou negativa, não salva.
+    const salvar = origem.getByRole("button", { name: "Salvar" });
+    await expect(salvar).toBeDisabled();
+    await origem.getByLabel("Negativa").check();
+    await salvar.click();
     await expect.poll(async () => (await mutations()).length).toBe(1);
     const [m] = await mutations();
-    expect(JSON.parse(m!.body)).toEqual({ status: "respondeu", resposta_etapa: 0 });
+    expect(JSON.parse(m!.body)).toEqual({
+      status: "respondeu",
+      resposta_etapa: 0,
+      resposta_tipo: "negativa",
+    });
+  });
+
+  test("a situação do contato não oferece 'descartado'", async ({ page }) => {
+    await page.goto("/contatos");
+    await page.getByRole("button", { name: "Editar Bruno Lima" }).click();
+    await page
+      .getByRole("dialog", { name: "Bruno Lima" })
+      .getByRole("combobox", { name: "Situação" })
+      .click();
+    await expect(page.getByRole("option", { name: "Respondeu" })).toBeVisible();
+    await expect(page.getByRole("option", { name: "Descartado" })).toHaveCount(0);
   });
 
   test("desfazer uma etapa do funil pede confirmação", async ({ page }) => {

@@ -3,6 +3,7 @@ import { CompanyGenderToggle } from "@/components/CompanyGender";
 import { CompanySelect } from "@/components/CompanySelect";
 import { FunnelBadge, FunnelControl } from "@/components/Funnel";
 import { InlineInput } from "@/components/InlineInput";
+import { ResponseKindSelect } from "@/components/RespostaOrigem";
 import { SectorSelect } from "@/components/SectorSelect";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ import {
   type Holidays,
   type Offsets,
 } from "@/lib/cadencia";
-import { CONTACT_STATUSES } from "@/lib/contatos";
+import { statusOptions } from "@/lib/contatos";
 import type { Company } from "@/lib/empresas";
 import { cn } from "@/lib/utils";
 
@@ -233,7 +234,7 @@ export function ContactEditDialog({
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {CONTACT_STATUSES.map((s) => (
+                  {statusOptions(status).map((s) => (
                     <SelectItem key={s} value={s}>
                       {STATUS_LABEL[s]}
                     </SelectItem>
@@ -241,6 +242,7 @@ export function ContactEditDialog({
                 </SelectContent>
               </Select>
             )}
+            {funnelIndex(c) < 0 && <ResponseKindSelect contact={c} onPatch={onPatch} />}
           </div>
           <FunnelControl contact={c} onPatch={onPatch} />
         </div>

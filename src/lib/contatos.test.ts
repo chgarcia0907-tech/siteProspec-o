@@ -9,6 +9,7 @@ import {
   manualAtRow,
   nextSend,
   sameNameContacts,
+  statusOptions,
   withSyncedStatus,
 } from "./contatos";
 
@@ -100,6 +101,21 @@ describe("contatos", () => {
     expect(header!.slice(5, 7)).toEqual(["LinkedIn 1 prevista", "LinkedIn 1 enviada"]);
     expect(row!.slice(5, 9)).toEqual(["09/11/2026", "09/11/2026", "10/11/2026", "—"]);
     expect(row!.at(-1)).toBe("Em cadência");
+  });
+});
+
+describe("opções de situação na edição", () => {
+  it("não oferece 'descartado' (recusa vira resposta negativa)", () => {
+    expect(statusOptions("em_cadencia")).toEqual([
+      "aguardando",
+      "em_cadencia",
+      "respondeu",
+      "concluido",
+    ]);
+  });
+
+  it("mantém 'descartado' para quem já está descartado", () => {
+    expect(statusOptions("descartado")).toContain("descartado");
   });
 });
 
