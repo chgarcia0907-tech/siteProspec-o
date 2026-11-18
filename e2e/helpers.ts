@@ -32,6 +32,11 @@ export async function seedHackathon(comAt = false) {
   await fetch(`${MOCK}/__seed?hackathon=${comAt ? "at" : "1"}`, { method: "POST" });
 }
 
+/** O hunter logado deixa de ser admin (até o próximo teste). */
+export async function semAdmin() {
+  await fetch(`${MOCK}/__rpc?has_role=false`, { method: "POST" });
+}
+
 /** Página com o hunter "Hunter Um" logado, relógio em 12/11/2026 e banco simulado zerado. */
 export const test = base.extend<{ page: Page }>({
   page: async ({ page, context }, provide) => {

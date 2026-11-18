@@ -1,3 +1,4 @@
+import type { Tables } from "@/integrations/supabase/types";
 import { daysBetween, normName, spDay } from "./auditoria";
 import { responseOriginLabel } from "./cadencia";
 
@@ -419,4 +420,218 @@ export function contatoDaAt(
     (c) => !normName(c.company) || mesmaEmpresa(c.company, at.empresa),
   );
   return compativeis.length === 1 ? compativeis[0]!.id : null;
+}
+
+/* ------------------------------- Tela de ATs ------------------------------- */
+
+/** Linha de `ats` como a tela usa (tipos gerados do Supabase, com o status estreitado). */
+export type AtRow = Omit<Tables<"ats">, "status"> & { status: AtStatus };
+
+/** AT com o número de remarcações (contado no log) para a tabela. */
+export type AtLinha = AtRow & { remarcacoes: number };
+
+export function linhasDaTabela(
+  ats: readonly AtRow[],
+  eventos: readonly { at_id: string; evento: AtEventoTipo }[],
+): AtLinha[] {
+  const rem = remarcacoesPorAt(eventos);
+  return ats
+    .map((a) => ({ ...a, remarcacoes: rem.get(a.id) ?? 0 }))
+    .sort(
+      (a, b) =>
+        b.agendada_atual.localeCompare(a.agendada_atual) ||
+        b.registrada_em.localeCompare(a.registrada_em),
+    );
+}
+
+export type FiltroStatus = AtStatus | "remarcada" | "todas";
+
+export const FILTRO_STATUS_LABEL: Record<FiltroStatus, string> = {
+  todas: "Todas as situações",
+  agendada: "Agendadas",
+  remarcada: "Remarcadas",
+  realizada: "Realizadas",
+  no_show: "No-show",
+  cancelada: "Canceladas",
+};
+
+export type AtFiltros = {
+  busca: string;
+  status: FiltroStatus;
+  /** Login do hunter ou "" para todos. */
+  hunter: string;
+  /** Login do CN ou "" para todos. */
+  cn: string;
+};
+
+export const FILTROS_VAZIOS: AtFiltros = { busca: "", status: "todas", hunter: "", cn: "" };
+
+/** Busca por empresa ou prospect (todas as palavras, sem acento), situação, hunter e CN. */
+export function filtrarAts<T extends AtLinha>(linhas: readonly T[], f: AtFiltros): T[] {
+  const palavras = normName(f.busca).split(" ").filter(Boolean);
+  return linhas.filter((a) => {
+    const texto = normName(`${a.empresa} ${a.prospect}`);
+    if (!palavras.every((p) => texto.includes(p))) return false;
+    if (f.hunter && a.hunter_login !== f.hunter) return false;
+    if (f.cn && a.cn_login !== f.cn) return false;
+    if (f.status === "todas") return true;
+    if (f.status === "remarcada") return a.remarcacoes > 0;
+    return a.status === f.status;
+  });
+}
+
+/**
+ * Quem pode registrar remarcação, no-show etc. pela plataforma: o hunter dono ou o admin, e só em
+ * AT sem card no Pipedrive (com card, o status vem da integração). Mesma regra da política
+ * `at_eventos_insert_app`.
+ */
+export function podeRegistrarEvento(
+  at: Pick<AtRow, "user_id" | "pipedrive_deal_id">,
+  userId: string,
+  isAdmin: boolean,
+): boolean {
+  return at.pipedrive_deal_id == null && (isAdmin || at.user_id === userId);
+}
+
+/** Link do card no Pipedrive. */
+export const linkDoCard = (deal: number) => `https://polijunior.pipedrive.com/deal/${deal}`;
+
+/** "2026-11-20T10:00" (campo datetime-local, horário de Brasília) → ISO com -03:00. */
+export function deDatetimeLocal(v: string): string | null {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v) ? `${v}:00-03:00` : null;
+}
+
+/** ISO qualquer → valor do campo datetime-local no horário de Brasília. */
+export function paraDatetimeLocal(iso: string): string {
+  return new Date(iso)
+    .toLocaleString("sv-SE", { timeZone: "America/Sao_Paulo" })
+    .replace(" ", "T")
+    .slice(0, 16);
+}
+
+/** "20/11/2026 10:00" no horário de Brasília. */
+export function dataHoraSP(iso: string): string {
+  const [d, h] = paraDatetimeLocal(iso).split("T");
+  const [a, m, dia] = d!.split("-");
+  return `${dia}/${m}/${a} ${h}`;
+}
+
+export type NovaAtForm = {
+  empresa: string;
+  prospect: string;
+  cargo: string;
+  setor: string;
+  linkedin: string;
+  canal: AtCanal | "";
+  cn: string;
+  /** Valor do campo datetime-local. */
+  quando: string;
+  motivo: string;
+  ficha: string;
+};
+
+export const NOVA_AT_VAZIA: NovaAtForm = {
+  empresa: "",
+  prospect: "",
+  cargo: "",
+  setor: "",
+  linkedin: "",
+  canal: "",
+  cn: "",
+  quando: "",
+  motivo: "",
+  ficha: "",
+};
+
+/** Preenche o formulário com a Ficha de AT colada; o que a ficha não traz fica como estava. */
+export function formDaFicha(
+  form: NovaAtForm,
+  ficha: FichaAt,
+  time: readonly PessoaTime[],
+): NovaAtForm {
+  const cn = pessoaDaMarcacao(ficha.cnMarcacao, time, "cn");
+  return {
+    ...form,
+    empresa: ficha.empresa || form.empresa,
+    prospect: ficha.prospect || form.prospect,
+    cargo: ficha.cargo || form.cargo,
+    setor: ficha.setor || form.setor,
+    linkedin: ficha.linkedin || form.linkedin,
+    canal: ficha.canal ?? form.canal,
+    cn: cn ?? form.cn,
+    quando: ficha.agendada ? paraDatetimeLocal(ficha.agendada) : form.quando,
+    motivo: ficha.motivo || form.motivo,
+    ficha: ficha.original,
+  };
+}
+
+/** Motivo que impede registrar a AT, ou null. */
+export function novaAtErro(f: NovaAtForm): string | null {
+  if (!f.empresa.trim()) return "Informe a empresa.";
+  if (!f.prospect.trim()) return "Informe o nome do prospect.";
+  if (!deDatetimeLocal(f.quando)) return "Informe a data e o horário da AT.";
+  return null;
+}
+
+/** Linha a inserir em `ats` pelo hunter logado (status e registro o banco carimba). */
+export function novaAtLinha(
+  f: NovaAtForm,
+  ctx: {
+    userId: string;
+    hunterLogin: string | null;
+    contato: { id: string; resposta_etapa: number | null; resposta_modelo: string | null } | null;
+  },
+) {
+  const vazio = (s: string) => (s.trim() ? s.trim() : null);
+  return {
+    user_id: ctx.userId,
+    hunter_login: ctx.hunterLogin,
+    cn_login: vazio(f.cn),
+    contact_id: ctx.contato?.id ?? null,
+    resposta_etapa: ctx.contato?.resposta_etapa ?? null,
+    resposta_modelo: ctx.contato?.resposta_modelo ?? null,
+    canal: vazio(f.canal),
+    empresa: f.empresa.trim(),
+    prospect: f.prospect.trim(),
+    cargo: vazio(f.cargo),
+    setor: vazio(f.setor),
+    linkedin: vazio(f.linkedin),
+    motivo_prospeccao: vazio(f.motivo),
+    ficha_original: vazio(f.ficha),
+    agendada_original: deDatetimeLocal(f.quando)!,
+  };
+}
+
+/** Login do hunter logado: o do time comercial ligado à conta, senão o começo do e-mail. */
+export function loginDoUsuario(
+  userId: string,
+  email: string | null | undefined,
+  time: readonly { login: string; user_id: string | null }[],
+): string | null {
+  const doTime = time.find((p) => p.user_id === userId);
+  if (doTime) return doTime.login;
+  const local = (email ?? "").split("@")[0]?.toLowerCase();
+  return local || null;
+}
+
+export type EventoApp = (typeof AT_EVENTOS_DO_APP)[number];
+
+export type EventoForm = { quando: string; motivo: string };
+
+/** Motivo que impede registrar o evento, ou null. Remarcação pede nova data e motivo. */
+export function eventoErro(tipo: EventoApp, f: EventoForm): string | null {
+  if (tipo !== "remarcada") return null;
+  if (!deDatetimeLocal(f.quando)) return "Informe a nova data e o horário.";
+  if (!f.motivo.trim()) return "Informe o motivo da remarcação.";
+  return null;
+}
+
+/** Linha a inserir em `at_eventos` pelo app (origem e autor o banco carimba). */
+export function eventoLinha(atId: string, tipo: EventoApp, f: EventoForm) {
+  return {
+    at_id: atId,
+    evento: tipo,
+    horario_novo: tipo === "remarcada" ? deDatetimeLocal(f.quando) : null,
+    motivo: f.motivo.trim() || null,
+  };
 }

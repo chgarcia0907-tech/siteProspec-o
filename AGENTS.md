@@ -62,7 +62,7 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 ## Organização do código
 
 - Rotas em `src/routes/` são finas: estado da tela e composição. Componentes de uma tela ficam
-  em `src/components/<tela>/` (`auth`, `configuracoes`, `contatos`, `empresas`, `hoje`, `importar`, `inicio`, `modelos`, `semana`,
+  em `src/components/<tela>/` (`ats`, `auth`, `configuracoes`, `contatos`, `empresas`, `hoje`, `importar`, `inicio`, `modelos`, `semana`,
   `ranking`, `painel`); componentes usados em
   mais de uma tela ficam na raiz de `src/components/` (ex.: `SectorSelect`, `InlineInput`,
   `Funnel`); `src/components/ui/` é o shadcn/ui.
@@ -194,3 +194,15 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   leem todas as ATs. `time_comercial` substitui a aba "Time" (login ↔ usuário e opção "Hunter" no
   Pipedrive). Leitura das fichas do WhatsApp em `lerFicha` (mesmo formato da skill criar-card): na
   dúvida, o campo fica em branco e o formulário pede. Ainda não entra na competição.
+- Carga da planilha de ATs (uma vez, na transição): `bun run db:carga-ats --ats ATs.csv --historico
+Historico.csv --time Time.csv` mostra o plano e os avisos; com `--gravar` (e `SUPABASE_URL` +
+  `SUPABASE_SERVICE_ROLE_KEY`) grava `time_comercial`, `ats` (origem `planilha`) e o log. A lógica é
+  pura em `src/lib/cargaAts.ts` (`planoDeCarga`): completa no log o que a linha da aba ATs tem e o
+  Histórico não, confere com `resumoAt` e avisa em vez de adivinhar. Rodar de novo não duplica: AT
+  com o mesmo card fica como está.
+- Tela de ATs (`/ats`, menu Prospecção): regras em `src/lib/ats.ts` (`linhasDaTabela`, `filtrarAts`,
+  `podeRegistrarEvento`, `formDaFicha`, `novaAtLinha`, `eventoLinha`), dados em `src/hooks/useAts.ts`,
+  componentes em `src/components/ats/`. Todos veem todas as ATs; colar a Ficha de AT preenche o
+  formulário e o contato do hunter é ligado pelo nome e empresa. Remarcar, no-show, realizada e
+  cancelar só aparecem em AT sem card para o dono ou o admin (mesma regra da política do banco). Nos
+  testes de ponta a ponta, `semAdmin()` (`e2e/helpers.ts`) tira o papel de admin do hunter logado.

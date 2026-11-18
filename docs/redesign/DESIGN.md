@@ -128,7 +128,7 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
 ## 6. Navegação
 
 - **Sidebar fixa à esquerda** (`bg-sidebar`, ~232 px), três grupos:
-  - **Prospecção:** Envios de hoje (com contador), Empresas, Contatos, Importar conexões.
+  - **Prospecção:** Início, Envios de hoje (com contador), Empresas, Contatos, ATs, Importar conexões.
   - **Referência:** Modelos, Configurações.
   - **Administração:** Indicadores e Painel Admin, só para `has_role` admin.
 - Usuário e "Sair" no rodapé da sidebar.
@@ -154,6 +154,10 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
   - Colunas: ☐, Contato (nome + cargo), Empresa (+ "texto livre" ou setor), Área, Telefone, Cadência, Próximo envio, Situação, menu de ações.
   - Cadência: 5 marcadores, um por etapa de `STEPS`. Enviada = preenchida na cor do canal; próxima = contorno; atrasada = contorno `destructive`.
   - Edição detalhada no menu da linha, não em inputs na tabela inteira.
+- **ATs** (`/ats`): faixa de 5 números do filtro (ATs, Realizadas, No-show em alerta quando houver,
+  Remarcadas, Canceladas), filtros num cartão e tabela compacta (data da AT com "era DD/MM" quando
+  remarcada, empresa e prospect, hunter, CN, canal, situação, link do card e "Abrir"). O detalhe abre
+  em diálogo com os dados, o histórico e as ações; a situação Remarcada usa `warning-soft`.
 - **Setores e cadências**: um editor com uma aba por etapa (status "própria"/"padrão"), código, mensagem, variáveis clicáveis e pré-visualização ao lado. Um botão "Salvar setor e cadência".
 
 ## 6b. Início do hunter (`/inicio`)

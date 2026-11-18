@@ -12,7 +12,23 @@ import {
   remarcacoesPorAt,
   resumoAt,
   statusExibido,
+  dataHoraSP,
+  deDatetimeLocal,
+  eventoErro,
+  eventoLinha,
+  filtrarAts,
+  FILTROS_VAZIOS,
+  formDaFicha,
+  linhasDaTabela,
+  loginDoUsuario,
+  NOVA_AT_VAZIA,
+  novaAtErro,
+  novaAtLinha,
+  paraDatetimeLocal,
+  podeRegistrarEvento,
   type AtEvento,
+  type AtRow,
+  type FichaAt,
   type PessoaTime,
 } from "./ats";
 
@@ -342,5 +358,159 @@ describe("utilidades", () => {
   it("antecedência em dias corridos no fuso de São Paulo", () => {
     // Registrada às 23h de SP do dia 16 (02h UTC do dia 17), AT no dia 20.
     expect(antecedenciaDias("2026-11-17T02:00:00Z", "2026-11-20T13:00:00Z")).toBe(4);
+  });
+});
+
+describe("tela de ATs", () => {
+  const base = {
+    id: "a1",
+    user_id: "u1",
+    hunter_login: "enzo.camargos",
+    cn_login: "augustus.rivas",
+    empresa: "Mangels",
+    prospect: "Palma Recchia Gibeli",
+    status: "agendada" as const,
+    agendada_atual: "2026-11-20T13:00:00+00:00",
+    registrada_em: "2026-11-16T16:45:00+00:00",
+    pipedrive_deal_id: null as number | null,
+  } as unknown as AtRow;
+  const outra = {
+    ...base,
+    id: "a2",
+    user_id: "u2",
+    hunter_login: "joao.nascimento",
+    cn_login: "sophia.labadessa",
+    empresa: "Plaszom Embalagens",
+    prospect: "Patrícia Ronsani",
+    status: "no_show",
+    agendada_atual: "2026-11-25T17:00:00+00:00",
+    pipedrive_deal_id: 94308,
+  } as AtRow;
+
+  it("monta as linhas com remarcações, da AT mais distante para a mais próxima", () => {
+    const linhas = linhasDaTabela(
+      [base, outra],
+      [
+        { at_id: "a1", evento: "marcada" },
+        { at_id: "a1", evento: "remarcada" },
+      ],
+    );
+    expect(linhas.map((l) => [l.id, l.remarcacoes])).toEqual([
+      ["a2", 0],
+      ["a1", 1],
+    ]);
+  });
+
+  it("filtra por busca sem acento, situação, hunter e CN", () => {
+    const linhas = linhasDaTabela([base, outra], [{ at_id: "a1", evento: "remarcada" }]);
+    const f = (p: Partial<typeof FILTROS_VAZIOS>) =>
+      filtrarAts(linhas, { ...FILTROS_VAZIOS, ...p }).map((l) => l.id);
+    expect(f({})).toEqual(["a2", "a1"]);
+    expect(f({ busca: "patricia" })).toEqual(["a2"]);
+    expect(f({ busca: "palma mangels" })).toEqual(["a1"]);
+    expect(f({ busca: "plaszom palma" })).toEqual([]);
+    expect(f({ busca: "mangels" })).toEqual(["a1"]);
+    expect(f({ status: "remarcada" })).toEqual(["a1"]);
+    expect(f({ status: "no_show" })).toEqual(["a2"]);
+    expect(f({ hunter: "enzo.camargos" })).toEqual(["a1"]);
+    expect(f({ cn: "sophia.labadessa" })).toEqual(["a2"]);
+  });
+
+  it("só o dono ou o admin registram evento, e só em AT sem card", () => {
+    expect(podeRegistrarEvento(base, "u1", false)).toBe(true);
+    expect(podeRegistrarEvento(base, "u2", false)).toBe(false);
+    expect(podeRegistrarEvento(base, "u2", true)).toBe(true);
+    expect(podeRegistrarEvento(outra, "u2", true)).toBe(false);
+  });
+
+  it("converte data e hora de Brasília nos dois sentidos", () => {
+    expect(deDatetimeLocal("2026-11-20T10:00")).toBe("2026-11-20T10:00:00-03:00");
+    expect(deDatetimeLocal("")).toBeNull();
+    expect(paraDatetimeLocal("2026-11-20T13:00:00+00:00")).toBe("2026-11-20T10:00");
+    expect(paraDatetimeLocal("2026-11-20T10:00:00-03:00")).toBe("2026-11-20T10:00");
+    expect(dataHoraSP("2026-11-21T02:30:00Z")).toBe("20/11/2026 23:30");
+  });
+
+  it("preenche o formulário com a ficha colada e acha o CN", () => {
+    const ficha = lerFicha(FICHA_PLASZOM, HOJE);
+    expect(ficha?.tipo).toBe("at");
+    const f = formDaFicha({ ...NOVA_AT_VAZIA, cargo: "já tinha" }, ficha as FichaAt, TIME);
+    expect(f).toMatchObject({
+      empresa: "Plaszom Embalagens",
+      prospect: "Patricia Ronsani",
+      cargo: "Coordenadora",
+      canal: "WhatsApp",
+      cn: "sophia.labadessa",
+      quando: "2026-11-25T14:00",
+      ficha: FICHA_PLASZOM,
+    });
+  });
+
+  it("valida e monta a AT nova do hunter logado", () => {
+    const form = {
+      ...NOVA_AT_VAZIA,
+      empresa: " Mangels ",
+      prospect: "Palma",
+      canal: "E-mail" as const,
+      quando: "2026-11-20T10:00",
+    };
+    expect(novaAtErro({ ...form, empresa: "" })).toBe("Informe a empresa.");
+    expect(novaAtErro({ ...form, prospect: " " })).toBe("Informe o nome do prospect.");
+    expect(novaAtErro({ ...form, quando: "" })).toBe("Informe a data e o horário da AT.");
+    expect(novaAtErro(form)).toBeNull();
+    expect(
+      novaAtLinha(form, {
+        userId: "u1",
+        hunterLogin: "enzo.camargos",
+        contato: { id: "c1", resposta_etapa: 2, resposta_modelo: "WPP-1" },
+      }),
+    ).toEqual({
+      user_id: "u1",
+      hunter_login: "enzo.camargos",
+      cn_login: null,
+      contact_id: "c1",
+      resposta_etapa: 2,
+      resposta_modelo: "WPP-1",
+      canal: "E-mail",
+      empresa: "Mangels",
+      prospect: "Palma",
+      cargo: null,
+      setor: null,
+      linkedin: null,
+      motivo_prospeccao: null,
+      ficha_original: null,
+      agendada_original: "2026-11-20T10:00:00-03:00",
+    });
+  });
+
+  it("login do hunter pelo time comercial, senão pelo e-mail", () => {
+    const time = [{ login: "enzo.camargos", user_id: "u1" }];
+    expect(loginDoUsuario("u1", "outro@x.com", time)).toBe("enzo.camargos");
+    expect(loginDoUsuario("u2", "Maria.Silva@polijunior.com.br", time)).toBe("maria.silva");
+    expect(loginDoUsuario("u2", null, time)).toBeNull();
+  });
+
+  it("evento: remarcação pede data e motivo; os outros não", () => {
+    expect(eventoErro("remarcada", { quando: "", motivo: "x" })).toBe(
+      "Informe a nova data e o horário.",
+    );
+    expect(eventoErro("remarcada", { quando: "2026-11-27T15:00", motivo: " " })).toBe(
+      "Informe o motivo da remarcação.",
+    );
+    expect(eventoErro("no_show", { quando: "", motivo: "" })).toBeNull();
+    expect(
+      eventoLinha("a1", "remarcada", { quando: "2026-11-27T15:00", motivo: " viagem " }),
+    ).toEqual({
+      at_id: "a1",
+      evento: "remarcada",
+      horario_novo: "2026-11-27T15:00:00-03:00",
+      motivo: "viagem",
+    });
+    expect(eventoLinha("a1", "realizada", { quando: "2026-11-27T15:00", motivo: "" })).toEqual({
+      at_id: "a1",
+      evento: "realizada",
+      horario_novo: null,
+      motivo: null,
+    });
   });
 });

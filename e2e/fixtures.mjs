@@ -371,6 +371,154 @@ export function initialDb() {
       },
     ],
     admin_attempts: [],
+    time_comercial: [
+      {
+        login: "hunter1",
+        nome: "Hunter Um",
+        papel: "hunter",
+        apelidos: ["Hunter Um"],
+        ativo: true,
+        user_id: U1,
+      },
+      {
+        login: "hunter2",
+        nome: "Hunter Dois",
+        papel: "hunter",
+        apelidos: ["Hunter Dois"],
+        ativo: true,
+        user_id: U2,
+      },
+      {
+        login: "ana.cn",
+        nome: "Ana Coordenadora",
+        papel: "cn",
+        apelidos: ["Ana", "Aninha"],
+        ativo: true,
+        user_id: null,
+      },
+      {
+        login: "rui.cn",
+        nome: "Rui Coordenador",
+        papel: "cn",
+        apelidos: ["Rui"],
+        ativo: true,
+        user_id: null,
+      },
+    ],
+    ats: [
+      at({
+        id: AT_ALFA,
+        user_id: U1,
+        hunter_login: "hunter1",
+        cn_login: "ana.cn",
+        empresa: "Alfa",
+        prospect: "Ana Souza",
+        cargo: "Diretora de Operações",
+        canal: "LinkedIn",
+        motivo_prospeccao: "Operação grande com processos manuais.",
+        agendada_original: "2026-11-13T13:00:00+00:00",
+        agendada_atual: "2026-11-17T17:00:00+00:00",
+        registrada_em: "2026-11-10T15:00:00+00:00",
+      }),
+      at({
+        id: AT_OMEGA,
+        user_id: U2,
+        hunter_login: "hunter2",
+        cn_login: "rui.cn",
+        empresa: "Ômega Log",
+        prospect: "Paulo Reis",
+        canal: "WhatsApp",
+        status: "realizada",
+        agendada_original: "2026-11-11T18:00:00+00:00",
+        agendada_atual: "2026-11-11T18:00:00+00:00",
+        registrada_em: "2026-11-05T14:00:00+00:00",
+        origem: "skill",
+        pipedrive_deal_id: 94307,
+      }),
+      at({
+        id: AT_SIGMA,
+        user_id: U2,
+        hunter_login: "hunter2",
+        cn_login: "ana.cn",
+        empresa: "Sigma",
+        prospect: "Lia Prado",
+        canal: "E-mail",
+        status: "no_show",
+        agendada_original: "2026-11-09T12:00:00+00:00",
+        agendada_atual: "2026-11-09T12:00:00+00:00",
+        registrada_em: "2026-11-04T14:00:00+00:00",
+      }),
+    ],
+    at_eventos: [
+      ev(AT_ALFA, 1, "marcada", "2026-11-10T15:00:00+00:00", {
+        horario_novo: "2026-11-13T13:00:00+00:00",
+      }),
+      ev(AT_ALFA, 2, "remarcada", "2026-11-12T12:00:00+00:00", {
+        horario_anterior: "2026-11-13T13:00:00+00:00",
+        horario_novo: "2026-11-17T17:00:00+00:00",
+        motivo: "Prospect pediu outro dia",
+      }),
+      ev(AT_OMEGA, 3, "marcada", "2026-11-05T14:00:00+00:00", {
+        horario_novo: "2026-11-11T18:00:00+00:00",
+        origem: "skill",
+      }),
+      ev(AT_OMEGA, 4, "realizada", "2026-11-11T19:00:00+00:00", { origem: "pipedrive_webhook" }),
+      ev(AT_SIGMA, 5, "marcada", "2026-11-04T14:00:00+00:00", {
+        horario_novo: "2026-11-09T12:00:00+00:00",
+      }),
+      ev(AT_SIGMA, 6, "no_show", "2026-11-09T13:00:00+00:00", { motivo: "Não entrou na sala" }),
+    ],
+  };
+}
+
+export const AT_ALFA = "15151515-0000-4000-8000-000000000001";
+const AT_OMEGA = "15151515-0000-4000-8000-000000000002";
+const AT_SIGMA = "15151515-0000-4000-8000-000000000003";
+
+/** Linha de `ats` com os campos que o teste não precisa variar. */
+function at(o) {
+  return {
+    tipo: "diagnostico",
+    contact_id: null,
+    resposta_etapa: null,
+    resposta_modelo: null,
+    cargo: null,
+    setor: null,
+    linkedin: null,
+    motivo_prospeccao: null,
+    ficha_original: null,
+    status: "agendada",
+    status_em: null,
+    pipedrive_deal_id: null,
+    pipedrive_person_id: null,
+    pipedrive_org_id: null,
+    pipedrive_stage_id: null,
+    pipedrive_activity_at_id: null,
+    pipedrive_activity_tp1_id: null,
+    pipedrive_activity_tp3_id: null,
+    pipedrive_activity_tp4_id: null,
+    origem: "app",
+    created_by: o.user_id,
+    created_at: o.registrada_em,
+    updated_at: o.registrada_em,
+    ...o,
+  };
+}
+
+/** Evento do log de uma AT. */
+function ev(at_id, n, evento, ocorrido_em, o = {}) {
+  return {
+    id: `16161616-0000-4000-8000-${String(n).padStart(12, "0")}`,
+    at_id,
+    evento,
+    ocorrido_em,
+    created_at: ocorrido_em,
+    horario_anterior: null,
+    horario_novo: null,
+    motivo: null,
+    origem: "app",
+    pipedrive_stage_id: null,
+    ...o,
   };
 }
 
