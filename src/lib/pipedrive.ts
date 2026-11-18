@@ -16,6 +16,16 @@ export const ETAPA_AT_AGENDADA = 108;
 /** Etapas do funil 6 em que a AT diagnóstica já aconteceu. */
 export const ETAPAS_DEPOIS_DA_AT: ReadonlySet<number> = new Set([31, 33, 34, 35, 36]);
 
+/** Nomes das etapas do funil 6, para o motivo dos eventos. */
+export const NOME_ETAPA: Readonly<Record<number, string>> = {
+  108: "AT Diag. Agendada",
+  31: "AT Diag. Realizada",
+  33: "AT Aprof. Marcada",
+  34: "Proposta Agendada",
+  35: "Negociação",
+  36: "Aprov. Verbal (Contrato)",
+};
+
 /** Opções do campo nativo "Resultado" (outcome) das activities. */
 export const RESULTADO = {
   concluido: 663,
@@ -58,7 +68,7 @@ export type AtNoBanco = {
 };
 
 export type EventoPipedrive = {
-  evento: "remarcada" | "no_show" | "realizada" | "cancelada" | "etapa_pipedrive";
+  evento: "remarcada" | "reaberta" | "no_show" | "realizada" | "cancelada" | "etapa_pipedrive";
   ocorrido_em: string;
   horario_anterior: string | null;
   horario_novo: string | null;
@@ -146,8 +156,9 @@ const mesmoInstante = (a: string, b: string) => Date.parse(a) === Date.parse(b);
  * Eventos que faltam no log para a AT refletir o Pipedrive. Ordem de prioridade do desfecho: o
  * "Resultado" da task da AT; depois o card numa etapa posterior à AT (realizada); depois o card
  * perdido ainda na etapa da AT (cancelada). Task aberta com outra data/hora vira remarcação (vale
- * também depois de um no-show). Task concluída sem resultado, com o card ainda na etapa da AT, não
- * vira nada: na dúvida, a AT fica como está.
+ * também depois de um no-show). Sem nenhum desses sinais, card aberto numa etapa anterior à AT
+ * reabre a AT (volta a agendada, mesma data): é o card que voltou no funil. Cada evento leva no
+ * `pipedrive_ref` o momento da mudança, então avançar e voltar várias vezes registra cada vez.
  */
 export function eventosDoPipedrive(
   at: AtNoBanco,
@@ -205,32 +216,33 @@ export function eventosDoPipedrive(
   if (task && resultado === RESULTADO.concluido)
     desfecho = {
       evento: "realizada",
-      ref: `act:${task.id}:resultado:${resultado}`,
+      ref: `act:${task.id}:resultado:${resultado}:${quandoTask}`,
       quando: quandoTask,
       motivo: null,
     };
   else if (task && resultado === RESULTADO.naoCompareceu)
     desfecho = {
       evento: "no_show",
-      ref: `act:${task.id}:resultado:${resultado}`,
+      ref: `act:${task.id}:resultado:${resultado}:${quandoTask}`,
       quando: quandoTask,
       motivo: null,
     };
   else if (task && resultado === RESULTADO.cancelado)
     desfecho = {
       evento: "cancelada",
-      ref: `act:${task.id}:resultado:${resultado}`,
+      ref: `act:${task.id}:resultado:${resultado}:${quandoTask}`,
       quando: quandoTask,
       motivo: "Cancelada no Pipedrive",
     };
-  else if (ETAPAS_DEPOIS_DA_AT.has(deal.stage_id))
+  else if (ETAPAS_DEPOIS_DA_AT.has(deal.stage_id)) {
+    const quando = isoDoPipedrive(deal.stage_change_time) ?? quandoDeal;
     desfecho = {
       evento: "realizada",
-      ref: `deal:${deal.id}:realizada`,
-      quando: isoDoPipedrive(deal.stage_change_time) ?? quandoDeal,
+      ref: `deal:${deal.id}:realizada:${deal.stage_id}:${quando}`,
+      quando,
       motivo: null,
     };
-  else if (deal.status === "lost" && deal.stage_id === ETAPA_AT_AGENDADA) {
+  } else if (deal.status === "lost" && deal.stage_id === ETAPA_AT_AGENDADA) {
     const quando = isoDoPipedrive(deal.lost_time) ?? quandoDeal;
     desfecho = {
       evento: "cancelada",
@@ -240,7 +252,26 @@ export function eventosDoPipedrive(
     };
   }
 
-  if (desfecho && desfecho.evento !== at.status) {
+  // Card aberto que voltou para antes da AT (ex.: de "AT Diag. Realizada" para "AT Diag.
+  // Agendada"), sem Resultado na task: a AT volta a ser agendada, na mesma data.
+  if (
+    !desfecho &&
+    at.status !== "agendada" &&
+    deal.status === "open" &&
+    !ETAPAS_DEPOIS_DA_AT.has(deal.stage_id)
+  ) {
+    const quando = isoDoPipedrive(deal.stage_change_time) ?? quandoDeal;
+    const etapa = NOME_ETAPA[deal.stage_id] ?? `etapa ${deal.stage_id}`;
+    desfecho = {
+      evento: "reaberta",
+      ref: `deal:${deal.id}:reaberta:${deal.stage_id}:${quando}`,
+      quando,
+      motivo: `Card voltou para ${etapa} no Pipedrive`,
+    };
+  }
+
+  const statusDoEvento = desfecho?.evento === "reaberta" ? "agendada" : desfecho?.evento;
+  if (desfecho && statusDoEvento !== at.status) {
     out.push({
       ...base,
       evento: desfecho.evento,

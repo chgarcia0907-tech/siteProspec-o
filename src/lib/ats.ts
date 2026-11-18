@@ -8,7 +8,7 @@ import { responseOriginLabel } from "./cadencia";
 
 export type AtStatus = "agendada" | "realizada" | "no_show" | "cancelada";
 export type AtEventoTipo =
-  "marcada" | "remarcada" | "no_show" | "realizada" | "cancelada" | "etapa_pipedrive";
+  "marcada" | "remarcada" | "reaberta" | "no_show" | "realizada" | "cancelada" | "etapa_pipedrive";
 
 export const AT_STATUS_LABEL: Record<AtStatus, string> = {
   agendada: "Agendada",
@@ -20,6 +20,7 @@ export const AT_STATUS_LABEL: Record<AtStatus, string> = {
 export const AT_EVENTO_LABEL: Record<AtEventoTipo, string> = {
   marcada: "Marcada",
   remarcada: "Remarcada",
+  reaberta: "Reaberta",
   no_show: "No-show",
   realizada: "Realizada",
   cancelada: "Cancelada",
@@ -62,8 +63,9 @@ export function resumoAt(eventos: readonly AtEvento[]): AtResumo {
   const ultimoStatus = ordenados.find((e) => e.evento !== "etapa_pipedrive");
   const ultimaAgenda = ordenados.find((e) => e.evento === "marcada" || e.evento === "remarcada");
   const ultimaEtapa = ordenados.find((e) => e.evento === "etapa_pipedrive");
+  const voltaAgendada = ["marcada", "remarcada", "reaberta"];
   const status: AtStatus =
-    !ultimoStatus || ultimoStatus.evento === "marcada" || ultimoStatus.evento === "remarcada"
+    !ultimoStatus || voltaAgendada.includes(ultimoStatus.evento)
       ? "agendada"
       : (ultimoStatus.evento as AtStatus);
   return {

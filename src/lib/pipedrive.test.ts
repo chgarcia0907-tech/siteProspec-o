@@ -183,11 +183,21 @@ describe("eventosDoPipedrive", () => {
         e.pipedrive_ref,
       ]);
     expect(so(663)).toEqual([
-      ["realizada", "2026-11-18T20:10:00.000Z", "act:160212:resultado:663"],
+      [
+        "realizada",
+        "2026-11-18T20:10:00.000Z",
+        "act:160212:resultado:663:2026-11-18T20:10:00.000Z",
+      ],
     ]);
-    expect(so(665)).toEqual([["no_show", "2026-11-18T20:10:00.000Z", "act:160212:resultado:665"]]);
+    expect(so(665)).toEqual([
+      ["no_show", "2026-11-18T20:10:00.000Z", "act:160212:resultado:665:2026-11-18T20:10:00.000Z"],
+    ]);
     expect(so(666)).toEqual([
-      ["cancelada", "2026-11-18T20:10:00.000Z", "act:160212:resultado:666"],
+      [
+        "cancelada",
+        "2026-11-18T20:10:00.000Z",
+        "act:160212:resultado:666:2026-11-18T20:10:00.000Z",
+      ],
     ]);
     // Já está assim no banco: nada a fazer.
     expect(so(665, "no_show")).toEqual([]);
@@ -203,7 +213,7 @@ describe("eventosDoPipedrive", () => {
     );
     expect(r.map((e) => [e.evento, e.pipedrive_stage_id, e.pipedrive_ref])).toEqual([
       ["etapa_pipedrive", 31, "deal:94331:etapa:31:2026-11-18T21:00:00.000Z"],
-      ["realizada", null, "deal:94331:realizada"],
+      ["realizada", null, "deal:94331:realizada:31:2026-11-18T21:00:00.000Z"],
     ]);
     // O resultado da task vale mais que a etapa.
     expect(
@@ -231,5 +241,53 @@ describe("eventosDoPipedrive", () => {
   it("na dúvida não muda: task concluída sem resultado e card ainda na etapa da AT", () => {
     expect(ev({ pipedrive_stage_id: 108 }, {}, [{ ...TASK_AT, done: true }])).toEqual([]);
     expect(ev({ pipedrive_stage_id: 108 }, {}, [])).toEqual([]);
+  });
+
+  it("card que volta para antes da AT reabre a AT, na mesma data", () => {
+    const voltou = { stage_id: 108, stage_change_time: "2026-11-19T12:00:00Z" };
+    const feita = { ...TASK_AT, done: true };
+    expect(ev({ status: "realizada", pipedrive_stage_id: 31 }, voltou, [feita])).toEqual([
+      expect.objectContaining({ evento: "etapa_pipedrive", pipedrive_stage_id: 108 }),
+      {
+        evento: "reaberta",
+        ocorrido_em: "2026-11-19T12:00:00.000Z",
+        horario_anterior: null,
+        horario_novo: null,
+        motivo: "Card voltou para AT Diag. Agendada no Pipedrive",
+        pipedrive_stage_id: null,
+        pipedrive_ref: "deal:94331:reaberta:108:2026-11-19T12:00:00.000Z",
+      },
+    ]);
+    // Card perdido que foi reaberto também volta a agendada.
+    expect(
+      ev({ status: "cancelada", pipedrive_stage_id: 108 }, { status: "open" }, [feita]).map(
+        (e) => e.evento,
+      ),
+    ).toEqual(["reaberta"]);
+    // Já agendada: nada a fazer.
+    expect(ev({ status: "agendada", pipedrive_stage_id: 108 }, voltou, [feita])).toEqual([]);
+  });
+
+  it("o Resultado da task segura o desfecho mesmo com o card voltando", () => {
+    const r = ev({ status: "no_show", pipedrive_stage_id: 31 }, { stage_id: 108 }, [
+      { ...TASK_AT, done: true, outcome: 665 },
+    ]);
+    expect(r.map((e) => e.evento)).toEqual(["etapa_pipedrive"]);
+  });
+
+  it("avançar, voltar e avançar de novo registra cada vez com uma chave nova", () => {
+    const feita = { ...TASK_AT, done: true };
+    const primeira = ev(
+      { pipedrive_stage_id: 108 },
+      { stage_id: 31, stage_change_time: "2026-11-18T21:00:00Z" },
+      [feita],
+    );
+    const segunda = ev(
+      { status: "agendada", pipedrive_stage_id: 108 },
+      { stage_id: 31, stage_change_time: "2026-11-20T09:00:00Z" },
+      [feita],
+    );
+    const ref = (l: typeof primeira) => l.find((e) => e.evento === "realizada")!.pipedrive_ref;
+    expect(ref(primeira)).not.toBe(ref(segunda));
   });
 });
