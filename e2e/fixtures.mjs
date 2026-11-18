@@ -575,3 +575,51 @@ export const RPC = {
     },
   ],
 };
+
+/**
+ * Pipedrive simulado: o card 94307 (AT da Ômega Log, realizada em 11/11 no banco) voltou para
+ * "AT Diag. Agendada" com uma task nova para 19/11 às 15h, ou seja, foi remarcado.
+ */
+export const PIPEDRIVE = {
+  deals: {
+    94307: {
+      id: 94307,
+      stage_id: 108,
+      status: "open",
+      lost_reason: null,
+      update_time: "2026-11-12T13:00:00Z",
+      stage_change_time: "2026-11-12T13:00:00Z",
+      lost_time: null,
+    },
+  },
+  activities: {
+    94307: [
+      {
+        id: 500001,
+        subject: "AT - 15h @hunter2",
+        type: "meeting",
+        due_date: "2026-11-11",
+        due_time: null,
+        done: true,
+        is_deleted: false,
+        add_time: "2026-11-05T14:00:00Z",
+        update_time: "2026-11-11T19:00:00Z",
+        marked_as_done_time: "2026-11-11T19:00:00Z",
+        outcome: 664,
+      },
+      {
+        id: 500002,
+        subject: "AT - 15h @hunter2",
+        type: "reuniao_remarcada",
+        due_date: "2026-11-19",
+        due_time: null,
+        done: false,
+        is_deleted: false,
+        add_time: "2026-11-12T13:05:00Z",
+        update_time: "2026-11-12T13:05:00Z",
+        marked_as_done_time: null,
+        outcome: null,
+      },
+    ],
+  },
+};
