@@ -185,7 +185,7 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   `src/lib/auditoria.ts`: casa por nome+headline, depois só nome (headline mudou) e por fim
   primeiro+último nome (nome editado), sem reutilizar um contato. Não grava nada no banco.
 - Registro de ATs (substitui a planilha "Registro de ATs - NTec"): `ats` tem uma linha por AT e
-  `at_eventos` é o log só de inserção (marcada, remarcada, no_show, realizada, cancelada,
+  `at_eventos` é o log só de inserção (marcada, remarcada, reaberta, no_show, realizada, cancelada,
   etapa_pipedrive). `ats.status`, `agendada_atual` e `pipedrive_stage_id` são resumo mantido pelo
   trigger `at_eventos_apply` (evento mais recente por `ocorrido_em`, então eventos fora de ordem não
   estragam o resumo); `resumoAt` (`src/lib/ats.ts`) faz a mesma conta em TS: ao mudar uma, revise a
@@ -213,8 +213,9 @@ Historico.csv --time Time.csv` mostra o plano e os avisos; com `--gravar` (e `SU
   com `pipedrive_ref` único. Prioridade do desfecho: Resultado da task (Concluído → realizada, Não
   compareceu → no_show, Cancelado → cancelada); depois card em etapa posterior à AT (31, 33–36) →
   realizada; depois card perdido na etapa 108 → cancelada. Task aberta com outra data/hora →
-  remarcada (reabre AT com no-show). Na dúvida (task concluída sem resultado, card ainda na 108), nada
-  muda. Servidor em `src/lib/pipedrive.server.ts` (API v2 com `PIPEDRIVE_API_TOKEN`): o webhook
+  remarcada (reabre AT com no-show). Sem nenhum desses sinais, card aberto numa etapa anterior à AT
+  (voltou no funil) → evento `reaberta` (volta a agendada, mesma data, não conta como remarcação).
+  O `pipedrive_ref` leva o momento da mudança, então avançar e voltar várias vezes registra cada vez. Servidor em `src/lib/pipedrive.server.ts` (API v2 com `PIPEDRIVE_API_TOKEN`): o webhook
   `/api/public/pipedrive/webhook` (basic auth `PIPEDRIVE_WEBHOOK_USER`/`PASSWORD`) guarda o payload em
   `pipedrive_webhook_log` e sincroniza o card citado; `/api/public/pipedrive/sincronizar` (cron diário da
   Vercel, `Authorization: Bearer CRON_SECRET`, configurado no `nitro()` do `vite.config.ts`, porque

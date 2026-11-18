@@ -287,6 +287,20 @@ describe("resumoAt", () => {
     expect(statusExibido(r.status, r.remarcacoes)).toBe("Remarcada");
   });
 
+  it("reaberta volta para agendada sem mudar a data nem contar remarcação", () => {
+    const r = resumoAt([
+      ev("marcada", "2026-11-10T13:00:00Z", { horario_novo: "2026-11-12T13:00:00Z" }),
+      ev("realizada", "2026-11-12T14:00:00Z"),
+      ev("reaberta", "2026-11-12T15:00:00Z"),
+    ]);
+    expect(r).toEqual({
+      status: "agendada",
+      agendadaAtual: "2026-11-12T13:00:00Z",
+      pipedriveStageId: null,
+      remarcacoes: 0,
+    });
+  });
+
   it("sem eventos fica agendada", () => {
     expect(resumoAt([])).toEqual({
       status: "agendada",
