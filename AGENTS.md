@@ -57,8 +57,10 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - SQL que depende de uma versão do app já publicada (ex.: texto de modelos com tags novas)
   vai para `pendente-pos-publicacao/` e só roda depois do deploy.
 - Segredos de servidor (`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `SHEET_EXPORT_TOKEN`,
-  `PIPEDRIVE_API_TOKEN`, `PIPEDRIVE_WEBHOOK_USER`, `PIPEDRIVE_WEBHOOK_PASSWORD`, `CRON_SECRET`)
-  ficam nas variáveis de ambiente da Vercel, nunca no repositório.
+  `PIPEDRIVE_API_TOKEN`, `PIPEDRIVE_WEBHOOK_USER`, `PIPEDRIVE_WEBHOOK_PASSWORD`, `CRON_SECRET`,
+  `ATS_INGEST_TOKEN`) ficam nas variáveis de ambiente da Vercel, nunca no repositório. As rotas
+  públicas conferem o segredo por `src/lib/segredos.server.ts`: variável ausente responde 503 dizendo
+  qual falta (problema de configuração na Vercel); segredo errado responde 401.
 
 ## Organização do código
 
@@ -222,3 +224,13 @@ Historico.csv --time Time.csv` mostra o plano e os avisos; com `--gravar` (e `SU
   com a Build Output API o `vercel.json` não vale) reconcilia as ATs com card agendadas ou dos últimos
   30 dias. Nos testes de ponta a ponta, `PIPEDRIVE_API_URL` aponta para o Pipedrive simulado em
   `e2e/mock-supabase.mjs` (dados em `PIPEDRIVE`, `e2e/fixtures.mjs`).
+- Skill criar-card (claude.ai) grava na plataforma: `POST /api/public/ats` (Bearer `ATS_INGEST_TOKEN`)
+  com `acao` `conferir` (duplicata e card para remarcar), `marcar` (AT do card recém-criado, origem
+  `skill`; card repetido não duplica) ou `remarcar` (evento com `pipedrive_ref` pela nova data; se a
+  AT já está nessa data, porque o webhook do Pipedrive chegou antes, não grava outra e só troca o
+  motivo genérico pelo da ficha). Contrato puro em `src/lib/atsSkill.ts`, gravação em
+  `atsSkill.server.ts`. A "mensagem que converteu" em texto livre fica em `ats.mensagem_ficha` (o
+  formulário de Registrar AT também grava, pela ficha colada). O texto da skill fica versionado em
+  `docs/skills/criar-card/SKILL.md` (com o token como `COLE_AQUI_O_ATS_INGEST_TOKEN`): ao mudar o
+  contrato, atualize a skill e reenvie ao claude.ai. A planilha continua como fonte da aba Time e
+  como reserva quando a plataforma não responde.

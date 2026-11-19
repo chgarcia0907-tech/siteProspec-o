@@ -486,6 +486,7 @@ describe("tela de ATs", () => {
       resposta_etapa: 2,
       resposta_modelo: "WPP-1",
       canal: "E-mail",
+      mensagem_ficha: null,
       empresa: "Mangels",
       prospect: "Palma",
       cargo: null,

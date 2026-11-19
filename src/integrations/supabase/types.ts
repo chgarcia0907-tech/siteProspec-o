@@ -97,6 +97,7 @@ export type Database = {
           hunter_login: string | null;
           id: string;
           linkedin: string | null;
+          mensagem_ficha: string | null;
           motivo_prospeccao: string | null;
           origem: string;
           pipedrive_activity_at_id: number | null;
@@ -132,6 +133,7 @@ export type Database = {
           hunter_login?: string | null;
           id?: string;
           linkedin?: string | null;
+          mensagem_ficha?: string | null;
           motivo_prospeccao?: string | null;
           origem?: string;
           pipedrive_activity_at_id?: number | null;
@@ -167,6 +169,7 @@ export type Database = {
           hunter_login?: string | null;
           id?: string;
           linkedin?: string | null;
+          mensagem_ficha?: string | null;
           motivo_prospeccao?: string | null;
           origem?: string;
           pipedrive_activity_at_id?: number | null;

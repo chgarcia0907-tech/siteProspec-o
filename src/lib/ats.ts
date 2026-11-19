@@ -525,6 +525,8 @@ export type NovaAtForm = {
   setor: string;
   linkedin: string;
   canal: AtCanal | "";
+  /** "Mensagem que converteu" como veio na ficha (texto depois do canal). */
+  mensagem: string;
   cn: string;
   /** Valor do campo datetime-local. */
   quando: string;
@@ -539,6 +541,7 @@ export const NOVA_AT_VAZIA: NovaAtForm = {
   setor: "",
   linkedin: "",
   canal: "",
+  mensagem: "",
   cn: "",
   quando: "",
   motivo: "",
@@ -560,6 +563,7 @@ export function formDaFicha(
     setor: ficha.setor || form.setor,
     linkedin: ficha.linkedin || form.linkedin,
     canal: ficha.canal ?? form.canal,
+    mensagem: ficha.mensagem || form.mensagem,
     cn: cn ?? form.cn,
     quando: ficha.agendada ? paraDatetimeLocal(ficha.agendada) : form.quando,
     motivo: ficha.motivo || form.motivo,
@@ -593,6 +597,7 @@ export function novaAtLinha(
     resposta_etapa: ctx.contato?.resposta_etapa ?? null,
     resposta_modelo: ctx.contato?.resposta_modelo ?? null,
     canal: vazio(f.canal),
+    mensagem_ficha: vazio(f.mensagem),
     empresa: f.empresa.trim(),
     prospect: f.prospect.trim(),
     cargo: vazio(f.cargo),

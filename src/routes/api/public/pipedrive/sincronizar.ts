@@ -7,7 +7,11 @@ export const Route = createFileRoute("/api/public/pipedrive/sincronizar")({
     handlers: {
       GET: async ({ request }) => {
         const m = await import("@/lib/pipedrive.server");
-        if (!m.cronAutorizado(request)) return new Response("Unauthorized", { status: 401 });
+        const v = m.verificarCron(request);
+        if (v !== "ok") {
+          const { respostaRecusa } = await import("@/lib/segredos.server");
+          return respostaRecusa(v, "CRON_SECRET");
+        }
         try {
           const r = await m.sincronizarTodas();
           return Response.json({

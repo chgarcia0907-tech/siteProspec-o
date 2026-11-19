@@ -78,7 +78,8 @@ export function AtDetalheDialog({
   if (!at) return null;
   const erro = acao ? eventoErro(acao, form) : null;
   const doLog = eventos.filter((e) => e.at_id === at.id);
-  const mensagem = mensagemQueConverteu(at);
+  // Etapa e modelo da cadência quando a AT tem contato; senão, o texto da ficha.
+  const mensagem = mensagemQueConverteu(at) ?? at.mensagem_ficha;
 
   function confirmar(e: React.FormEvent) {
     e.preventDefault();
