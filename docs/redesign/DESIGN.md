@@ -128,7 +128,7 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
 ## 6. Navegação
 
 - **Sidebar fixa à esquerda** (`bg-sidebar`, ~232 px), três grupos:
-  - **Prospecção:** Início, Envios de hoje (com contador), Empresas, Contatos, ATs, Importar conexões.
+  - **Prospecção:** Início, Envios de hoje (com contador), Empresas, Contatos, ATs, Tasks, Importar conexões.
   - **Referência:** Modelos, Configurações.
   - **Administração:** Indicadores e Painel Admin, só para `has_role` admin.
 - Usuário e "Sair" no rodapé da sidebar.
@@ -158,6 +158,10 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
   Remarcadas, Canceladas), filtros num cartão e tabela compacta (data da AT com "era DD/MM" quando
   remarcada, empresa e prospect, hunter, CN, canal, situação, link do card e "Abrir"). O detalhe abre
   em diálogo com os dados, o histórico e as ações; a situação Remarcada usa `warning-soft`.
+- **Tasks** (`/tasks`): tasks do Pipedrive dos cards em AT Diag. Agendada e Realizada. Segmentado de
+  etapa, faixa de 5 números (abertas, atrasadas em alerta, vencem hoje, próximas, concluídas no prazo),
+  tabela "Por hunter" só para o admin (clicar no nome filtra a tela) e "Tasks abertas" com selo de
+  situação: "Atrasada N dias" `destructive-soft`, "Vence hoje" `warning-soft`, "No prazo" `success-soft`.
 - **Setores e cadências**: um editor com uma aba por etapa (status "própria"/"padrão"), código, mensagem, variáveis clicáveis e pré-visualização ao lado. Um botão "Salvar setor e cadência".
 
 ## 6b. Início do hunter (`/inicio`)
