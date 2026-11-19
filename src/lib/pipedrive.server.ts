@@ -16,18 +16,39 @@ import {
 // PIPEDRIVE_API_URL só existe para os testes de ponta a ponta (Pipedrive simulado).
 const api = () => process.env["PIPEDRIVE_API_URL"] ?? "https://api.pipedrive.com/api/v2";
 
-async function pd<T>(path: string): Promise<T> {
-  const token = process.env["PIPEDRIVE_API_TOKEN"];
-  if (!token) throw new Error("PIPEDRIVE_API_TOKEN não configurado");
+type Pagina<T> = { success?: boolean; data?: T; additional_data?: { next_cursor?: string | null } };
+
+async function pdBruto<T>(path: string): Promise<Pagina<T>> {
+  const token = (process.env["PIPEDRIVE_API_TOKEN"] ?? "").trim();
+  if (!token) throw new Error("PIPEDRIVE_API_TOKEN não configurado nesta implantação");
   const res = await fetch(`${api()}${path}`, {
     headers: { "x-api-token": token, accept: "application/json" },
   });
   if (!res.ok) throw new Error(`Pipedrive ${res.status} em ${path.split("?")[0]}`);
-  const body = (await res.json()) as { success?: boolean; data?: T };
+  const body = (await res.json()) as Pagina<T>;
   if (body.success === false || body.data === undefined) {
     throw new Error(`Pipedrive sem dados em ${path.split("?")[0]}`);
   }
-  return body.data;
+  return body;
+}
+
+export async function pd<T>(path: string): Promise<T> {
+  return (await pdBruto<T>(path)).data as T;
+}
+
+/** Lista inteira de um endpoint paginado por cursor (API v2), 500 por página. */
+export async function pdTodas<T>(path: string): Promise<T[]> {
+  const out: T[] = [];
+  let cursor: string | null | undefined = null;
+  do {
+    const sep = path.includes("?") ? "&" : "?";
+    const pagina: Pagina<T[]> = await pdBruto<T[]>(
+      `${path}${sep}limit=500${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    );
+    out.push(...(pagina.data ?? []));
+    cursor = pagina.additional_data?.next_cursor;
+  } while (cursor);
+  return out;
 }
 
 /** Basic auth configurado no webhook do Pipedrive ("HTTP auth" ao criar o webhook). */
