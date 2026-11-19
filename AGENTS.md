@@ -134,7 +134,8 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   `contacts.resposta_tipo` (`positiva`/`negativa`; `needsResponseKind` em `cadencia.ts`), e a edição
   do contato permite trocar depois. "Descartado" saiu das opções de situação da edição
   (`statusOptions` em `contatos.ts`): recusa vira resposta negativa. A ação em massa "Marcar como
-  descartado" e o filtro continuam.
+  descartado" e o filtro continuam. Em Contatos, o filtro "Resposta" (`RespostaFilter` em
+  `contatos.ts`) mostra só as positivas ou negativas de quem está "respondeu".
 - Mensagem que gerou a resposta: ao marcar "respondeu" ou a AT (`needsResponseOrigin` em
   `cadencia.ts`), o hunter escolhe a etapa (`contacts.resposta_etapa`, 1–5; 0 = outro canal) num
   diálogo obrigatório (`useResponseOrigin`, `src/components/RespostaOrigem.tsx`) e pode trocá-la
