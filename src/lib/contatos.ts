@@ -8,10 +8,12 @@ import {
   formatBR,
   isActive,
   plannedDates,
+  RESPOSTA_TIPO_LABEL,
   type Contact,
   type ContactStatus,
   type Holidays,
   type Offsets,
+  type RespostaTipo,
   type StepDef,
 } from "./cadencia";
 
@@ -42,21 +44,34 @@ export const MISSING_LABEL: Record<MissingFilter, string> = {
 export const hasNoCompany = (c: Pick<Contact, "company_id" | "company">) =>
   !c.company_id && !c.company.trim();
 
+/** Tipo da resposta do lead (`contacts.resposta_tipo`), para ver só as positivas ou as negativas. */
+export type RespostaFilter = "todos" | RespostaTipo;
+
+export const RESPOSTA_FILTER_LABEL: Record<RespostaFilter, string> = {
+  todos: "Todas as respostas",
+  positiva: `${RESPOSTA_TIPO_LABEL.positiva}s`,
+  negativa: `${RESPOSTA_TIPO_LABEL.negativa}s`,
+};
+
 /**
- * Filtra por situação, por pendência e por nome/empresa, sem diferenciar acentos e maiúsculas.
- * A situação é a calculada (`computedStatus`), a mesma que o selo da tabela mostra.
+ * Filtra por situação, pendência, tipo de resposta e por nome/empresa, sem diferenciar acentos e
+ * maiúsculas. A situação é a calculada (`computedStatus`), a mesma que o selo da tabela mostra.
  */
 export function filterContacts(
   contacts: Contact[],
   search: string,
   status: StatusFilter,
   missing: MissingFilter = "todos",
+  resposta: RespostaFilter = "todos",
 ): Contact[] {
   const term = fold(search).trim();
   return contacts.filter((c) => {
     if (status !== "todos" && computedStatus(c) !== status) return false;
     if (missing === "empresa" && !hasNoCompany(c)) return false;
     if (missing === "area" && c.sector.trim()) return false;
+    // O tipo fica gravado se o contato volta à cadência; só vale enquanto ele está "respondeu".
+    if (resposta !== "todos" && (c.resposta_tipo !== resposta || computedStatus(c) !== "respondeu"))
+      return false;
     return !term || fold(`${c.name} ${c.company}`).includes(term);
   });
 }

@@ -49,6 +49,16 @@ test.describe("Contatos", () => {
     await expect(page.locator("main tbody tr").first()).toContainText("Diretora de Operações");
   });
 
+  test("filtra as respostas positivas e negativas", async ({ page }) => {
+    await page.goto("/contatos");
+    const resposta = page.getByRole("combobox", { name: "Resposta" });
+    await resposta.selectOption({ label: "Positivas" });
+    await expect(page.getByText("1 contato", { exact: true })).toBeVisible();
+    await expect(page.locator("main tbody tr").first()).toContainText("Elisa Prado");
+    await resposta.selectOption({ label: "Negativas" });
+    await expect(page.getByText("0 contatos", { exact: true })).toBeVisible();
+  });
+
   test("preenche empresa e área vazias a partir do headline", async ({ page }) => {
     await page.goto("/contatos");
     await page.getByRole("button", { name: "Preencher empresa e área (1)" }).click();
