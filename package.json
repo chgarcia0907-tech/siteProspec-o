@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "db:new": "npx -y supabase@2 migration new",
     "db:push": "npx -y supabase@2 db push",
+    "db:carga-ats": "bun scripts/carga-ats.ts",
     "db:types": "npx -y supabase@2 gen types typescript --linked --schema public > src/integrations/supabase/types.ts && prettier --write src/integrations/supabase/types.ts"
   },
   "overrides": {
