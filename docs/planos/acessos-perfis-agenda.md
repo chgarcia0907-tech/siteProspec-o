@@ -1,10 +1,10 @@
-# Plano: acessos por cargo, perfil com foto e agenda dos CNs
+# Plano: login com Google, acessos por cargo e agenda dos CNs
 
 Data: 21/11/2026 · Branch de trabalho: `dev` · Status: proposta, aguardando as decisões da seção 1
 
 Objetivo de produto: fazer o hunter marcar mais ATs. A agenda dos CNs é a parte que mexe direto
-na métrica (menos idas e vindas para achar horário). O controle de acesso e o perfil são a base
-para ela: a plataforma precisa saber quem é CN para saber de quem ler a agenda.
+na métrica (menos idas e vindas para achar horário). O login com Google e os cargos são a base
+para ela: a plataforma precisa saber quem é CN e ter acesso à agenda de cada um.
 
 ---
 
@@ -18,7 +18,7 @@ para ela: a plataforma precisa saber quem é CN para saber de quem ler a agenda.
 | Papéis            | Enum `app_role` com um único valor, `admin`, em `user_roles`; o admin é dado por um trigger que olha um e-mail fixo   | `supabase/migrations/20261010200102_admin_roles.sql`, `20261010200850_admin_email_guilherme.sql` |
 | Checagem de papel | `has_role(uid, 'admin')` repetido em cada `*.functions.ts` (`assertAdmin`) e no SQL de `public.ranking()`             | `painel.functions.ts`, `periodos.functions.ts`, `setores.functions.ts`, `admin.functions.ts`     |
 | Ações sensíveis   | Senha compartilhada `ADMIN_PASSWORD` com bloqueio (5 tentativas / 15 min)                                             | `src/lib/admin.server.ts`                                                                        |
-| Perfil            | `profiles` com `email`, `display_name`, `message_name`, `gender`; leitura liberada para todo logado                   | migração inicial, `src/routes/_authenticated/configuracoes.tsx`                                  |
+| Perfil            | `profiles` com `email`, `display_name`, `message_name`, `gender`; leitura liberada para todo logado; sem foto         | migração inicial, `src/routes/_authenticated/configuracoes.tsx`                                  |
 | Navegação         | Grupo "Administração" aparece só para `isAdmin`                                                                       | `src/components/AppSidebar.tsx`, `src/routes/_authenticated/route.tsx`                           |
 | Calendário        | Nenhuma integração                                                                                                    | —                                                                                                |
 | Time comercial    | `time_comercial` já diz quem é hunter e quem é CN (`papel`), com login, apelidos e ids do Pipedrive                   | `supabase/migrations/20261118164342_ats_registro_e_eventos.sql`                                  |
@@ -30,19 +30,28 @@ para ela: a plataforma precisa saber quem é CN para saber de quem ler a agenda.
 
 ---
 
-## 1. Decisões antes de começar (precisam da sua resposta)
+## 1. Decisões
 
-| #   | Decisão                                                                 | Recomendação                                                                                                                                                                                                                                                                |
-| --- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D1  | **Login com Google** (conta @polijunior.com.br) como caminho principal? | **Sim.** É o login mais seguro que dá para ter sem custo (a senha e o 2FA ficam com o Google Workspace da Poli) e é o mesmo consentimento que a agenda vai pedir. Senha continua existindo, com regras fortes, para quem precisar.                                          |
-| D2  | Cadastro aberto ou **só por convite**?                                  | **Convite pelo gerente** (e-mail + cargo já escolhidos). Enquanto o convite não está pronto, travar o cadastro aberto ao domínio `@polijunior.com.br`.                                                                                                                      |
-| D3  | Uma pessoa tem **um cargo** ou vários?                                  | **Um cargo por pessoa** (Hunter, CN ou LO/Gerente). Mais simples de entender e de auditar. Se um CN também prospectar, o cargo CN ganha a permissão de prospecção.                                                                                                          |
-| D3b | Onde mora o cargo, já que `time_comercial.papel` existe?                | **`profiles.cargo_id` manda nas permissões**; `time_comercial` continua sendo o cadastro do Pipedrive (login, apelidos, ids). A migração 2.1 copia `papel` para `cargo_id` e um trigger mantém `papel` igual ao cargo (hunter/cn) para a tela de ATs e a carga não mudarem. |
-| D4  | Permissões **fixas no código** ou **editáveis numa matriz**?            | **Matriz editável** (cargo × permissão) na tela de Acessos, com a lista de permissões fixa no código. Você aloca cargos e ajusta o que cada cargo pode, sem deploy.                                                                                                         |
-| D5  | O que vira o `admin` atual?                                             | O `admin` vira o cargo **LO/Gerente** com todas as permissões de hoje. Fica um papel técnico **"dono da plataforma"** (só ele gerencia a matriz de permissões), para ninguém se trancar para fora.                                                                          |
-| D6  | A `ADMIN_PASSWORD` compartilhada continua?                              | **Substituir na fase 5** por reautenticação da própria pessoa (código do 2FA ou senha dela). Senha compartilhada não diz quem fez a exclusão. Até lá, continua.                                                                                                             |
-| D7  | **Projeto no Google Cloud** em nome de quem?                            | Criar o projeto **dentro da organização Google da Poli Júnior**, com tela de consentimento **"Interna"**. Assim os escopos de agenda não passam pela verificação do Google e só contas @polijunior entram. Precisa de alguém com acesso de admin do Workspace/GCP da Poli.  |
-| D8  | A agenda **lê** só livre/ocupado ou também **cria o evento** da AT?     | **Fase 4: só livre/ocupado.** Fase 5 (opcional): criar o evento na agenda do CN com link do Meet ao registrar a AT.                                                                                                                                                         |
+### Já decididas
+
+- **Login só com a conta Google @polijunior.com.br.** Senha, 2FA e recuperação ficam com o Google
+  Workspace da Poli; o app não guarda senha de ninguém. Fica uma única conta de emergência com
+  senha (ver D5).
+- **Sem upload de foto.** A foto é a da conta Google, atualizada a cada login. Para trocar, a pessoa
+  troca no Google.
+
+### Precisam da sua resposta
+
+| #   | Decisão                                                             | Recomendação                                                                                                                                                                                                                                                                               |
+| --- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| D1  | Quem pode entrar?                                                   | **Só quem está na lista de liberados** (e-mail + cargo, cadastrados pelo gerente na tela de Acessos). Uma conta @polijunior fora da lista vê "peça acesso ao gerente". Assim o cargo já vem certo no primeiro login.                                                                       |
+| D2  | Uma pessoa tem **um cargo** ou vários?                              | **Um cargo por pessoa** (Hunter, CN ou LO/Gerente). Se um CN também prospectar, o cargo CN ganha a permissão de prospecção.                                                                                                                                                                |
+| D3  | Onde mora o cargo, já que `time_comercial.papel` existe?            | **`profiles.cargo_id` manda nas permissões**; `time_comercial` continua sendo o cadastro do Pipedrive (login, apelidos, ids). A migração copia `papel` para `cargo_id` e um trigger mantém `papel` igual ao cargo (hunter/cn), para a tela de ATs e a carga da planilha não mudarem.       |
+| D4  | Permissões **fixas no código** ou **editáveis numa matriz**?        | **Matriz editável** (cargo × permissão) na tela de Acessos, com a lista de permissões fixa no código. Você aloca cargos e ajusta o que cada cargo pode, sem deploy.                                                                                                                        |
+| D5  | O que vira o `admin` atual?                                         | O `admin` vira o cargo **LO/Gerente** com as permissões de hoje. Fica um papel técnico **"dono da plataforma"** (só ele edita a matriz) com a **conta de emergência**: e-mail e senha forte + MFA, entrada fora da tela normal, para o caso de o login Google quebrar.                     |
+| D6  | A `ADMIN_PASSWORD` compartilhada continua?                          | **Sai.** Com login individual pelo Google (e o 2FA do Workspace), a exclusão passa a exigir a permissão (`contatos.excluir`, `feriados.editar`), a confirmação com palavra do `useConfirm` e grava quem excluiu. Senha compartilhada não diz quem fez a ação.                              |
+| D7  | **Projeto no Google Cloud** em nome de quem?                        | Criar o projeto **dentro da organização Google da Poli Júnior**, com tela de consentimento **"Interna"**. Só contas @polijunior entram e os escopos de agenda não passam pela verificação do Google. Precisa de alguém com acesso de administrador do Workspace/GCP da Poli. **Pedir já.** |
+| D8  | A agenda **lê** só livre/ocupado ou também **cria o evento** da AT? | **Fase 3: só livre/ocupado.** Fase 4 (opcional): criar o evento na agenda do CN com link do Meet ao registrar a AT.                                                                                                                                                                        |
 
 ---
 
@@ -50,16 +59,18 @@ para ela: a plataforma precisa saber quem é CN para saber de quem ler a agenda.
 
 ```
                  ┌──────────────────────────── Supabase ────────────────────────────┐
- Navegador       │ auth.users ── profiles (+ cargo, foto, bio, linkedin...)         │
- (React Query) ──┤ cargos ── cargo_permissoes          has_permission(uid, perm)   │
-                 │ storage: bucket "avatars" (<uid>/avatar.webp)                    │
+ Navegador       │ auth.users (provider google) ── profiles (+ cargo, avatar_url)   │
+ (React Query) ──┤ acessos_liberados (e-mail → cargo)                               │
+                 │ cargos ── cargo_permissoes          has_permission(uid, perm)   │
                  │ google_contas (refresh token cifrado, só service role)           │
                  └──────────────────────────────────────────────────────────────────┘
                           ▲                                   ▲
  Server functions ────────┘ assertPermission(ctx, "...")      │ service role
  (TanStack Start)  agenda.functions.ts ──► Google Calendar API: freeBusy (só livre/ocupado)
-                   /api/google/conectar e /api/google/callback (OAuth da agenda)
 ```
+
+Um só consentimento do Google no login dá **identidade, nome, foto e acesso a livre/ocupado da
+agenda**. Não há fluxo OAuth separado para a agenda.
 
 Princípios (seguem o `AGENTS.md`):
 
@@ -79,47 +90,11 @@ Princípios (seguem o `AGENTS.md`):
 Cada item abaixo é um PR para o `dev` (dados e regras separados de tela, uma tela por PR, como
 pede o `AGENTS.md`). Rodar `/verificar` antes de cada push.
 
-### Fase 1 — Login mais seguro (sem mudar cargos ainda)
+A fase 1 não depende do Google: anda enquanto o projeto no Google Cloud (D7) é criado.
 
-**PR 1.1 `feat(auth): exige senha forte e restringe o cadastro ao domínio da poli`**
+### Fase 1 — Cargos e permissões
 
-- Supabase (painel → Authentication): senha mínima **10** caracteres com letras e números;
-  "Secure password change" e "Secure email change" ligados; confirmação de e-mail obrigatória;
-  limites de tentativa (rate limits) revisados. _Proteção contra senhas vazadas (HaveIBeenPwned)
-  só existe no plano Pro do Supabase: avaliar._
-- Migração: hook `before_user_created` (ou trigger em `auth.users`) que recusa e-mail fora de
-  `@polijunior.com.br`. Regra do domínio também em `src/lib/acessos.ts` (`allowedEmail`) para a
-  mensagem de erro na tela.
-- `AuthForm`: `minLength={10}`, medidor simples de força (regra pura `passwordIssues` em
-  `src/lib/acessos.ts`, testada), mensagens em português para os erros do Supabase.
-- e2e: `auth.spec.ts` novo cobrindo senha fraca e e-mail fora do domínio.
-
-**PR 1.2 `feat(auth): adiciona recuperação de senha`**
-
-- "Esqueci minha senha" no `/auth` → `resetPasswordForEmail`; rota `/auth/nova-senha` que trata
-  o evento `PASSWORD_RECOVERY` e chama `updateUser({ password })`.
-- Template de e-mail do Supabase em português.
-
-**PR 1.3 `feat(auth): entra com a conta google da poli`** _(depende de D1 e D7)_
-
-- Google Cloud: projeto na organização da Poli, consentimento **Interno**, cliente OAuth Web com
-  redirect `https://ctxsmboaqbjgslctojeq.supabase.co/auth/v1/callback`.
-- Supabase: provider Google ligado com client id/secret.
-- `/auth`: botão "Entrar com Google" (`signInWithOAuth({ provider: "google", options: { queryParams: { hd: "polijunior.com.br" } } })`).
-  O `hd` só filtra a tela do Google; quem garante o domínio é o hook do PR 1.1.
-- Contas que já existem com o mesmo e-mail são ligadas automaticamente pelo Supabase (identity
-  linking por e-mail confirmado). Testar com uma conta real antes de publicar.
-
-**PR 1.4 `feat(auth): ativa verificação em duas etapas para quem usa senha`**
-
-- MFA TOTP do Supabase (`supabase.auth.mfa.enroll/challenge/verify`), cadastro em Configurações.
-- Obrigatório para o cargo LO/Gerente quando entrar por senha (checar `aal2` no
-  `_authenticated/route.tsx` e no `assertPermission` das permissões sensíveis). Quem entra pelo
-  Google herda o 2FA do Workspace.
-
-### Fase 2 — Cargos e permissões
-
-**PR 2.1 `feat(db): cria cargos, matriz de permissões e has_permission`** (via `/nova-migracao`)
+**PR 1.1 `feat(db): cria cargos, matriz de permissões e has_permission`** (via `/nova-migracao`)
 
 Migração (nova, sem editar as antigas):
 
@@ -146,14 +121,14 @@ create function public.has_permission(_user_id uuid, _perm text) returns boolean
 $$;
 ```
 
-- RLS: `cargos` e `cargo_permissoes` com leitura para logados e escrita só service role.
-  `profiles_update_own` passa a **impedir** que a pessoa troque o próprio `cargo_id` (policy com
-  `WITH CHECK` comparando com o valor atual, ou coluna fora do `GRANT UPDATE`).
-- Dados iniciais: os três cargos; usuários com `user_roles.admin` → `cargo_id = 'gerente'`;
-  quem está em `time_comercial` com `papel = 'cn'` → `cn`; os demais → `hunter`. O papel `admin`
-  continua existindo como "dono da plataforma".
-- Trigger mantém `time_comercial.papel` igual ao cargo (hunter/cn) quando a pessoa tem
-  `user_id` ligado, para a tela de ATs e a carga da planilha seguirem funcionando sem mudança.
+- RLS: `cargos` e `cargo_permissoes` com leitura para logados e escrita só service role. A
+  pessoa **não** pode trocar o próprio `cargo_id` (coluna fora do `GRANT UPDATE` de
+  `authenticated`).
+- Dados iniciais: os três cargos; usuários com `user_roles.admin` → `gerente`; quem está em
+  `time_comercial` com `papel = 'cn'` → `cn`; os demais → `hunter`. O papel `admin` continua
+  existindo como "dono da plataforma".
+- Trigger mantém `time_comercial.papel` igual ao cargo (hunter/cn) quando a pessoa tem `user_id`
+  ligado.
 - `bun run db:types` e testes de `acessos.ts`.
 
 Permissões iniciais (`PERMISSOES`, `src/lib/acessos.ts`):
@@ -163,6 +138,7 @@ Permissões iniciais (`PERMISSOES`, `src/lib/acessos.ts`):
 | `prospeccao.usar` — Início, Envios, Empresas, Contatos, Importar |            ✓            |  ✓  |     ✓      |
 | `agenda.buscar` — buscar horários com os CNs                     |            ✓            |  ✓  |     ✓      |
 | `agenda.receber_at` — aparece como CN disponível na busca        |                         |  ✓  |     ✓      |
+| `ats.gerenciar` — remarcar/no-show/cancelar AT de outro hunter   |                         |  ✓  |     ✓      |
 | `indicadores.ver`                                                |                         |  ✓  |     ✓      |
 | `competicao.ver` — placar e atividade                            |                         |  ✓  |     ✓      |
 | `painel.periodos` — períodos, grupos, membros, transferências    |                         |     |     ✓      |
@@ -170,128 +146,169 @@ Permissões iniciais (`PERMISSOES`, `src/lib/acessos.ts`):
 | `painel.metas`                                                   |                         |     |     ✓      |
 | `painel.auditoria`                                               |                         |     |     ✓      |
 | `contatos.excluir` e `feriados.editar`                           |                         |     |     ✓      |
-| `acessos.gerenciar` — convidar, alocar cargos, desativar pessoas |                         |     |     ✓      |
+| `acessos.gerenciar` — liberar pessoas, alocar cargos, desativar  |                         |     |     ✓      |
 | `acessos.permissoes` — editar esta matriz                        | só "dono da plataforma" |     |            |
 
-**PR 2.2 `refactor(painel): troca has_role(admin) por permissões`**
+**PR 1.2 `refactor(painel): troca has_role(admin) por permissões`**
 
 - `assertPermission(ctx, perm)` único em `src/lib/acessos.server.ts`, substituindo os
   `assertAdmin` de `painel.functions.ts`, `periodos.functions.ts`, `setores.functions.ts`,
   `admin.functions.ts`. `painelIsAdmin` vira `minhasPermissoes` (devolve a lista do usuário).
-- SQL: `public.ranking()` passa a usar `has_permission(auth.uid(), 'competicao.ver')`
-  (lembrar da regra do Hackathon que anda junto com o TS); as políticas de `ats`/`at_eventos`
-  que hoje dizem "dono ou admin" passam a "dono ou `ats.gerenciar`" (permissão nova, do
-  LO/Gerente e, se você quiser, do CN).
-- `AppSidebar` monta os grupos a partir das permissões; redirecionamento pós-login
-  (`AuthForm`) também (gerente → Indicadores, demais → Início).
+- SQL: `public.ranking()` passa a usar `has_permission(auth.uid(), 'competicao.ver')` (a regra do
+  Hackathon anda junto com o TS); as políticas de `ats`/`at_eventos` que dizem "dono ou admin"
+  passam a "dono ou `ats.gerenciar`".
+- `AppSidebar` monta os grupos a partir das permissões; o destino depois do login também
+  (gerente → Indicadores, demais → Início).
 - e2e: o mock (`e2e/mock-supabase.mjs`) responde `has_permission`; um teste por cargo em
   `navegacao.spec.ts` (o que cada um vê no menu e o bloqueio por URL direta).
 
-**PR 2.3 `feat(acessos): tela de pessoas e cargos no painel`** (tela; capturas antes/depois)
+**PR 1.3 `feat(acessos): tela de pessoas e cargos`** (tela; capturas antes/depois)
 
-- Nova aba "Acessos" no `/painel` (ou menu próprio em Administração, como Indicadores):
-  - lista de pessoas: foto, nome, e-mail, cargo (select), login do `time_comercial` e apelidos
-    (hoje só editáveis pela carga), status da agenda (conectada ou não), último acesso,
-    ativo/desativado;
-  - **convidar**: e-mail + cargo → `supabase.auth.admin.inviteUserByEmail` com o cargo em
-    `data`, lido pelo `handle_new_user`;
-  - **desativar** em vez de excluir (ban do Supabase Auth): mantém contatos e histórico;
+- Menu próprio "Acessos" em Administração (como Indicadores):
+  - **pessoas**: foto, nome, e-mail, cargo (select), login do `time_comercial` e apelidos, agenda
+    conectada ou não, último acesso, ativa/desativada;
+  - **liberar acesso**: e-mail @polijunior + cargo → linha em `acessos_liberados` (tabela nova,
+    só service role). A pessoa entra com o Google e já cai no cargo certo;
+  - **desativar** em vez de excluir (ban do Supabase Auth, corta a sessão na hora): mantém
+    contatos e histórico;
   - matriz cargo × permissão (só para o dono da plataforma), com `useConfirm` ao salvar.
 - Server functions em `src/lib/acessos.functions.ts` (`assertPermission` antes do service role).
-- Toda troca de cargo grava em `acessos_log` (quem, quando, de → para).
+- Toda troca de cargo, liberação e desativação grava em `acessos_log` (quem, quando, o quê).
 
-### Fase 3 — Perfil com foto
+### Fase 2 — Login com Google
 
-**PR 3.1 `feat(db): adiciona foto e dados de perfil`**
+**PR 2.1 `feat(db): aceita só contas google liberadas e copia nome e foto`**
 
-- `profiles`: `avatar_path text`, `bio text` (até 160), `linkedin_url text`, `whatsapp text`,
-  `cargo_titulo text` (texto livre, ex. "Diretor de Negócios"), `atualizado_em`.
-- Storage: bucket `avatars` **privado**; policies em `storage.objects`: logado lê tudo do bucket;
-  cada pessoa grava/apaga só em `<seu uid>/`. Limite de 2 MB e só `image/webp|png|jpeg`.
-- Regras puras em `src/lib/perfil.ts`: validação de LinkedIn/WhatsApp, iniciais para o avatar
-  sem foto, nome exibido (`display_name` → e-mail).
+- Hook `before_user_created` do Supabase Auth: recusa e-mail fora de `@polijunior.com.br` ou fora
+  de `acessos_liberados` (exceto a conta de emergência). Regra do domínio também em
+  `src/lib/acessos.ts` (`allowedEmail`), testada, para a mensagem na tela.
+- `handle_new_user` lê o cargo de `acessos_liberados`.
+- Trigger em `auth.users` (insert e update de `raw_user_meta_data`): copia `full_name` para
+  `display_name` (só se estiver vazio, para não apagar o nome editado) e `avatar_url`/`picture`
+  para `profiles.avatar_url` (sempre, assim a foto acompanha o Google a cada login).
+- Antes de publicar, conferir quem usaria e-mail fora do domínio:
 
-**PR 3.2 `feat(configuracoes): edita perfil com foto`** (tela)
+  ```sql
+  select email from auth.users where lower(email) not like '%@polijunior.com.br';
+  ```
 
-- Cartão "Meu perfil" em Configurações: foto com recorte quadrado e redução no navegador para
-  256×256 WebP (canvas, sem biblioteca nova), nome, título, bio, LinkedIn, WhatsApp.
-- Componente compartilhado `src/components/Avatar.tsx` (foto ou iniciais, tokens do design
-  system), usado na barra lateral (troca o e-mail pela foto + nome), no painel, no placar e na
-  agenda.
-- e2e: mock do Storage (`/storage/v1/object/...`) e teste do upload em `configuracoes.spec.ts`.
+  Essas contas precisam ser trocadas para o e-mail da Poli (admin API) antes do PR 2.3, senão a
+  pessoa perde o acesso aos próprios contatos.
 
-### Fase 4 — Agenda dos CNs (Google Calendar)
+**PR 2.2 `feat(auth): entra com a conta google da poli`** (tela; capturas; e2e)
+
+- Google Cloud (D7): consentimento **Interno**, cliente OAuth Web com redirect
+  `https://ctxsmboaqbjgslctojeq.supabase.co/auth/v1/callback`. Supabase: provider Google ligado;
+  URLs de retorno da produção e das prévias da Vercel liberadas em Authentication → URL
+  Configuration.
+- `/auth` passa a ter um botão só, "Entrar com Google":
+
+  ```ts
+  supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${origin}/auth/retorno`,
+      scopes: "https://www.googleapis.com/auth/calendar.freebusy",
+      queryParams: { hd: "polijunior.com.br", access_type: "offline" },
+    },
+  });
+  ```
+
+  O `hd` só filtra a tela do Google; quem garante o domínio é o hook do PR 2.1.
+
+- Rota `/auth/retorno`: com a sessão nova, se vier `provider_refresh_token`, manda para a server
+  function `agendaGuardarToken` (cifra e grava em `google_contas`, ver fase 3) e segue para
+  Início/Indicadores. O Google só devolve o refresh token no primeiro consentimento; se faltar e
+  não houver token guardado, o botão "Reconectar agenda" refaz o login com `prompt: "consent"`.
+- Contas que já existem com o mesmo e-mail @polijunior são ligadas pelo Supabase (mesmo `user_id`,
+  contatos preservados). **Testar com uma conta real** antes de publicar.
+- Erros do Google e do hook em português ("Esta conta não está liberada. Peça acesso ao gerente.").
+- e2e: o mock responde `/auth/v1/authorize` redirecionando de volta com uma sessão falsa;
+  `auth.spec.ts` cobre entrar, conta não liberada e retorno sem refresh token.
+
+**PR 2.3 `feat(auth)!: desliga o login por senha`** (depois que todos entraram uma vez com o Google)
+
+- Script único (admin API) troca a senha de todas as contas por uma aleatória, menos a de
+  emergência, para senhas antigas não abrirem mais a porta pela API.
+- Conta de emergência: só o dono da plataforma, senha forte + MFA TOTP do Supabase, formulário
+  em `/auth?emergencia` (fora da tela normal).
+- Remove `ADMIN_PASSWORD` e `admin_attempts` do fluxo de exclusão (D6): exclusões passam a usar
+  `assertPermission` + `useConfirm` com palavra + `acessos_log`. A remoção da tabela vai numa
+  migração própria, depois do deploy.
+- Rodapé `BREAKING CHANGE: login só com conta Google @polijunior.com.br`.
+
+**PR 2.4 `feat(configuracoes): mostra o perfil com a foto do google`** (tela)
+
+- `profiles` (migração): `bio text` (até 160), `linkedin_url text`, `whatsapp text`,
+  `cargo_titulo text` (ex. "Diretor de Negócios"). A foto **não é editável** no app.
+- Cartão "Meu perfil" em Configurações: foto e e-mail do Google (só leitura, com o aviso "para
+  trocar a foto, troque na sua conta Google"), nome, título, bio, LinkedIn, WhatsApp.
+- Componente compartilhado `src/components/Avatar.tsx`: mostra `avatar_url` e, se não houver ou a
+  imagem falhar (`onError`), as iniciais (`initials` em `src/lib/perfil.ts`, testada), com tokens do
+  design system. Usado na barra lateral (troca o e-mail por foto + nome), em Acessos, no painel,
+  no placar e na agenda.
+
+### Fase 3 — Agenda dos CNs (Google Calendar)
 
 **Como funciona para o hunter**
 
-1. Na primeira vez, o hunter e cada CN clicam em "Conectar minha agenda Google" (uma vez só).
+1. A agenda já fica conectada no login com Google (sem passo extra para a maioria).
 2. O hunter abre **Agenda** (menu Prospecção), escolhe os próximos dias (padrão: 5 dias úteis),
    a duração da AT (30/45/60 min) e, se quiser, CNs específicos.
-3. A tela mostra os horários em que **o hunter está livre e pelo menos um CN também**, com a
-   foto dos CNs livres em cada horário, ordenados pelo mais cedo e pelo número de CNs livres.
+3. A tela mostra os horários em que **o hunter está livre e pelo menos um CN também**, com a foto
+   dos CNs livres em cada horário, ordenados pelo mais cedo e pelo número de CNs livres.
 4. O hunter marca 2 ou 3 horários e clica em **"Copiar sugestão"**: o texto pronto vai para a
    mensagem do prospect ("terça (25/11) às 14h ou quarta (26/11) às 10h?").
 5. Quando o prospect aceita um horário, **"Registrar AT neste horário"** abre o formulário de
    `/ats` já com CN, data e hora preenchidos.
 
-**PR 4.1 `feat(db): guarda a conexão com o google agenda`**
+**PR 3.1 `feat(db): guarda o acesso à agenda google`** (entra antes do PR 2.2)
 
 - Tabela `google_contas` (`user_id` pk, `google_email`, `refresh_token_cifrado`, `escopos`,
-  `conectado_em`, `erro`), RLS ligada **sem nenhuma policy** (só service role) e view/RPC
-  `agenda_status()` que devolve ao cliente apenas "conectada: sim/não" de cada pessoa.
-- `profiles`: `agenda_inicio`/`agenda_fim` (janela de trabalho, padrão 08:00–19:00),
-  respeitada no cálculo.
-- Segredos novos na Vercel: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_TOKEN_KEY`
-  (chave AES-256 para cifrar o refresh token). Nunca no repositório.
+  `conectado_em`, `erro`), RLS ligada **sem nenhuma policy** (só service role) e RPC
+  `agenda_status()` que devolve ao cliente só "conectada: sim/não" de cada pessoa.
+- `profiles`: `agenda_inicio`/`agenda_fim` (janela de trabalho, padrão 08:00–19:00).
+- Segredos novos na Vercel: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (o mesmo cliente OAuth do
+  Supabase, para renovar o token) e `GOOGLE_TOKEN_KEY` (chave AES-256). Nunca no repositório.
+- `src/lib/google.server.ts`: cifrar/decifrar (AES-GCM, `node:crypto`), renovar access token,
+  `freeBusy`; URL base por variável para o e2e apontar para um mock. Token revogado ou conta
+  suspensa → grava `erro` e a pessoa vê "Reconectar agenda".
+- `agendaGuardarToken` (usada pelo `/auth/retorno`) e `agendaDesconectar` (revoga no Google e
+  apaga a linha) em `src/lib/agenda.functions.ts`.
 
-**PR 4.2 `feat(agenda): conecta a agenda google`**
-
-- Fluxo OAuth próprio (independente de como a pessoa fez login):
-  `src/routes/api/google/conectar.ts` → Google com `scope=calendar.freebusy`,
-  `access_type=offline`, `prompt=consent`, `state` assinado (uid + nonce + validade, contra
-  CSRF) → `src/routes/api/google/callback.ts` troca o código, cifra (AES-GCM, `node:crypto`) e
-  grava em `google_contas`. Desconectar revoga o token no Google e apaga a linha.
-- Cliente Google em `src/lib/google.server.ts` (renovar access token, `freeBusy`), com a URL base
-  vinda de variável para o e2e apontar para um mock.
-- Botão em Configurações ("Agenda Google: conectada como fulano@polijunior.com.br").
-
-**PR 4.3 `feat(agenda): calcula horários livres em comum`** (regra pura + server function)
+**PR 3.2 `feat(agenda): calcula horários livres em comum`** (regra pura + server function)
 
 - `src/lib/agenda.ts`, sem I/O, com testes:
-  - `freeSlots({ busy, janela, duracao, passo, dias, holidays, agora })` — subtrai os ocupados
-    da janela de trabalho, pula fins de semana e feriados (o mesmo Set de `holidays` de
+  - `freeSlots({ busy, janela, duracao, passo, dias, holidays, agora })` — subtrai os ocupados da
+    janela de trabalho, pula fins de semana e feriados (o mesmo Set de `holidays` de
     `cadencia.ts`), descarta horários que já passaram e dá folga mínima (ex.: 2 h a partir de
     agora);
-  - `commonSlots(hunter, cns)` — interseção hunter × cada CN, com a lista de CNs livres por
-    horário; `rankSlots` ordena (pode pesar para equilibrar: CN com menos ATs na semana primeiro);
   - `atsComoOcupado(ats, duracao)` — as ATs `agendada` de cada CN (`ats.cn_login`,
     `agendada_atual`) também bloqueiam o horário, mesmo que não estejam na agenda Google;
+  - `commonSlots(hunter, cns)` — interseção hunter × cada CN, com a lista de CNs livres por
+    horário; `rankSlots` ordena (pode pesar para equilibrar: CN com menos ATs na semana primeiro);
   - `suggestionText(slots)` — o texto em português para copiar.
   - Fuso sempre `America/Sao_Paulo`.
-- `src/lib/agenda.functions.ts`: `agendaHorarios` (`assertPermission('agenda.buscar')`) carrega
-  os tokens do hunter e dos CNs com `agenda.receber_at` e agenda conectada, chama
-  `freeBusy` uma vez por pessoa em paralelo e devolve **só os horários livres em comum** — o
-  cliente nunca recebe a agenda ocupada de ninguém.
-- Os CNs vêm de `time_comercial` (`papel = 'cn'`, `ativo`, com `user_id`) cruzado com a
-  permissão `agenda.receber_at`.
+- `agendaHorarios` (`assertPermission('agenda.buscar')`): CNs vêm de `time_comercial`
+  (`papel = 'cn'`, `ativo`, com `user_id`) cruzado com `agenda.receber_at`; chama `freeBusy` uma
+  vez por pessoa em paralelo e devolve **só os horários livres em comum** — o cliente nunca
+  recebe a agenda ocupada de ninguém.
 - CN sem agenda conectada aparece como "agenda não conectada" (não some em silêncio).
 
-**PR 4.4 `feat(agenda): tela de horários com os cns`** (tela; capturas; e2e)
+**PR 3.3 `feat(agenda): tela de horários com os cns`** (tela; capturas; e2e)
 
 - Rota `src/routes/_authenticated/agenda.tsx`, componentes em `src/components/agenda/`
   (`FiltrosAgenda`, `GradeHorarios`, `SugestaoCopiar`). Seguir `docs/redesign/DESIGN.md`, só
   tokens de `src/styles.css`, só desktop.
 - e2e `agenda.spec.ts` com mock do Google (`e2e/mock-google.mjs`) e o relógio fixo de 12/11/2026.
-- Documentar no `AGENTS.md` (seção Arquitetura) as regras novas, como nas outras features.
+- Documentar no `AGENTS.md` (seção Arquitetura) login, cargos, permissões e agenda.
 
-### Fase 5 — Fechamento (opcional, depois de medir o uso)
+### Fase 4 — Depois de medir o uso (opcional)
 
 - **Criar o evento da AT**: ao registrar a AT em `/ats`, oferecer "criar evento na agenda do CN"
   com link do Meet e o prospect como convidado (escopo extra `calendar.events`, pedido só a quem
   usar). Guardar `ats.google_event_id`; remarcar/cancelar no `/ats` atualiza o evento. Cuidado
   para não duplicar o que o Pipedrive (task "AT - 16h30 @hunter") já faz.
-- **Trocar a `ADMIN_PASSWORD`** por reautenticação da própria pessoa (`aal2`/senha), mantendo o
-  log de quem excluiu.
 - **Indicador novo**: tempo entre "respondeu" e "AT marcada", para ver se a agenda encurtou o
   caminho até a reunião.
 
@@ -299,39 +316,44 @@ Permissões iniciais (`PERMISSOES`, `src/lib/acessos.ts`):
 
 ## 4. Ordem sugerida e tamanho
 
-| Ordem | PR                                            | Tipo                  | Esforço |
-| ----- | --------------------------------------------- | --------------------- | ------- |
-| 1     | 1.1 senha forte + domínio                     | dados + tela pequena  | P       |
-| 2     | 1.2 recuperar senha                           | tela                  | P       |
-| 3     | 2.1 cargos e `has_permission`                 | dados                 | M       |
-| 4     | 2.2 trocar `has_role` por permissões          | refactor              | M       |
-| 5     | 2.3 tela de Acessos                           | tela                  | M       |
-| 6     | 3.1 + 3.2 perfil com foto                     | dados + tela          | M       |
-| 7     | 1.3 login com Google (precisa do GCP da Poli) | config + tela pequena | P       |
-| 8     | 4.1 → 4.4 agenda                              | dados + server + tela | G       |
-| 9     | 1.4 MFA para gerentes                         | tela + guarda         | P       |
-| 10    | Fase 5                                        | —                     | —       |
-
-O login com Google (1.3) e a agenda (4.x) dependem do mesmo projeto no Google Cloud; vale pedir o
-acesso na primeira semana para não travar a fase 4.
+| Ordem | PR                                                  | Depende de    | Esforço |
+| ----- | --------------------------------------------------- | ------------- | ------- |
+| 0     | Pedir o projeto no Google Cloud da Poli (D7)        | admin da Poli | —       |
+| 1     | 1.1 cargos e `has_permission`                       | —             | M       |
+| 2     | 1.2 trocar `has_role` por permissões                | 1.1           | M       |
+| 3     | 1.3 tela de Acessos (com lista de liberados)        | 1.2           | M       |
+| 4     | 3.1 guardar token da agenda                         | —             | P       |
+| 5     | 2.1 hook de domínio/liberados + nome e foto         | 1.3           | P       |
+| 6     | 2.2 login com Google                                | 2.1, 3.1, GCP | M       |
+| 7     | 2.4 perfil com foto do Google                       | 2.2           | P       |
+| 8     | 2.3 desligar senha (depois de todos entrarem 1 vez) | 2.2           | P       |
+| 9     | 3.2 + 3.3 agenda                                    | 2.2           | G       |
+| 10    | Fase 4                                              | uso medido    | —       |
 
 ## 5. Riscos e cuidados
 
-- **Trancar-se para fora**: a migração 2.1 precisa manter o dono da plataforma com tudo; testar em
-  branch do Supabase (ou local) antes do `db:push` em produção.
-- **Refresh token do Google**: só vem no primeiro consentimento (`prompt=consent` resolve);
-  token revogado ou senha trocada → marcar `erro` e pedir reconexão na tela, não falhar calado.
+- **Trancar-se para fora**: a migração 1.1 mantém o dono da plataforma com tudo, e a conta de
+  emergência existe antes de desligar a senha (2.3). Testar migrações em branch do Supabase (ou
+  local) antes do `db:push` em produção.
+- **Saída de alguém da Poli**: suspender a conta no Workspace impede novos logins, mas não derruba
+  uma sessão aberta. Por isso "Desativar" em Acessos continua necessário.
+- **Contas com e-mail pessoal**: rodar a consulta do PR 2.1 e migrar antes do 2.3.
+- **Refresh token do Google**: só vem no primeiro consentimento; sem ele, "Reconectar agenda" com
+  `prompt: "consent"`. Token revogado → `erro` e aviso na tela, nunca falha calada.
+- **Foto do Google**: se a pessoa não tiver foto ou o Workspace esconder, cai nas iniciais.
 - **RLS de `profiles`**: hoje qualquer logado lê todos os perfis. WhatsApp e LinkedIn entram aí;
-  confirmar que isso é aceitável para a equipe ou mover os contatos pessoais para uma view só
-  com nome e foto.
-- **Testes de ponta a ponta**: cada fase acrescenta rotas ao mock (`has_permission`, Storage,
-  Google). Nunca pular teste para ficar verde.
+  confirmar que isso é aceitável para a equipe ou mover os contatos pessoais para uma view só com
+  nome e foto.
+- **Testes de ponta a ponta**: o Playwright não passa pela tela real do Google; o mock simula o
+  retorno do login. Cada fase acrescenta rotas ao mock (`has_permission`, authorize, Google).
+  Nunca pular teste para ficar verde.
 - **LGPD**: a agenda lê só livre/ocupado e nada é guardado além do token; dizer isso na tela de
-  conexão.
+  login ("pedimos para ver se você está livre ou ocupado, nunca o conteúdo dos eventos").
 
 ## 6. O que preciso de você para começar
 
 1. Respostas para D1–D8 (pode ser só "segue as recomendações").
 2. Quem na Poli tem acesso de administrador ao Google Workspace/Google Cloud (para o projeto OAuth
-   interno).
-3. A lista de quem é CN e quem é LO/Gerente hoje (para os dados iniciais da migração 2.1).
+   interno). É o que mais pode atrasar.
+3. A lista de quem é CN e quem é LO/Gerente hoje (para os dados iniciais da migração 1.1).
+4. Qual e-mail fica como conta de emergência do dono da plataforma.
