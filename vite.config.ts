@@ -34,7 +34,20 @@ export default defineConfig(({ command }) => ({
         client: { files: ["**/server/**"], specifiers: ["server-only"] },
       },
     }),
-    ...(command === "build" ? [nitro()] : []),
+    ...(command === "build"
+      ? [
+          nitro({
+            // Reconciliação diária com o Pipedrive (06h37 em Brasília). Com a Build Output API o
+            // vercel.json não vale: o cron vai no config que o nitro gera.
+            vercel: {
+              config: {
+                version: 3,
+                crons: [{ path: "/api/public/pipedrive/sincronizar", schedule: "37 9 * * *" }],
+              },
+            },
+          }),
+        ]
+      : []),
     viteReact(),
   ],
 }));

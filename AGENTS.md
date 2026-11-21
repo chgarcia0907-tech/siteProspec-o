@@ -56,13 +56,16 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   e as server functions derivam dele.
 - SQL que depende de uma versão do app já publicada (ex.: texto de modelos com tags novas)
   vai para `pendente-pos-publicacao/` e só roda depois do deploy.
-- Segredos de servidor (`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `SHEET_EXPORT_TOKEN`)
-  ficam nas variáveis de ambiente da Vercel, nunca no repositório.
+- Segredos de servidor (`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `SHEET_EXPORT_TOKEN`,
+  `PIPEDRIVE_API_TOKEN`, `PIPEDRIVE_WEBHOOK_USER`, `PIPEDRIVE_WEBHOOK_PASSWORD`, `CRON_SECRET`,
+  `ATS_INGEST_TOKEN`) ficam nas variáveis de ambiente da Vercel, nunca no repositório. As rotas
+  públicas conferem o segredo por `src/lib/segredos.server.ts`: variável ausente responde 503 dizendo
+  qual falta (problema de configuração na Vercel); segredo errado responde 401.
 
 ## Organização do código
 
 - Rotas em `src/routes/` são finas: estado da tela e composição. Componentes de uma tela ficam
-  em `src/components/<tela>/` (`auth`, `configuracoes`, `contatos`, `empresas`, `hoje`, `importar`, `inicio`, `modelos`, `semana`,
+  em `src/components/<tela>/` (`ats`, `auth`, `configuracoes`, `tasks`, `contatos`, `empresas`, `hoje`, `importar`, `inicio`, `modelos`, `semana`,
   `ranking`, `painel`); componentes usados em
   mais de uma tela ficam na raiz de `src/components/` (ex.: `SectorSelect`, `InlineInput`,
   `Funnel`); `src/components/ui/` é o shadcn/ui.
@@ -183,3 +186,60 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   O parser é o mesmo da importação (`parseLinkedInConnections`); a comparação é pura em
   `src/lib/auditoria.ts`: casa por nome+headline, depois só nome (headline mudou) e por fim
   primeiro+último nome (nome editado), sem reutilizar um contato. Não grava nada no banco.
+- Registro de ATs (substitui a planilha "Registro de ATs - NTec"): `ats` tem uma linha por AT e
+  `at_eventos` é o log só de inserção (marcada, remarcada, reaberta, no_show, realizada, cancelada,
+  etapa_pipedrive). `ats.status`, `agendada_atual` e `pipedrive_stage_id` são resumo mantido pelo
+  trigger `at_eventos_apply` (evento mais recente por `ocorrido_em`, então eventos fora de ordem não
+  estragam o resumo); `resumoAt` (`src/lib/ats.ts`) faz a mesma conta em TS: ao mudar uma, revise a
+  outra. Remarcações saem da contagem de eventos, nunca de um contador gravado. Fonte da verdade: a
+  plataforma manda nos dados da prospecção (o hunter dono edita); o Pipedrive manda no status
+  quando a AT tem `pipedrive_deal_id` (o app só registra eventos de AT sem card). Todos os logados
+  leem todas as ATs. `time_comercial` substitui a aba "Time" (login ↔ usuário e opção "Hunter" no
+  Pipedrive). Leitura das fichas do WhatsApp em `lerFicha` (mesmo formato da skill criar-card): na
+  dúvida, o campo fica em branco e o formulário pede. Ainda não entra na competição.
+- Carga da planilha de ATs (uma vez, na transição): `bun run db:carga-ats --ats ATs.csv --historico
+Historico.csv --time Time.csv` mostra o plano e os avisos; com `--gravar` (e `SUPABASE_URL` +
+  `SUPABASE_SERVICE_ROLE_KEY`) grava `time_comercial`, `ats` (origem `planilha`) e o log. A lógica é
+  pura em `src/lib/cargaAts.ts` (`planoDeCarga`): completa no log o que a linha da aba ATs tem e o
+  Histórico não, confere com `resumoAt` e avisa em vez de adivinhar. Rodar de novo não duplica: AT
+  com o mesmo card fica como está.
+- Tela de ATs (`/ats`, menu Prospecção): regras em `src/lib/ats.ts` (`linhasDaTabela`, `filtrarAts`,
+  `podeRegistrarEvento`, `formDaFicha`, `novaAtLinha`, `eventoLinha`), dados em `src/hooks/useAts.ts`,
+  componentes em `src/components/ats/`. Todos veem todas as ATs; colar a Ficha de AT preenche o
+  formulário e o contato do hunter é ligado pelo nome e empresa. Remarcar, no-show, realizada e
+  cancelar só aparecem em AT sem card para o dono ou o admin (mesma regra da política do banco). Nos
+  testes de ponta a ponta, `semAdmin()` (`e2e/helpers.ts`) tira o papel de admin do hunter logado.
+- Integração com o Pipedrive (status das ATs com card): regra pura em `src/lib/pipedrive.ts`
+  (`eventosDoPipedrive`), que olha o card (etapa, ganho/perdido) e a task "AT - 16h30 @hunter" (data,
+  hora do assunto e o campo nativo "Resultado"/outcome) e devolve os eventos que faltam no log, cada um
+  com `pipedrive_ref` único. Prioridade do desfecho: Resultado da task (Concluído → realizada, Não
+  compareceu → no_show, Cancelado → cancelada); depois card em etapa posterior à AT (31, 33–36) →
+  realizada; depois card perdido na etapa 108 → cancelada. Task aberta com outra data/hora →
+  remarcada (reabre AT com no-show). Sem nenhum desses sinais, card aberto numa etapa anterior à AT
+  (voltou no funil) → evento `reaberta` (volta a agendada, mesma data, não conta como remarcação).
+  O `pipedrive_ref` leva o momento da mudança, então avançar e voltar várias vezes registra cada vez. Servidor em `src/lib/pipedrive.server.ts` (API v2 com `PIPEDRIVE_API_TOKEN`): o webhook
+  `/api/public/pipedrive/webhook` (basic auth `PIPEDRIVE_WEBHOOK_USER`/`PASSWORD`) guarda o payload em
+  `pipedrive_webhook_log` e sincroniza o card citado; `/api/public/pipedrive/sincronizar` (cron diário da
+  Vercel, `Authorization: Bearer CRON_SECRET`, configurado no `nitro()` do `vite.config.ts`, porque
+  com a Build Output API o `vercel.json` não vale) reconcilia as ATs com card agendadas ou dos últimos
+  30 dias. Nos testes de ponta a ponta, `PIPEDRIVE_API_URL` aponta para o Pipedrive simulado em
+  `e2e/mock-supabase.mjs` (dados em `PIPEDRIVE`, `e2e/fixtures.mjs`).
+- Skill criar-card (claude.ai) grava na plataforma: `POST /api/public/ats` (Bearer `ATS_INGEST_TOKEN`)
+  com `acao` `conferir` (duplicata e card para remarcar), `marcar` (AT do card recém-criado, origem
+  `skill`; card repetido não duplica) ou `remarcar` (evento com `pipedrive_ref` pela nova data; se a
+  AT já está nessa data, porque o webhook do Pipedrive chegou antes, não grava outra e só troca o
+  motivo genérico pelo da ficha). Contrato puro em `src/lib/atsSkill.ts`, gravação em
+  `atsSkill.server.ts`. A "mensagem que converteu" em texto livre fica em `ats.mensagem_ficha` (o
+  formulário de Registrar AT também grava, pela ficha colada). O texto da skill fica versionado em
+  `docs/skills/criar-card/SKILL.md` (com o token como `COLE_AQUI_O_ATS_INGEST_TOKEN`): ao mudar o
+  contrato, atualize a skill e reenvie ao claude.ai. A planilha continua como fonte da aba Time e
+  como reserva quando a plataforma não responde.
+- Tela Tasks (`/tasks`, menu Prospecção): tasks do Pipedrive dos cards do NTec (funil 6, etiqueta 34)
+  em AT Diag. Agendada (108) e AT Diag. Realizada (31), lidas na hora por `tasksPipedrive`
+  (`src/lib/tasksHunter.functions.ts`, com `PIPEDRIVE_API_TOKEN`; nada é gravado no banco). O hunter de
+  cada card é o campo "Hunter" do card (rótulo da opção = login; "Nenhum" vira "Sem hunter"), porque as
+  tasks têm o CN como dono. O admin recebe todos os hunters; os demais, só os cards do próprio login
+  (`loginDoUsuario`). Regras puras em `src/lib/tasksHunter.ts` (`situacaoTask`: atrasada se venceu antes
+  de hoje; concluída no prazo se marcada até o dia do vencimento, no fuso de São Paulo; `resumoTasks`
+  soma por hunter e lista as abertas, mais atrasada primeiro). Nos testes de ponta a ponta, os cards e
+  as opções do campo Hunter vêm de `PIPEDRIVE.lista` e `PIPEDRIVE.dealFields` (`e2e/fixtures.mjs`).

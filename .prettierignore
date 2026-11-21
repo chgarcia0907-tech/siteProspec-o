@@ -10,3 +10,6 @@ routeTree.gen.ts
 test-results
 playwright-report
 motion-audits
+
+# Texto de skill do claude.ai: precisa ficar idêntico ao que é enviado
+docs/skills/

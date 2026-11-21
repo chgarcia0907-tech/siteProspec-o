@@ -3,8 +3,11 @@
 // e podem ser lidas em GET /__mutations. POST /__reset volta ao estado inicial e
 // POST /__seed?n=60 acrescenta n contatos simples ao hunter logado;
 // POST /__seed?hackathon=1 acrescenta um contato de período de Hackathon encerrado.
+// POST /__rpc?has_role=false troca a resposta de uma RPC até o próximo /__reset (ex.: hunter sem
+// papel de admin).
 import http from "node:http";
 import {
+  PIPEDRIVE,
   RPC,
   SERVICE_KEY,
   U1,
@@ -17,6 +20,7 @@ import {
 const PORT = Number(process.env.MOCK_SUPABASE_PORT ?? 54399);
 let db = initialDb();
 let mutations = [];
+let rpcOverride = {};
 
 function matchOne(r, k, v) {
   const m = /^(not\.)?(eq|neq|is|in|gte|lte|gt|lt|ilike)\.(.*)$/.exec(v);
@@ -134,6 +138,11 @@ http
       if (url.pathname === "/__reset") {
         db = initialDb();
         mutations = [];
+        rpcOverride = {};
+        return send(res, 200, { ok: true });
+      }
+      if (url.pathname === "/__rpc") {
+        for (const [k, v] of url.searchParams) rpcOverride[k] = JSON.parse(v);
         return send(res, 200, { ok: true });
       }
       if (url.pathname === "/__seed" && url.searchParams.get("hackathon")) {
@@ -144,11 +153,33 @@ http
         db.contacts.push(...seedContacts(Number(url.searchParams.get("n") ?? 60)));
         return send(res, 200, { ok: true });
       }
+      // Pipedrive simulado (API v2): card e tasks por id do card.
+      const pdDeal = /^\/pipedrive\/deals\/(\d+)$/.exec(url.pathname);
+      if (pdDeal) {
+        const deal = PIPEDRIVE.deals[pdDeal[1]];
+        return deal ? send(res, 200, { success: true, data: deal }) : send(res, 404, {});
+      }
+      if (url.pathname === "/pipedrive/deals") {
+        const lista = PIPEDRIVE.lista.map((d) => (typeof d === "string" ? PIPEDRIVE.deals[d] : d));
+        return send(res, 200, {
+          success: true,
+          data: lista,
+          additional_data: { next_cursor: null },
+        });
+      }
+      if (url.pathname === "/pipedrive/dealFields") {
+        return send(res, 200, { success: true, data: PIPEDRIVE.dealFields });
+      }
+      if (url.pathname === "/pipedrive/activities") {
+        const acts = PIPEDRIVE.activities[url.searchParams.get("deal_id") ?? ""] ?? [];
+        return send(res, 200, { success: true, data: acts });
+      }
       if (url.pathname === "/auth/v1/user") return send(res, 200, USER);
       if (url.pathname.startsWith("/auth/v1/")) return send(res, 200, {});
 
       const rpc = /^\/rest\/v1\/rpc\/(\w+)$/.exec(url.pathname);
-      if (rpc) return send(res, 200, RPC[rpc[1]] ?? null);
+      if (rpc)
+        return send(res, 200, rpc[1] in rpcOverride ? rpcOverride[rpc[1]] : (RPC[rpc[1]] ?? null));
       const t = /^\/rest\/v1\/(\w+)$/.exec(url.pathname);
       if (!t) return send(res, 404, { message: "not found" });
       const table = t[1];
