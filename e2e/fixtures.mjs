@@ -582,9 +582,50 @@ export const RPC = {
  * "AT Diag. Agendada" com uma task nova para 19/11 às 15h, ou seja, foi remarcado.
  */
 export const PIPEDRIVE = {
+  /** GET /deals (lista): só os cards 94307 e 94500 entram na tela Tasks. */
+  lista: [
+    "94307",
+    {
+      id: 94500,
+      title: "Sigma Fretes - Rita Lopes",
+      stage_id: 31,
+      status: "open",
+      label_ids: [34],
+      custom_fields: { "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 901 },
+    },
+    {
+      id: 94600,
+      title: "Em negociação",
+      stage_id: 35,
+      status: "open",
+      label_ids: [34],
+      custom_fields: { "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 900 },
+    },
+    {
+      id: 94700,
+      title: "Card de outro núcleo",
+      stage_id: 108,
+      status: "open",
+      label_ids: [12],
+      custom_fields: {},
+    },
+  ],
+  dealFields: [
+    {
+      field_code: "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4",
+      options: [
+        { id: 458, label: "Nenhum" },
+        { id: 900, label: "hunter1" },
+        { id: 901, label: "hunter2" },
+      ],
+    },
+  ],
   deals: {
     94307: {
       id: 94307,
+      title: "Ômega Log - Paulo Reis",
+      label_ids: [34],
+      custom_fields: { "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 900 },
       stage_id: 108,
       status: "open",
       lost_reason: null,
@@ -594,7 +635,47 @@ export const PIPEDRIVE = {
     },
   },
   activities: {
+    94500: [
+      {
+        id: 500010,
+        deal_id: 94500,
+        subject: "follow up 1",
+        type: "task",
+        due_date: "2026-11-12",
+        due_time: null,
+        done: false,
+        is_deleted: false,
+        marked_as_done_time: null,
+        outcome: null,
+      },
+      {
+        id: 500011,
+        deal_id: 94500,
+        subject: "AT - 10h @hunter2",
+        type: "meeting",
+        due_date: "2026-11-05",
+        due_time: null,
+        done: true,
+        is_deleted: false,
+        marked_as_done_time: "2026-11-06T13:00:00Z",
+        outcome: 663,
+      },
+    ],
     94307: [
+      {
+        id: 500003,
+        deal_id: 94307,
+        subject: "WhatsApp - TP3 pré-AT, enviar 14h",
+        type: "mensagem",
+        due_date: "2026-11-10",
+        due_time: null,
+        done: false,
+        is_deleted: false,
+        add_time: "2026-11-05T14:00:00Z",
+        update_time: "2026-11-05T14:00:00Z",
+        marked_as_done_time: null,
+        outcome: null,
+      },
       {
         id: 500001,
         subject: "AT - 15h @hunter2",

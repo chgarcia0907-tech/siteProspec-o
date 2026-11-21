@@ -65,7 +65,7 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 ## Organização do código
 
 - Rotas em `src/routes/` são finas: estado da tela e composição. Componentes de uma tela ficam
-  em `src/components/<tela>/` (`ats`, `auth`, `configuracoes`, `contatos`, `empresas`, `hoje`, `importar`, `inicio`, `modelos`, `semana`,
+  em `src/components/<tela>/` (`ats`, `auth`, `configuracoes`, `tasks`, `contatos`, `empresas`, `hoje`, `importar`, `inicio`, `modelos`, `semana`,
   `ranking`, `painel`); componentes usados em
   mais de uma tela ficam na raiz de `src/components/` (ex.: `SectorSelect`, `InlineInput`,
   `Funnel`); `src/components/ui/` é o shadcn/ui.
@@ -234,3 +234,12 @@ Historico.csv --time Time.csv` mostra o plano e os avisos; com `--gravar` (e `SU
   `docs/skills/criar-card/SKILL.md` (com o token como `COLE_AQUI_O_ATS_INGEST_TOKEN`): ao mudar o
   contrato, atualize a skill e reenvie ao claude.ai. A planilha continua como fonte da aba Time e
   como reserva quando a plataforma não responde.
+- Tela Tasks (`/tasks`, menu Prospecção): tasks do Pipedrive dos cards do NTec (funil 6, etiqueta 34)
+  em AT Diag. Agendada (108) e AT Diag. Realizada (31), lidas na hora por `tasksPipedrive`
+  (`src/lib/tasksHunter.functions.ts`, com `PIPEDRIVE_API_TOKEN`; nada é gravado no banco). O hunter de
+  cada card é o campo "Hunter" do card (rótulo da opção = login; "Nenhum" vira "Sem hunter"), porque as
+  tasks têm o CN como dono. O admin recebe todos os hunters; os demais, só os cards do próprio login
+  (`loginDoUsuario`). Regras puras em `src/lib/tasksHunter.ts` (`situacaoTask`: atrasada se venceu antes
+  de hoje; concluída no prazo se marcada até o dia do vencimento, no fuso de São Paulo; `resumoTasks`
+  soma por hunter e lista as abertas, mais atrasada primeiro). Nos testes de ponta a ponta, os cards e
+  as opções do campo Hunter vêm de `PIPEDRIVE.lista` e `PIPEDRIVE.dealFields` (`e2e/fixtures.mjs`).

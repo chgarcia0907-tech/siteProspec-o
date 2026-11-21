@@ -159,6 +159,17 @@ http
         const deal = PIPEDRIVE.deals[pdDeal[1]];
         return deal ? send(res, 200, { success: true, data: deal }) : send(res, 404, {});
       }
+      if (url.pathname === "/pipedrive/deals") {
+        const lista = PIPEDRIVE.lista.map((d) => (typeof d === "string" ? PIPEDRIVE.deals[d] : d));
+        return send(res, 200, {
+          success: true,
+          data: lista,
+          additional_data: { next_cursor: null },
+        });
+      }
+      if (url.pathname === "/pipedrive/dealFields") {
+        return send(res, 200, { success: true, data: PIPEDRIVE.dealFields });
+      }
       if (url.pathname === "/pipedrive/activities") {
         const acts = PIPEDRIVE.activities[url.searchParams.get("deal_id") ?? ""] ?? [];
         return send(res, 200, { success: true, data: acts });

@@ -23,6 +23,7 @@ import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedModelosRouteImport } from './routes/_authenticated/modelos'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
+import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as ApiPublicAtsRouteImport } from './routes/api/public/ats'
 import { Route as ApiPublicExportSheetRouteImport } from './routes/api/public/export-sheet'
 import { Route as ApiPublicPipedriveSincronizarRouteImport } from './routes/api/public/pipedrive/sincronizar'
@@ -101,6 +102,11 @@ const AuthenticatedRankingRoute = AuthenticatedRankingRouteImport.update({
   path: '/ranking',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicAtsRoute = ApiPublicAtsRouteImport.update({
   id: '/api/public/ats',
   path: '/api/public/ats',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/modelos': typeof AuthenticatedModelosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/tasks': typeof AuthenticatedTasksRoute
   '/api/public/ats': typeof ApiPublicAtsRoute
   '/api/public/export-sheet': typeof ApiPublicExportSheetRoute
   '/api/public/pipedrive/sincronizar': typeof ApiPublicPipedriveSincronizarRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/modelos': typeof AuthenticatedModelosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/tasks': typeof AuthenticatedTasksRoute
   '/api/public/ats': typeof ApiPublicAtsRoute
   '/api/public/export-sheet': typeof ApiPublicExportSheetRoute
   '/api/public/pipedrive/sincronizar': typeof ApiPublicPipedriveSincronizarRoute
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/_authenticated/modelos': typeof AuthenticatedModelosRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
+  '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/api/public/ats': typeof ApiPublicAtsRoute
   '/api/public/export-sheet': typeof ApiPublicExportSheetRoute
   '/api/public/pipedrive/sincronizar': typeof ApiPublicPipedriveSincronizarRoute
@@ -217,6 +226,7 @@ export interface FileRouteTypes {
     | '/modelos'
     | '/painel'
     | '/ranking'
+    | '/tasks'
     | '/api/public/ats'
     | '/api/public/export-sheet'
     | '/api/public/pipedrive/sincronizar'
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/modelos'
     | '/painel'
     | '/ranking'
+    | '/tasks'
     | '/api/public/ats'
     | '/api/public/export-sheet'
     | '/api/public/pipedrive/sincronizar'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/_authenticated/modelos'
     | '/_authenticated/painel'
     | '/_authenticated/ranking'
+    | '/_authenticated/tasks'
     | '/api/public/ats'
     | '/api/public/export-sheet'
     | '/api/public/pipedrive/sincronizar'
@@ -380,6 +392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRankingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tasks': {
+      id: '/_authenticated/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthenticatedTasksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/ats': {
       id: '/api/public/ats'
       path: '/api/public/ats'
@@ -437,6 +456,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedModelosRoute: typeof AuthenticatedModelosRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
+  AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -451,6 +471,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedModelosRoute: AuthenticatedModelosRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
+  AuthenticatedTasksRoute: AuthenticatedTasksRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
