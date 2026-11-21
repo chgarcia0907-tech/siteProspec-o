@@ -36,7 +36,11 @@ give concrete fixes; you never edit anything.
 - Security: every `*.functions.ts` handler uses `requireSupabaseAuth`, validates input with zod,
   and checks `has_role` (or `ADMIN_PASSWORD` for deletions, `src/lib/admin.functions.ts`) before
   using `supabaseAdmin`; hunter data goes through RLS; new tables have RLS and policies; no
-  secrets (`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `SHEET_EXPORT_TOKEN`) in code;
+  secrets in code (`SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `SHEET_EXPORT_TOKEN`,
+  `PIPEDRIVE_API_TOKEN`, `PIPEDRIVE_WEBHOOK_USER`, `PIPEDRIVE_WEBHOOK_PASSWORD`, `CRON_SECRET`,
+  `ATS_INGEST_TOKEN`; `docs/skills/criar-card/SKILL.md` keeps the placeholder
+  `COLE_AQUI_O_ATS_INGEST_TOKEN`); public routes under `src/routes/api/public/` check their secret
+  through `src/lib/segredos.server.ts` (missing variable → 503, wrong secret → 401);
   `*.server.ts` modules are never imported from client code.
 - Database: no edits to an applied file in `supabase/migrations/`; `src/integrations/supabase/types.ts`
   only changed via `bun run db:types`; SQL that depends on an unpublished app version belongs in
@@ -44,7 +48,9 @@ give concrete fixes; you never edit anything.
 - Domain rules: stages come from `STEPS`/`FUNNEL` (`src/lib/cadencia.ts`), not hand-written;
   `stepApplies` respected; dates via `plannedDates` (never stored); scoring changes touch both
   `isRelevantContact` and `competitionFilter` with `competition.test.ts` updated; Hackathon rule
-  changed in both TS (`isHackathonContact`) and SQL (`public.ranking()`).
+  changed in both TS (`isHackathonContact`) and SQL (`public.ranking()`); AT summary changed in
+  both TS (`resumoAt`, `src/lib/ats.ts`) and SQL (trigger `at_eventos_apply`); a change to the
+  skill contract (`src/lib/atsSkill.ts`) also updates `docs/skills/criar-card/SKILL.md`.
 - Conventions: thin routes; testable logic in `src/lib/` with tests; toasts use `errorMessage`;
   destructive actions via `useConfirm`, never `confirm()`; long lists paginate; large queries use
   `fetchAll`; UI uses only `src/styles.css` tokens (no hex, `text-[11px]`, `slate-*`, `blue-*`, `dark:`);
@@ -60,7 +66,8 @@ give concrete fixes; you never edit anything.
 - Read-only: never edit, write, format or stage files.
 - Bash only for git read commands (`git status`, `git diff`, `git log`, `git show`) and the project
   checks (`bun run lint`, `bun run typecheck`, `bun run test`, `bun run build`, `bun run e2e`).
-  Never `bun run format` (it writes files), never installs, never `db:*` scripts.
+  Never `bun run format` (it writes files), never installs, never `db:*` scripts (including
+  `bun run db:carga-ats`, which writes to the database with `--gravar`).
 - Every finding cites `file:line` and a concrete fix; no vague advice.
 
 ## Final report format

@@ -50,6 +50,9 @@ the smallest correct change, proving it with commands.
   timezone is America/Sao_Paulo.
 - Generated files (`src/integrations/supabase/types.ts`, `src/routeTree.gen.ts`) are never hand-edited.
 - If `node_modules` is missing, the checks cannot run: report that; do not install.
+- Never run `bun run db:push`, `bun run db:types` or `bun run db:carga-ats`: they reach the real
+  Supabase. Pipedrive failures in e2e come from the simulated Pipedrive in `e2e/mock-supabase.mjs`
+  (data in `PIPEDRIVE`, `e2e/fixtures.mjs`), never the real API.
 
 ## Hard rules
 

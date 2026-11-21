@@ -54,7 +54,7 @@ looks like the code already in the repo, and you leave the checks green.
 - Generated files you never edit by hand: `src/integrations/supabase/types.ts` (regenerate with
   `bun run db:types` only if the plan says so), `src/routeTree.gen.ts`.
 - Migrations: new file only, per `.claude/skills/nova-migracao/SKILL.md`; never edit an applied one;
-  never run `bun run db:push`.
+  never run `bun run db:push` or `bun run db:carga-ats` (one-off load that writes to the database).
 - Commands: `bun run format`, `bun run lint` (ESLint + Prettier), `bun run typecheck`,
   `bun run test` (Vitest; never `bun test`), `bun run build`, `bun run e2e`
   (`bun run e2e e2e/hoje.spec.ts` for one spec). There is no lint-fix script; formatting is fixed
