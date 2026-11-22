@@ -36,7 +36,10 @@ test.describe("Indicadores", () => {
 
   test("lista os atrasados do hunter e a etapa que gerou a AT", async ({ page }) => {
     await page.goto("/indicadores");
-    await page.getByRole("button", { name: "Hunter Dois" }).click();
+    await page
+      .getByRole("region", { name: "Execução da cadência por hunter" })
+      .getByRole("button", { name: "Hunter Dois" })
+      .click();
     const late = page.getByRole("row", { name: /^Karen Luz/ });
     await expect(late).toContainText("WhatsApp 1");
     await expect(late).toContainText("5 d úteis");
@@ -281,5 +284,95 @@ test.describe("Indicadores", () => {
     await barra.getByRole("button", { name: "Limpar filtros" }).click();
     await expect(page).toHaveURL(/\/indicadores$/);
     await expect(page.getByText("09/11/2026 a 15/11/2026 · comparado com")).toBeVisible();
+  });
+
+  test("o nome do hunter no alerta leva à Execução com o hunter aberto", async ({ page }) => {
+    await page.goto("/indicadores?detalhe=funil");
+    const alertas = page.getByRole("region", { name: /^Quem precisa de ajuda/ });
+    await alertas.getByRole("link", { name: "Hunter Dois" }).first().click();
+    await expect(page).toHaveURL(/aberto=22222222-/);
+    await expect(page).not.toHaveURL(/detalhe=/);
+    const exec = page.getByRole("region", { name: "Execução da cadência por hunter" });
+    await expect(exec).toBeInViewport();
+    await expect(exec.getByRole("row", { name: /^Karen Luz/ })).toBeVisible();
+    const botao = exec.getByRole("button", { name: "Hunter Dois" });
+    await expect(botao).toHaveAttribute("aria-expanded", "true");
+    await expect(botao).toBeFocused();
+    // Voltar desfaz o atalho: a linha recolhe.
+    await page.goBack();
+    await expect(page).not.toHaveURL(/aberto=/);
+    await expect(page.getByRole("tab", { name: "Funil", exact: true })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
+  test("abrir e fechar um hunter pela tabela não rola a página nem põe âncora na url", async ({
+    page,
+  }) => {
+    await page.goto("/indicadores");
+    const exec = page.getByRole("region", { name: "Execução da cadência por hunter" });
+    await expect(exec).toBeVisible();
+    await exec.scrollIntoViewIfNeeded();
+    const y = await page.evaluate(() => window.scrollY);
+    await exec.getByRole("button", { name: "Hunter Dois" }).click();
+    await expect(exec.getByRole("row", { name: /^Karen Luz/ })).toBeVisible();
+    await expect(page).toHaveURL(/aberto=22222222-/);
+    await expect(page).not.toHaveURL(/#/);
+    expect(await page.evaluate(() => window.scrollY)).toBe(y);
+    await exec.getByRole("button", { name: "Hunter Dois" }).click();
+    await expect(page).not.toHaveURL(/aberto=/);
+  });
+
+  test("os KPIs de atrasados e parados levam à Execução ordenada", async ({ page }) => {
+    await page.goto("/indicadores");
+    const exec = page.getByRole("region", { name: "Execução da cadência por hunter" });
+    await page
+      .getByRole("group", { name: "Envios atrasados agora", exact: true })
+      .getByRole("link", { name: "Ver por hunter" })
+      .click();
+    await expect(page).toHaveURL(/ordem=late/);
+    await expect(exec).toBeInViewport();
+    await expect(exec.getByRole("columnheader", { name: /Atrasados/ })).toHaveAttribute(
+      "aria-sort",
+      "descending",
+    );
+    await expect(exec.getByRole("button", { name: /Atrasados/ })).toContainText("↓");
+    await page
+      .getByRole("group", { name: "Hunters parados (2+ dias úteis)", exact: true })
+      .getByRole("link", { name: "Ver por hunter" })
+      .click();
+    await expect(page).toHaveURL(/ordem=idle/);
+    await expect(exec.getByRole("button", { name: /Último envio/ })).toContainText("↓");
+    await expect(exec).toBeInViewport();
+  });
+
+  test("a ordenação da Execução fica na url e sobrevive à troca de aba", async ({ page }) => {
+    await page.goto("/indicadores");
+    const exec = page.getByRole("region", { name: "Execução da cadência por hunter" });
+    await exec.getByRole("button", { name: "Atrasados" }).click();
+    await expect(page).toHaveURL(/ordem=late/);
+    await expect(page).not.toHaveURL(/sentido=/);
+    await exec.getByRole("button", { name: /Atrasados/ }).click();
+    await expect(page).toHaveURL(/sentido=asc/);
+    await page.getByRole("tab", { name: "Funil", exact: true }).click();
+    await page.getByRole("tab", { name: "Execução por hunter", exact: true }).click();
+    await expect(exec.getByRole("button", { name: /Atrasados/ })).toContainText("↑");
+  });
+
+  test("a ordenação com a página rolada não volta ao topo", async ({ page }) => {
+    await page.goto("/indicadores");
+    const exec = page.getByRole("region", { name: "Execução da cadência por hunter" });
+    await exec.scrollIntoViewIfNeeded();
+    await exec.getByRole("button", { name: "Atrasados" }).click();
+    await expect(page).toHaveURL(/ordem=late/);
+    await expect(exec).toBeInViewport();
+  });
+
+  test("hunter aberto fora do recorte não quebra a tela", async ({ page }) => {
+    await page.goto("/indicadores?aberto=33333333-3333-4333-8333-333333333333");
+    const exec = page.getByRole("region", { name: "Execução da cadência por hunter" });
+    await expect(exec).toBeVisible();
+    await expect(exec.locator('button[aria-expanded="true"]')).toHaveCount(0);
   });
 });

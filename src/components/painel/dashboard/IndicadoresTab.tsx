@@ -10,6 +10,8 @@ import {
   buscaDosFiltros,
   filtrosDaBusca,
   filtrosPadrao,
+  hunterIdsByName,
+  type ExecSortKey,
   resumoFiltros,
   temFiltroAtivo,
   type IndicadoresBusca,
@@ -91,6 +93,31 @@ export function IndicadoresTab({
       sectors: opcoes?.sectors ?? [],
     },
   );
+  // Ordenação e sentido da Execução (o padrão não vai para a URL).
+  const ordem: ExecSortKey = search.ordem ?? "total";
+  const padraoDesc = (k: ExecSortKey) => k !== "hunter";
+  const sort = { key: ordem, desc: search.sentido ? search.sentido === "desc" : padraoDesc(ordem) };
+  const onSort = (key: ExecSortKey) => {
+    const desc = sort.key === key ? !sort.desc : padraoDesc(key);
+    onSearch({
+      ...search,
+      ordem: key === "total" ? undefined : key,
+      sentido: desc === padraoDesc(key) ? undefined : desc ? "desc" : "asc",
+    });
+  };
+  // Atalhos para a Execução: voltam à aba padrão e levam à seção (#execucao).
+  const ids = useMemo(() => hunterIdsByName(d?.hunters ?? []), [d]);
+  const linkFor = (name: string): IndicadoresBusca | null => {
+    const id = ids.get(name);
+    return id ? { ...search, detalhe: undefined, aberto: id } : null;
+  };
+  const verPor = (key: ExecSortKey): IndicadoresBusca => ({
+    ...search,
+    detalhe: undefined,
+    aberto: undefined,
+    ordem: key === "total" ? undefined : key,
+    sentido: undefined,
+  });
   const limpar = () => onSearch({ ...search, ...buscaDosFiltros(filtrosPadrao(today)) });
   const onFilters = (f: DashFilters) => {
     const periodId = !search.periodo && f.periodId === q.data?.periodId ? null : f.periodId;
@@ -159,12 +186,12 @@ export function IndicadoresTab({
                 {formatBR(d.range.prevFrom)} a {formatBR(d.range.prevTo)}
               </p>
             </div>
-            <KpisPrincipais d={d} />
-            <KpisSecundarios d={d} />
+            <KpisPrincipais d={d} verPor={verPor} />
+            <KpisSecundarios d={d} verPor={verPor} />
           </section>
 
           <div className="grid grid-cols-2 items-stretch gap-6">
-            <Alertas d={d} />
+            <Alertas d={d} linkFor={linkFor} />
             <Metas d={d} data={q.data!} title={semana ? "Metas da semana" : "Metas do intervalo"} />
           </div>
 
@@ -189,7 +216,13 @@ export function IndicadoresTab({
                 ))}
               </TabsList>
               <TabsContent value="execucao">
-                <Execucao d={d} />
+                <Execucao
+                  d={d}
+                  sort={sort}
+                  onSort={onSort}
+                  open={search.aberto ?? null}
+                  onOpen={(id) => onSearch({ ...search, aberto: id ?? undefined })}
+                />
               </TabsContent>
               <TabsContent value="envios">
                 <Heatmap d={d} />

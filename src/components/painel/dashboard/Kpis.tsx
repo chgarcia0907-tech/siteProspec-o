@@ -1,5 +1,7 @@
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import { deltaPct, pct, type Kpi } from "@/lib/dashboard";
+import type { ExecSortKey, IndicadoresBusca } from "@/lib/indicadores";
 import { cn } from "@/lib/utils";
 import { num, pctText, type Dash } from "./format";
 
@@ -7,7 +9,14 @@ import { num, pctText, type Dash } from "./format";
  * Os 4 KPIs que respondem "a equipe está no ritmo?": o resultado (ATs, a métrica-guia), o
  * esforço, a conversão e o que está travado agora (DESIGN.md, seção 7).
  */
-export function KpisPrincipais({ d }: { d: Dash }) {
+export function KpisPrincipais({
+  d,
+  verPor,
+}: {
+  d: Dash;
+  /** Busca do atalho para a Execução ordenada por `ordem`. */
+  verPor: (ordem: ExecSortKey) => IndicadoresBusca;
+}) {
   const k = d.kpis;
   const conv = pct(k.ats.value, k.l1.value);
   const convPrev = pct(k.ats.prev ?? 0, k.l1.prev ?? 0);
@@ -20,13 +29,24 @@ export function KpisPrincipais({ d }: { d: Dash }) {
         value={pctText(conv)}
         sub={`${num(k.ats.value)} ATs ÷ ${num(k.l1.value)} LinkedIn 1 · antes ${pctText(convPrev)}`}
       />
-      <Tile label="Envios atrasados agora" value={num(k.atrasados)} alert={k.atrasados > 0} />
+      <Tile
+        label="Envios atrasados agora"
+        value={num(k.atrasados)}
+        alert={k.atrasados > 0}
+        action={k.atrasados > 0 ? { label: "Ver por hunter", search: verPor("late") } : undefined}
+      />
     </div>
   );
 }
 
 /** Faixa de KPIs secundários, abaixo dos principais. */
-export function KpisSecundarios({ d }: { d: Dash }) {
+export function KpisSecundarios({
+  d,
+  verPor,
+}: {
+  d: Dash;
+  verPor: (ordem: ExecSortKey) => IndicadoresBusca;
+}) {
   const k = d.kpis;
   return (
     <div className="grid grid-cols-6 divide-x divide-border overflow-hidden rounded-xl border bg-card">
@@ -44,6 +64,7 @@ export function KpisSecundarios({ d }: { d: Dash }) {
         label="Hunters parados (2+ dias úteis)"
         value={num(k.parados)}
         alert={k.parados > 0}
+        action={k.parados > 0 ? { label: "Ver por hunter", search: verPor("idle") } : undefined}
       />
       <Tile
         small
@@ -63,6 +84,7 @@ function Tile({
   guide,
   alert,
   small,
+  action,
 }: {
   label: string;
   kpi?: Kpi;
@@ -73,6 +95,8 @@ function Tile({
   /** Em alerta: fundo e valor em vermelho. */
   alert?: boolean;
   small?: boolean;
+  /** Atalho para a Execução por hunter, dentro do tile. */
+  action?: { label: string; search: IndicadoresBusca } | undefined;
 }) {
   const delta = kpi ? deltaPct(kpi) : null;
   return (
@@ -134,6 +158,20 @@ function Tile({
             {sub}
           </p>
         )
+      )}
+      {action && (
+        <Link
+          to="/indicadores"
+          search={action.search}
+          hash="execucao"
+          className={cn(
+            "mt-2 inline-flex items-center gap-1 rounded-sm font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+            small ? "min-h-8 text-caption" : "min-h-9 text-dense",
+          )}
+        >
+          {action.label}
+          <ArrowRight className="size-3.5" aria-hidden />
+        </Link>
       )}
     </div>
   );

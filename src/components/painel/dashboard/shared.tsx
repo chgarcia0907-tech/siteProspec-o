@@ -10,8 +10,11 @@ export function Section({
   children,
   className,
   action,
+  id,
 }: {
   title: string;
+  /** Âncora da seção (ex.: destino do atalho "Ver por hunter"). */
+  id?: string;
   hint?: string | undefined;
   children: ReactNode;
   className?: string;
@@ -19,7 +22,7 @@ export function Section({
   action?: ReactNode;
 }) {
   return (
-    <Card className={className} role="region" aria-label={title}>
+    <Card id={id} className={className} role="region" aria-label={title}>
       <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 p-5 pb-3">
         <div className="space-y-1">
           <CardTitle>{title}</CardTitle>
