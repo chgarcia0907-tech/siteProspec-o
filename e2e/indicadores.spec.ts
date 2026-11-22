@@ -395,3 +395,23 @@ test.describe("Indicadores", () => {
     await expect(ats).not.toContainText("meta");
   });
 });
+
+test.describe("Indicadores em 1280 px", () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test("alertas e metas ocupam a largura toda, um abaixo do outro, sem rolagem horizontal", async ({
+    page,
+  }) => {
+    await page.goto("/indicadores");
+    const metas = page.getByRole("region", { name: "Metas da semana" });
+    await expect(metas).toBeVisible();
+    const caixa = metas.locator(".overflow-x-auto").first();
+    const cabe = await caixa.evaluate((el) => el.scrollWidth <= el.clientWidth);
+    expect(cabe).toBe(true);
+    const alertas = page.getByRole("region", { name: /^Quem precisa de ajuda/ });
+    const a = await alertas.boundingBox();
+    const m = await metas.boundingBox();
+    expect(a!.y).toBeLessThan(m!.y);
+    expect(a!.y + a!.height).toBeLessThanOrEqual(m!.y + 1);
+  });
+});

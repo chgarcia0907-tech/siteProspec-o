@@ -190,7 +190,7 @@ export function IndicadoresTab({
             <KpisSecundarios d={d} verPor={verPor} />
           </section>
 
-          <div className="grid grid-cols-2 items-stretch gap-6">
+          <div className="space-y-6">
             <Alertas d={d} linkFor={linkFor} />
             <Metas d={d} data={q.data!} title={semana ? "Metas da semana" : "Metas do intervalo"} />
           </div>

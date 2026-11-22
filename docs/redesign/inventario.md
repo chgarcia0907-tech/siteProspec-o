@@ -519,6 +519,17 @@ filas de envio**.
       subgrupos"** (desabilitado sem subgrupos), **"Todos os hunters"** (filtrado pelo grupo),
       **"Todos os setores"** (setor da empresa) e canal **"LinkedIn e WhatsApp"** / "Só LinkedIn" /
       "Só WhatsApp".
+    - **Na URL** (`/indicadores?…`, regras em `src/lib/indicadores.ts`): `intervalo`, `de`/`ate`
+      (só intervalo livre ou período inteiro), `periodo`, `grupo`, `subgrupo`, `hunter`, `setor`,
+      `canal`, e ainda `detalhe` (aba do Detalhamento), `ordem`/`sentido` (Execução) e `aberto`
+      (hunter expandido). O valor padrão nunca vai para a URL; atalhos guardam só o nome e valem
+      em relação a hoje. Valor inválido é descartado. Filtros e abas trocam a URL com `replace`
+      (sem encher o "voltar"); os atalhos de alerta e KPI empilham uma entrada nova.
+    - **Resumo e limpeza:** com filtro fora do padrão, uma linha de chips (intervalo, período,
+      grupo, subgrupo, hunter, setor, canal) e **"Limpar filtros"** (só os filtros; aba, ordenação
+      e hunter aberto ficam). Ao rolar além do cartão, uma barra compacta fixa no topo
+      (`role="region"`, "Filtros ativos") repete os chips, com **"Editar filtros"** (volta ao
+      topo e foca o atalho de intervalo) e **"Limpar filtros"**.
   - Linha de contexto: "DD/MM/AAAA a DD/MM/AAAA · comparado com DD/MM/AAAA a DD/MM/AAAA" (o
     intervalo anterior de mesmo tamanho).
   - Os blocos abaixo aparecem nesta ordem; cada um é um `Section` (Card com título e uma frase de
@@ -529,6 +540,10 @@ filas de envio**.
        LinkedIn 1 · antes X%"); **Importados · empresas** ("N · M", "antes ..."); **Envios
        atrasados agora** e **Hunters parados (2+ dias úteis)** (em vermelho quando > 0); **Tempo
        até a resposta** ("N d úteis" ou "—", com "média desde o LinkedIn 1 · N respostas").
+       **ATs marcadas** mostra também a meta da equipe ("meta 1,6 · 63%" + ícone e rótulo do
+       semáforo, o mesmo de Metas), só com meta de ATs e dia útil no intervalo. **Envios atrasados
+       agora** e **Hunters parados** (valor > 0) têm o link **"Ver por hunter"**, que abre a
+       Execução ordenada por Atrasados / Último envio (`#execucao`).
     2. **Alertas ({N})** ("O que precisa de ação hoje."): lista com ícone e etiqueta **Alta**
        (vermelho) ou **Média** (âmbar), mais urgentes primeiro: hunter "nunca registrou um envio"
        ou "sem envio há N dias úteis" (com contatos na fila), "N contatos atrasados há mais de 5
@@ -536,7 +551,9 @@ filas de envio**.
        mensagens|ATs: real de meta (N%)" (só com 3+ dias úteis no intervalo), "empresa X (semana de
        DD/MM/AAAA) sem nenhum contato" e "setor X: cadência sem mensagem própria para {etapas} (usa
        o modelo padrão)". Até 5 tipos por hunter, mais um por empresa e por setor: a lista não tem
-       limite.
+       limite. O nome do hunter é um link para a Execução com ele expandido (`aberto`, `#execucao`);
+       nome repetido ou alerta de setor ficam como texto. **Alertas e Metas** ocupam a largura
+       toda, um abaixo do outro.
     3. **Abastecimento e qualidade dos dados** (ao lado dos alertas em `xl`): 6 mini-cartões —
        Aguardando início, Empresas da semana com contato ("N de M"), Contatos por empresa, WhatsApp
        sem telefone, Sem empresa, Sem área; os problemáticos em vermelho; a explicação de cada um
@@ -547,7 +564,8 @@ filas de envio**.
        Atrasados (com as faixas "1–2 / 3–5 / mais de 5" dias úteis), Último envio ("DD/MM" e
        "hoje" / "há N d úteis" / "nunca enviou", vermelho a partir de 2), Iniciadas, Em cadência,
        Aguardando, **Respostas**, ATs, Conversão e Descarte (17 colunas com 5 etapas). Cabeçalhos
-       clicáveis ordenam (↑/↓; padrão: Total decrescente). Clicar no hunter (chevron) expande a
+       clicáveis ordenam (↑/↓, `aria-sort`; padrão: Total decrescente; ordenação e hunter aberto ficam
+       na URL e sobrevivem à troca de aba). Clicar no hunter (chevron) expande a
        lista de atrasados (outra `<table>`): Contato, Empresa, Etapa, Prevista, Atraso (até 100,
        "mostrando os N mais antigos"). Nota de rodapé explica as faixas.
     6. **Envios por dia** (ou **por semana**, se o intervalo passa de 31 dias) (`Heatmap`): mapa de
@@ -621,7 +639,8 @@ filas de envio**.
   até hoje: "O intervalo ainda não tem dias úteis até hoje: as metas aparecem a partir do primeiro
   dia útil.".
 
-- **Ações:** filtros, ordenação da tabela de execução, expansão dos atrasados e o editor de metas
+- **Ações:** filtros (e "Limpar filtros"), atalhos "Ver por hunter" e nome do hunter nos alertas,
+  ordenação da tabela de execução, expansão dos atrasados e o editor de metas
   (única escrita da aba). Não há ações destrutivas além de "Remover" uma meta.
 - **Estados:**
   - Primeiro carregamento: "Carregando indicadores…" (os filtros já aparecem).
@@ -648,8 +667,8 @@ filas de envio**.
     que pode passar de 9 itens, metas e várias tabelas largas.
   - A tabela de execução tem 17 colunas (com 5 etapas) e exige scroll horizontal; no celular a
     coluna Hunter quebra o nome em várias linhas.
-  - Os filtros ocupam duas linhas com 6 atalhos, 2 datas e 6 selects; no celular viram um bloco
-    alto antes de qualquer número. Os selects não têm rótulo visível (só `aria-label`).
+  - Os filtros ocupam duas linhas com 6 atalhos, 2 datas e 6 selects (a barra compacta fixa os
+    mantém à vista ao rolar). Os selects não têm rótulo visível (só `aria-label`).
   - O heatmap usa só `chart-1` e mostra o número dentro da célula; com muitos dias (até 31) fica
     largo e rola na horizontal.
   - Explicações de métricas ficam em tooltips (`title`), inacessíveis no toque.
@@ -1023,7 +1042,7 @@ de empresas em `/empresas`, o placar e a tabela de atividade.
 9. **Ranking/placar:** é **só do admin** — fica na aba Competição do painel; `/ranking` redireciona
    para `/painel?aba=competicao` e a função SQL `ranking` devolve vazio para quem não é admin. Não
    voltar a mostrar placar aos hunters. A aba do painel fica na URL (`?aba=`), e links diretos
-   dependem disso. O cliente recebe só totais (`getCompetition`). Admins não aparecem. Período
+   dependem disso; `/indicadores?…` também é link direto (filtros, aba e ordenação na URL). O cliente recebe só totais (`getCompetition`). Admins não aparecem. Período
    encerrado: "Placar oficial" (snapshot) e "Maturação atual" (ao vivo) são visões distintas e
    precisam continuar distinguíveis.
 10. **AT marcada tira o contato das filas**, e a pontuação conta pela data de registro, não pela
