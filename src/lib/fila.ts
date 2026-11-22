@@ -10,7 +10,14 @@ import {
   type Offsets,
   type StepDef,
 } from "./cadencia";
-import type { SectorTemplates, TemplateText } from "./empresas";
+import {
+  sectorPath,
+  type SectorCadences,
+  type SectorNode,
+  type SectorTemplates,
+  type TemplateText,
+} from "./empresas";
+import { PERSONA_LABEL, type Persona } from "./personas";
 
 /** Período como a regra do Hackathon precisa enxergar (subconjunto de `periods`). */
 export type PeriodInfo = { id: string; status: string; kind: string; closed_at?: string | null };
@@ -146,9 +153,78 @@ export function markSentPatch(contact: Contact, step: StepDef, ref: string): Par
   return patch;
 }
 
+/** De onde veio a mensagem, da mais específica para a mais geral. */
+export type TemplateLevel = "subsetor_persona" | "subsetor" | "setor_persona" | "setor" | "padrao";
+
+export type ResolvedTemplate = TemplateText & {
+  level: TemplateLevel;
+  /** Setor ou subsetor dono da mensagem (`null` no modelo padrão). */
+  sourceSectorId: string | null;
+  /** Persona da mensagem escolhida (`null` quando vale para qualquer persona). */
+  persona: Persona | null;
+};
+
 /**
- * Modelo da etapa para o lead: a mensagem da cadência do setor da empresa, se existir;
- * senão o modelo padrão da equipe. `fromSector` diz qual dos dois foi usado.
+ * Mensagem da etapa para o lead: a primeira não vazia na ordem subsetor+persona, subsetor,
+ * setor+persona, setor, modelo padrão da equipe. Sem subsetor começa no setor+persona; sem setor
+ * vai direto ao padrão. Par SQL: `stamp_resposta_origem` (mesma ordem; ao mudar uma, revise a outra).
+ */
+export function resolveTemplate(args: {
+  step: StepDef;
+  sectorId: string | null | undefined;
+  subsectorId?: string | null;
+  persona?: Persona | null;
+  cadences: SectorCadences | undefined;
+  defaults: Partial<Record<number, TemplateText>> | undefined;
+}): ResolvedTemplate | null {
+  const { step, sectorId, subsectorId, persona, cadences, defaults } = args;
+  const tries: { level: TemplateLevel; id: string | null | undefined; persona: Persona | null }[] =
+    [
+      { level: "subsetor_persona", id: subsectorId, persona: persona ?? null },
+      { level: "subsetor", id: subsectorId, persona: null },
+      { level: "setor_persona", id: sectorId, persona: persona ?? null },
+      { level: "setor", id: sectorId, persona: null },
+    ];
+  for (const t of tries) {
+    if (!t.id) continue;
+    // Os dois níveis de persona só valem com persona informada; o resto é "qualquer persona".
+    if (t.level.endsWith("_persona") && !t.persona) continue;
+    const own = cadences?.[t.id]?.[t.persona ?? ""]?.[step.n];
+    if (own?.body.trim())
+      return {
+        code: own.code,
+        body: own.body,
+        level: t.level,
+        sourceSectorId: t.id,
+        persona: t.persona,
+      };
+  }
+  const def = defaults?.[step.n];
+  return def?.body.trim()
+    ? { code: def.code, body: def.body, level: "padrao", sourceSectorId: null, persona: null }
+    : null;
+}
+
+/**
+ * Texto de onde veio a mensagem: "Indústria › Metalurgia · Owner da Operação",
+ * "Indústria · qualquer persona" ou "Modelo padrão da equipe".
+ */
+export function templateOriginLabel(
+  t: Pick<ResolvedTemplate, "level" | "sourceSectorId" | "persona">,
+  sectors: readonly SectorNode[],
+): string {
+  if (t.level === "padrao" || !t.sourceSectorId) return "Modelo padrão da equipe";
+  const node = sectors.find((s) => s.id === t.sourceSectorId);
+  const path = node?.parent_id
+    ? sectorPath(sectors, node.parent_id, node.id)
+    : sectorPath(sectors, t.sourceSectorId);
+  return `${path} · ${t.persona ? PERSONA_LABEL[t.persona] : "qualquer persona"}`;
+}
+
+/**
+ * Modelo da etapa para o lead: a mensagem da cadência do setor da empresa (qualquer persona), se
+ * existir; senão o modelo padrão da equipe. `fromSector` diz qual dos dois foi usado. Forma
+ * compatível de `resolveTemplate` para quem ainda não conhece subsetor nem persona.
  */
 export function pickTemplate(
   step: StepDef,
@@ -156,8 +232,14 @@ export function pickTemplate(
   sectorTemplates: SectorTemplates | undefined,
   defaults: Partial<Record<number, TemplateText>> | undefined,
 ): (TemplateText & { fromSector: boolean }) | null {
-  const own = sectorId ? sectorTemplates?.[sectorId]?.[step.n] : undefined;
-  if (own?.body.trim()) return { ...own, fromSector: true };
-  const def = defaults?.[step.n];
-  return def?.body.trim() ? { ...def, fromSector: false } : null;
+  const own = sectorId ? sectorTemplates?.[sectorId] : undefined;
+  const found = resolveTemplate({
+    step,
+    sectorId,
+    cadences: sectorId && own ? { [sectorId]: { "": own } } : undefined,
+    defaults,
+  });
+  return found
+    ? { code: found.code, body: found.body, fromSector: found.level !== "padrao" }
+    : null;
 }

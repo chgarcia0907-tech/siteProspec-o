@@ -7,6 +7,7 @@ import {
 } from "./cadencia";
 import type { Company } from "./empresas";
 import { areaFromTitle, suggestCompany, type Area } from "./enriquecimento";
+import { suggestPersona, type Persona } from "./personas";
 
 export type ImportRow = ParsedContact & {
   key: string;
@@ -21,6 +22,8 @@ export type ImportRow = ParsedContact & {
   companyText: { company: string; company_gender: CompanyGender } | null;
   job_title: string;
   area: Area | null;
+  /** Persona sugerida pelo cargo (ou headline). Só vai ao banco se o hunter trocar na prévia. */
+  persona: Persona;
 };
 
 /**
@@ -46,7 +49,19 @@ export function buildImportRows(
     const companyText = guess && "company" in guess ? guess : null;
     const job_title = jobTitleFromHeadline(p.headline);
     const area = areaFromTitle(job_title, p.headline);
-    return { ...p, key, duplicate, filteredOut, noDate, suggested, companyText, job_title, area };
+    const persona = suggestPersona(job_title, p.headline);
+    return {
+      ...p,
+      key,
+      duplicate,
+      filteredOut,
+      noDate,
+      suggested,
+      companyText,
+      job_title,
+      area,
+      persona,
+    };
   });
 }
 
@@ -62,8 +77,12 @@ export const importable = (rows: readonly ImportRow[]) =>
  * o supabase-js manda NULL na coluna que falta numa linha e existe em outra; como empresa e área
  * são NOT NULL, um contato sem área no meio da lista recusava a importação inteira. Com empresa
  * cadastrada, o trigger `contacts_copy_company` troca empresa e concordância pelas do cadastro.
+ *
+ * `persona` é a escolha do hunter na prévia e só entra no payload quando ele trocou: sem a chave,
+ * o contato fica com persona nula (= "sugerida", calculada na hora). A coluna é anulável, então
+ * a chave ausente numa linha do lote (NULL) não recusa a importação.
  */
-export function importPayload(r: ImportRow, companyId: string | null) {
+export function importPayload(r: ImportRow, companyId: string | null, persona?: Persona) {
   const companyText = companyId ? null : r.companyText;
   return {
     name: r.name,
@@ -74,5 +93,6 @@ export function importPayload(r: ImportRow, companyId: string | null) {
     company: companyText?.company ?? "",
     company_gender: companyText?.company_gender ?? ("feminino" as CompanyGender),
     sector: r.area ?? "",
+    ...(persona ? { persona } : {}),
   };
 }

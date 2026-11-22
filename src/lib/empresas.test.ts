@@ -1,14 +1,23 @@
 import { describe, expect, it } from "vitest";
 import { STEPS } from "./cadencia";
 import {
+  cadenceGaps,
   groupByWeek,
   matchCompany,
   missingSteps,
   normalizeCompany,
   parseCompanyLines,
+  parseSectorOption,
+  personaFilled,
+  sectorOptions,
+  sectorPath,
   sortSectors,
+  subsectorsOf,
+  topSectors,
   weekEndISO,
   weekStartISO,
+  type SectorCadences,
+  type SectorNode,
 } from "./empresas";
 import { pickTemplate } from "./fila";
 
@@ -103,5 +112,87 @@ describe("modelo da etapa", () => {
   it("aponta as etapas que faltam na cadência do setor", () => {
     expect(missingSteps(bySector.varejo, STEPS).map((s) => s.n)).toEqual([2, 3, 4, 5]);
     expect(missingSteps(undefined, STEPS)).toHaveLength(5);
+  });
+});
+
+describe("setor e subsetor", () => {
+  const node = (
+    id: string,
+    name: string,
+    parent_id: string | null = null,
+    over: Partial<SectorNode> = {},
+  ): SectorNode => ({ id, name, parent_id, active: true, sort: 0, ...over });
+  const sectors = [
+    node("ind", "Indústria"),
+    node("var", "Varejo", null, { sort: 1 }),
+    node("met", "Metalurgia", "ind"),
+    node("alm", "Alimentos", "ind", { active: false }),
+    node("inat", "Agro", null, { active: false }),
+  ];
+
+  it("separa setores de primeiro nível e subsetores", () => {
+    expect(topSectors(sectors).map((s) => s.id)).toEqual(["inat", "ind", "var"]);
+    expect(subsectorsOf(sectors, "ind").map((s) => s.id)).toEqual(["alm", "met"]);
+    expect(subsectorsOf(sectors, "var")).toEqual([]);
+  });
+
+  it("monta o nome com o caminho", () => {
+    expect(sectorPath(sectors, "ind", "met")).toBe("Indústria › Metalurgia");
+    expect(sectorPath(sectors, "ind", null)).toBe("Indústria");
+    expect(sectorPath(sectors, "ind")).toBe("Indústria");
+    expect(sectorPath(sectors, "sumiu", "met")).toBe("");
+    expect(sectorPath(sectors, null)).toBe("");
+  });
+
+  it("opções do seletor: só ativos, setor sozinho antes dos subsetores", () => {
+    expect(sectorOptions(sectors).map((o) => o.value)).toEqual(["ind", "ind:met", "var"]);
+    expect(sectorOptions(sectors)[1]).toMatchObject({
+      label: "Metalurgia",
+      group: "Indústria",
+      sectorId: "ind",
+      subsectorId: "met",
+    });
+  });
+
+  it("o valor atual aparece mesmo inativo", () => {
+    expect(
+      sectorOptions(sectors, { sectorId: "ind", subsectorId: "alm" }).map((o) => o.value),
+    ).toEqual(["ind", "ind:alm", "ind:met", "var"]);
+    expect(sectorOptions(sectors, { sectorId: "inat" }).map((o) => o.value)).toEqual([
+      "inat",
+      "ind",
+      "ind:met",
+      "var",
+    ]);
+  });
+
+  it("decodifica o valor da opção", () => {
+    expect(parseSectorOption("ind")).toEqual({ sectorId: "ind", subsectorId: null });
+    expect(parseSectorOption("ind:met")).toEqual({ sectorId: "ind", subsectorId: "met" });
+    expect(parseSectorOption("")).toBeNull();
+  });
+});
+
+describe("cadências por persona", () => {
+  const t = (code: string) => ({ code, body: code });
+  const cadences: SectorCadences = {
+    ind: {
+      "": { 1: t("a"), 2: t("b") },
+      owner_operacao: { 1: t("c"), 3: { code: "", body: " " } },
+    },
+    met: { "": { 3: t("d") } },
+  };
+
+  it("aponta as etapas sem mensagem em qualquer persona; o subsetor herda do setor", () => {
+    expect(cadenceGaps(cadences, "ind", null).map((s) => s.n)).toEqual([3, 4, 5]);
+    expect(cadenceGaps(cadences, "ind", "met").map((s) => s.n)).toEqual([4, 5]);
+    expect(cadenceGaps(undefined, "ind", "met")).toHaveLength(STEPS.length);
+  });
+
+  it("conta as etapas preenchidas por persona", () => {
+    expect(personaFilled(cadences, "ind", "")).toBe(2);
+    expect(personaFilled(cadences, "ind", "owner_operacao")).toBe(1);
+    expect(personaFilled(cadences, "ind", "owner_tecnologia")).toBe(0);
+    expect(personaFilled(undefined, "ind", "")).toBe(0);
   });
 });

@@ -7,8 +7,11 @@ import {
   isHackathonContact,
   markSentPatch,
   missingForMessage,
+  resolveTemplate,
   splitHackathon,
+  templateOriginLabel,
 } from "./fila";
+import type { SectorCadences, SectorNode } from "./empresas";
 
 let id = 0;
 const c = (over: Partial<Contact>) =>
@@ -189,5 +192,109 @@ describe("contatos do Hackathon", () => {
     const { current, hackathon } = splitHackathon([a, b, d], h);
     expect(names(current.map((contact) => ({ contact })))).toEqual(["ciclo", "sem-periodo"]);
     expect(hackathon).toEqual([a]);
+  });
+});
+
+describe("resolveTemplate", () => {
+  const step = STEPS[3]!;
+  const t = (code: string, body = code) => ({ code, body });
+  const defaults = { 4: t("PAD4") };
+  const sectors: SectorNode[] = [
+    { id: "ind", name: "Indústria", active: true, sort: 0, parent_id: null },
+    { id: "met", name: "Metalurgia", active: true, sort: 0, parent_id: "ind" },
+  ];
+  const full: SectorCadences = {
+    met: { owner_operacao: { 4: t("MET-OP") }, "": { 4: t("MET") } },
+    ind: { owner_operacao: { 4: t("IND-OP") }, "": { 4: t("IND") } },
+  };
+  const base = {
+    step,
+    sectorId: "ind",
+    subsectorId: "met",
+    persona: "owner_operacao" as const,
+    defaults,
+  };
+
+  it("nível 1: subsetor + persona", () => {
+    expect(resolveTemplate({ ...base, cadences: full })).toEqual({
+      code: "MET-OP",
+      body: "MET-OP",
+      level: "subsetor_persona",
+      sourceSectorId: "met",
+      persona: "owner_operacao",
+    });
+  });
+  it("nível 2: subsetor, qualquer persona", () => {
+    const cadences = { ...full, met: { "": { 4: t("MET") } } };
+    expect(resolveTemplate({ ...base, cadences })).toMatchObject({
+      code: "MET",
+      level: "subsetor",
+      sourceSectorId: "met",
+      persona: null,
+    });
+  });
+  it("nível 3: setor + persona", () => {
+    const cadences = { ind: full["ind"]! };
+    expect(resolveTemplate({ ...base, cadences })).toMatchObject({
+      code: "IND-OP",
+      level: "setor_persona",
+      sourceSectorId: "ind",
+      persona: "owner_operacao",
+    });
+  });
+  it("nível 4: setor, qualquer persona", () => {
+    const cadences = { ind: { "": { 4: t("IND") } } };
+    expect(resolveTemplate({ ...base, cadences })).toMatchObject({
+      code: "IND",
+      level: "setor",
+      persona: null,
+    });
+  });
+  it("nível 5: modelo padrão", () => {
+    expect(resolveTemplate({ ...base, cadences: {} })).toEqual({
+      code: "PAD4",
+      body: "PAD4",
+      level: "padrao",
+      sourceSectorId: null,
+      persona: null,
+    });
+  });
+  it("empresa sem subsetor começa no setor + persona", () => {
+    expect(resolveTemplate({ ...base, subsectorId: null, cadences: full })?.level).toBe(
+      "setor_persona",
+    );
+  });
+  it("persona de outro papel não vale; cai em qualquer persona", () => {
+    const r = resolveTemplate({ ...base, persona: "owner_tecnologia", cadences: full });
+    expect(r).toMatchObject({ code: "MET", level: "subsetor" });
+  });
+  it("sem persona informada, ignora os níveis de persona", () => {
+    expect(resolveTemplate({ ...base, persona: null, cadences: full })?.code).toBe("MET");
+  });
+  it("corpo só com espaços é ignorado e cai de nível", () => {
+    const cadences = { ...full, met: { owner_operacao: { 4: t("MET-OP", "   ") }, "": {} } };
+    expect(resolveTemplate({ ...base, cadences })?.code).toBe("IND-OP");
+  });
+  it("sem setor vai direto ao padrão; sem padrão devolve null", () => {
+    expect(
+      resolveTemplate({ ...base, sectorId: null, subsectorId: null, cadences: full }),
+    ).toMatchObject({
+      level: "padrao",
+    });
+    expect(
+      resolveTemplate({ ...base, sectorId: null, subsectorId: null, cadences: full, defaults: {} }),
+    ).toBeNull();
+    expect(resolveTemplate({ ...base, cadences: undefined, defaults: undefined })).toBeNull();
+  });
+
+  it("templateOriginLabel nos três formatos", () => {
+    const sub = resolveTemplate({ ...base, cadences: full })!;
+    expect(templateOriginLabel(sub, sectors)).toBe("Indústria › Metalurgia · Owner da Operação");
+    const setor = resolveTemplate({ ...base, subsectorId: null, persona: null, cadences: full })!;
+    expect(templateOriginLabel(setor, sectors)).toBe("Indústria · qualquer persona");
+    const sub2 = resolveTemplate({ ...base, persona: null, cadences: full })!;
+    expect(templateOriginLabel(sub2, sectors)).toBe("Indústria › Metalurgia · qualquer persona");
+    const pad = resolveTemplate({ ...base, cadences: {} })!;
+    expect(templateOriginLabel(pad, sectors)).toBe("Modelo padrão da equipe");
   });
 });
