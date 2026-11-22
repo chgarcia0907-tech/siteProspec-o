@@ -176,8 +176,8 @@ export type ResolvedTemplate = TemplateText & {
 export function resolveTemplate(args: {
   step: StepDef;
   sectorId: string | null | undefined;
-  subsectorId?: string | null;
-  persona?: Persona | null;
+  subsectorId?: string | null | undefined;
+  persona?: Persona | null | undefined;
   cadences: SectorCadences | undefined;
   defaults: Partial<Record<number, TemplateText>> | undefined;
 }): ResolvedTemplate | null {
