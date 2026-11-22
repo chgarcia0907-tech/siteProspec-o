@@ -243,4 +243,43 @@ test.describe("Indicadores", () => {
     await expect(page.getByRole("group", { name: "ATs marcadas", exact: true })).toBeVisible();
     await expect(page).toHaveURL(/\/indicadores$/);
   });
+
+  test("o cartão de filtros resume o recorte e limpa os filtros", async ({ page }) => {
+    await page.goto("/indicadores");
+    await expect(page.getByRole("group", { name: "ATs marcadas", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Limpar filtros" })).toHaveCount(0);
+    await page.goto("/indicadores?grupo=bbbbbbbb-0000-4000-8000-000000000001");
+    const chips = page.getByRole("list", { name: "Filtros aplicados" });
+    await expect(chips).toContainText("Esta semana");
+    await expect(chips).toContainText("Squad Azul");
+    await page.getByRole("button", { name: "Limpar filtros" }).click();
+    await expect(page).toHaveURL(/\/indicadores$/);
+    await expect(page.getByRole("button", { name: "Limpar filtros" })).toHaveCount(0);
+  });
+
+  test("a barra compacta aparece ao rolar e leva de volta aos filtros", async ({ page }) => {
+    await page.goto("/indicadores?intervalo=semana_passada");
+    const barra = page.getByRole("region", { name: "Filtros ativos" });
+    await expect(page.getByText("02/11/2026 a 08/11/2026 · comparado com")).toBeVisible();
+    await expect(barra).toBeHidden();
+    await page
+      .getByRole("region", { name: "Execução da cadência por hunter" })
+      .scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(barra).toBeVisible();
+    await expect(barra).toContainText("Semana passada");
+    await barra.getByRole("button", { name: "Editar filtros" }).click();
+    await expect(page.getByRole("button", { name: "Semana passada", exact: true })).toBeFocused();
+    await expect(barra).toBeHidden();
+  });
+
+  test("Limpar filtros da barra compacta volta ao padrão", async ({ page }) => {
+    await page.goto("/indicadores?intervalo=semana_passada");
+    await expect(page.getByText("02/11/2026 a 08/11/2026 · comparado com")).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    const barra = page.getByRole("region", { name: "Filtros ativos" });
+    await barra.getByRole("button", { name: "Limpar filtros" }).click();
+    await expect(page).toHaveURL(/\/indicadores$/);
+    await expect(page.getByText("09/11/2026 a 15/11/2026 · comparado com")).toBeVisible();
+  });
 });

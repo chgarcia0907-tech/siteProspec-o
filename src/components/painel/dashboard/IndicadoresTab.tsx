@@ -9,6 +9,9 @@ import {
   DETALHE_ABAS,
   buscaDosFiltros,
   filtrosDaBusca,
+  filtrosPadrao,
+  resumoFiltros,
+  temFiltroAtivo,
   type IndicadoresBusca,
 } from "@/lib/indicadores";
 import { painelDashboard } from "@/lib/painel.functions";
@@ -67,6 +70,28 @@ export function IndicadoresTab({
   const shown: DashFilters = { ...filters, periodId: filters.periodId ?? q.data?.periodId ?? null };
   const semana = filters.preset === "semana";
   // O período escolhido pelo servidor só é exibido: nunca vai para a URL.
+  // O resumo parte dos filtros da URL (não do período do servidor); sem as opções ainda, só o intervalo.
+  const opcoes = q.data?.options;
+  const chips = resumoFiltros(
+    opcoes
+      ? filters
+      : {
+          ...filters,
+          periodId: null,
+          groupId: null,
+          subgroupId: null,
+          hunterId: null,
+          sectorId: null,
+        },
+    {
+      periods: opcoes?.periods ?? [],
+      groups: opcoes?.groups ?? [],
+      subgroups: opcoes?.subgroups ?? [],
+      hunters: opcoes?.hunters ?? [],
+      sectors: opcoes?.sectors ?? [],
+    },
+  );
+  const limpar = () => onSearch({ ...search, ...buscaDosFiltros(filtrosPadrao(today)) });
   const onFilters = (f: DashFilters) => {
     const periodId = !search.periodo && f.periodId === q.data?.periodId ? null : f.periodId;
     onSearch({ ...search, ...buscaDosFiltros({ ...f, periodId }) });
@@ -74,7 +99,14 @@ export function IndicadoresTab({
 
   return (
     <div className="space-y-6">
-      <Filters value={shown} onChange={onFilters} options={q.data?.options} today={today} />
+      <Filters
+        value={shown}
+        onChange={onFilters}
+        options={opcoes}
+        today={today}
+        chips={chips}
+        onClear={temFiltroAtivo(search) ? limpar : undefined}
+      />
       {q.isError && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive-border bg-destructive-soft/40 px-4 py-3">
           <p className="text-dense text-destructive-text">
