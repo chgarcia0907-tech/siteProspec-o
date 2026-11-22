@@ -50,7 +50,7 @@ export function Rodape() {
         </div>
         <div className="mt-14 flex items-end justify-between gap-8 text-body">
           <div className="space-y-2">
-            <Marca className="block text-lead" />
+            <Marca className="flex text-lead" />
             <p className="text-muted-foreground">
               Ferramenta interna da equipe de prospecção. O cadastro é para hunters da equipe.
             </p>
