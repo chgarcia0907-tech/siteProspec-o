@@ -23,6 +23,7 @@ import {
   filterContacts,
   withSyncedStatus,
   type MissingFilter,
+  type RespostaFilter,
   type StatusFilter,
 } from "@/lib/contatos";
 import { downloadCsv } from "@/lib/download";
@@ -66,13 +67,14 @@ function Contatos() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
   const [missing, setMissing] = useState<MissingFilter>("todos");
+  const [resposta, setResposta] = useState<RespostaFilter>("todos");
   const [page, setPage] = useState(0);
   // A busca filtra milhares de contatos: o campo responde na hora e a tabela acompanha em seguida.
   const deferredSearch = useDeferredValue(search);
 
   const rows = useMemo(
-    () => filterContacts(contacts ?? [], deferredSearch, statusFilter, missing),
-    [contacts, deferredSearch, statusFilter, missing],
+    () => filterContacts(contacts ?? [], deferredSearch, statusFilter, missing, resposta),
+    [contacts, deferredSearch, statusFilter, missing, resposta],
   );
   const paged = paginate(rows, page, PAGE_SIZE);
   const save = (contact: Contact, patch: Partial<Contact>) =>
@@ -95,6 +97,11 @@ function Contatos() {
         missing={missing}
         onMissing={(v) => {
           setMissing(v);
+          setPage(0);
+        }}
+        resposta={resposta}
+        onResposta={(v) => {
+          setResposta(v);
           setPage(0);
         }}
         actions={

@@ -197,10 +197,7 @@ export const RESPOSTA_TIPO_LABEL: Record<RespostaTipo, string> = {
  * A mudança marca "respondeu" num contato que ainda não estava nessa situação: o hunter diz se a
  * resposta foi positiva ou negativa (pergunta de novo se o contato voltou à cadência antes).
  */
-export function needsResponseKind(
-  c: Pick<Contact, "status">,
-  patch: Partial<Pick<Contact, "status" | "resposta_tipo">>,
-): boolean {
+export function needsResponseKind(c: Pick<Contact, "status">, patch: Partial<Contact>): boolean {
   return patch.status === "respondeu" && c.status !== "respondeu" && patch.resposta_tipo == null;
 }
 

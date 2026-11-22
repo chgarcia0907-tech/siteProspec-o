@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAtsRouteImport } from './routes/_authenticated/ats'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedContatosRouteImport } from './routes/_authenticated/contatos'
 import { Route as AuthenticatedEmpresasRouteImport } from './routes/_authenticated/empresas'
@@ -22,7 +23,11 @@ import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedModelosRouteImport } from './routes/_authenticated/modelos'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedRankingRouteImport } from './routes/_authenticated/ranking'
+import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
+import { Route as ApiPublicAtsRouteImport } from './routes/api/public/ats'
 import { Route as ApiPublicExportSheetRouteImport } from './routes/api/public/export-sheet'
+import { Route as ApiPublicPipedriveSincronizarRouteImport } from './routes/api/public/pipedrive/sincronizar'
+import { Route as ApiPublicPipedriveWebhookRouteImport } from './routes/api/public/pipedrive/webhook'
 import { Route as ApiPublicPlanilhaContatosDotcsvRouteImport } from './routes/api/public/planilha/contatos[.]csv'
 import { Route as ApiPublicPlanilhaRankingDotcsvRouteImport } from './routes/api/public/planilha/ranking[.]csv'
 
@@ -39,6 +44,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAtsRoute = AuthenticatedAtsRouteImport.update({
+  id: '/ats',
+  path: '/ats',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
@@ -92,11 +102,33 @@ const AuthenticatedRankingRoute = AuthenticatedRankingRouteImport.update({
   path: '/ranking',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiPublicAtsRoute = ApiPublicAtsRouteImport.update({
+  id: '/api/public/ats',
+  path: '/api/public/ats',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicExportSheetRoute = ApiPublicExportSheetRouteImport.update({
   id: '/api/public/export-sheet',
   path: '/api/public/export-sheet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPipedriveSincronizarRoute =
+  ApiPublicPipedriveSincronizarRouteImport.update({
+    id: '/api/public/pipedrive/sincronizar',
+    path: '/api/public/pipedrive/sincronizar',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPipedriveWebhookRoute =
+  ApiPublicPipedriveWebhookRouteImport.update({
+    id: '/api/public/pipedrive/webhook',
+    path: '/api/public/pipedrive/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPlanilhaContatosDotcsvRoute =
   ApiPublicPlanilhaContatosDotcsvRouteImport.update({
     id: '/api/public/planilha/contatos.csv',
@@ -113,6 +145,7 @@ const ApiPublicPlanilhaRankingDotcsvRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ats': typeof AuthenticatedAtsRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contatos': typeof AuthenticatedContatosRoute
   '/empresas': typeof AuthenticatedEmpresasRoute
@@ -123,13 +156,18 @@ export interface FileRoutesByFullPath {
   '/modelos': typeof AuthenticatedModelosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/tasks': typeof AuthenticatedTasksRoute
+  '/api/public/ats': typeof ApiPublicAtsRoute
   '/api/public/export-sheet': typeof ApiPublicExportSheetRoute
+  '/api/public/pipedrive/sincronizar': typeof ApiPublicPipedriveSincronizarRoute
+  '/api/public/pipedrive/webhook': typeof ApiPublicPipedriveWebhookRoute
   '/api/public/planilha/contatos.csv': typeof ApiPublicPlanilhaContatosDotcsvRoute
   '/api/public/planilha/ranking.csv': typeof ApiPublicPlanilhaRankingDotcsvRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/ats': typeof AuthenticatedAtsRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contatos': typeof AuthenticatedContatosRoute
   '/empresas': typeof AuthenticatedEmpresasRoute
@@ -140,7 +178,11 @@ export interface FileRoutesByTo {
   '/modelos': typeof AuthenticatedModelosRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/ranking': typeof AuthenticatedRankingRoute
+  '/tasks': typeof AuthenticatedTasksRoute
+  '/api/public/ats': typeof ApiPublicAtsRoute
   '/api/public/export-sheet': typeof ApiPublicExportSheetRoute
+  '/api/public/pipedrive/sincronizar': typeof ApiPublicPipedriveSincronizarRoute
+  '/api/public/pipedrive/webhook': typeof ApiPublicPipedriveWebhookRoute
   '/api/public/planilha/contatos.csv': typeof ApiPublicPlanilhaContatosDotcsvRoute
   '/api/public/planilha/ranking.csv': typeof ApiPublicPlanilhaRankingDotcsvRoute
 }
@@ -149,6 +191,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/ats': typeof AuthenticatedAtsRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/contatos': typeof AuthenticatedContatosRoute
   '/_authenticated/empresas': typeof AuthenticatedEmpresasRoute
@@ -159,7 +202,11 @@ export interface FileRoutesById {
   '/_authenticated/modelos': typeof AuthenticatedModelosRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/ranking': typeof AuthenticatedRankingRoute
+  '/_authenticated/tasks': typeof AuthenticatedTasksRoute
+  '/api/public/ats': typeof ApiPublicAtsRoute
   '/api/public/export-sheet': typeof ApiPublicExportSheetRoute
+  '/api/public/pipedrive/sincronizar': typeof ApiPublicPipedriveSincronizarRoute
+  '/api/public/pipedrive/webhook': typeof ApiPublicPipedriveWebhookRoute
   '/api/public/planilha/contatos.csv': typeof ApiPublicPlanilhaContatosDotcsvRoute
   '/api/public/planilha/ranking.csv': typeof ApiPublicPlanilhaRankingDotcsvRoute
 }
@@ -168,6 +215,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/ats'
     | '/configuracoes'
     | '/contatos'
     | '/empresas'
@@ -178,13 +226,18 @@ export interface FileRouteTypes {
     | '/modelos'
     | '/painel'
     | '/ranking'
+    | '/tasks'
+    | '/api/public/ats'
     | '/api/public/export-sheet'
+    | '/api/public/pipedrive/sincronizar'
+    | '/api/public/pipedrive/webhook'
     | '/api/public/planilha/contatos.csv'
     | '/api/public/planilha/ranking.csv'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/ats'
     | '/configuracoes'
     | '/contatos'
     | '/empresas'
@@ -195,7 +248,11 @@ export interface FileRouteTypes {
     | '/modelos'
     | '/painel'
     | '/ranking'
+    | '/tasks'
+    | '/api/public/ats'
     | '/api/public/export-sheet'
+    | '/api/public/pipedrive/sincronizar'
+    | '/api/public/pipedrive/webhook'
     | '/api/public/planilha/contatos.csv'
     | '/api/public/planilha/ranking.csv'
   id:
@@ -203,6 +260,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/ats'
     | '/_authenticated/configuracoes'
     | '/_authenticated/contatos'
     | '/_authenticated/empresas'
@@ -213,7 +271,11 @@ export interface FileRouteTypes {
     | '/_authenticated/modelos'
     | '/_authenticated/painel'
     | '/_authenticated/ranking'
+    | '/_authenticated/tasks'
+    | '/api/public/ats'
     | '/api/public/export-sheet'
+    | '/api/public/pipedrive/sincronizar'
+    | '/api/public/pipedrive/webhook'
     | '/api/public/planilha/contatos.csv'
     | '/api/public/planilha/ranking.csv'
   fileRoutesById: FileRoutesById
@@ -222,7 +284,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicAtsRoute: typeof ApiPublicAtsRoute
   ApiPublicExportSheetRoute: typeof ApiPublicExportSheetRoute
+  ApiPublicPipedriveSincronizarRoute: typeof ApiPublicPipedriveSincronizarRoute
+  ApiPublicPipedriveWebhookRoute: typeof ApiPublicPipedriveWebhookRoute
   ApiPublicPlanilhaContatosDotcsvRoute: typeof ApiPublicPlanilhaContatosDotcsvRoute
   ApiPublicPlanilhaRankingDotcsvRoute: typeof ApiPublicPlanilhaRankingDotcsvRoute
 }
@@ -249,6 +314,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/ats': {
+      id: '/_authenticated/ats'
+      path: '/ats'
+      fullPath: '/ats'
+      preLoaderRoute: typeof AuthenticatedAtsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/configuracoes': {
       id: '/_authenticated/configuracoes'
@@ -320,11 +392,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRankingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tasks': {
+      id: '/_authenticated/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AuthenticatedTasksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/ats': {
+      id: '/api/public/ats'
+      path: '/api/public/ats'
+      fullPath: '/api/public/ats'
+      preLoaderRoute: typeof ApiPublicAtsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/export-sheet': {
       id: '/api/public/export-sheet'
       path: '/api/public/export-sheet'
       fullPath: '/api/public/export-sheet'
       preLoaderRoute: typeof ApiPublicExportSheetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/pipedrive/sincronizar': {
+      id: '/api/public/pipedrive/sincronizar'
+      path: '/api/public/pipedrive/sincronizar'
+      fullPath: '/api/public/pipedrive/sincronizar'
+      preLoaderRoute: typeof ApiPublicPipedriveSincronizarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/pipedrive/webhook': {
+      id: '/api/public/pipedrive/webhook'
+      path: '/api/public/pipedrive/webhook'
+      fullPath: '/api/public/pipedrive/webhook'
+      preLoaderRoute: typeof ApiPublicPipedriveWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/planilha/contatos.csv': {
@@ -345,6 +445,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAtsRoute: typeof AuthenticatedAtsRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedContatosRoute: typeof AuthenticatedContatosRoute
   AuthenticatedEmpresasRoute: typeof AuthenticatedEmpresasRoute
@@ -355,9 +456,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedModelosRoute: typeof AuthenticatedModelosRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedRankingRoute: typeof AuthenticatedRankingRoute
+  AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAtsRoute: AuthenticatedAtsRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedContatosRoute: AuthenticatedContatosRoute,
   AuthenticatedEmpresasRoute: AuthenticatedEmpresasRoute,
@@ -368,6 +471,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedModelosRoute: AuthenticatedModelosRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedRankingRoute: AuthenticatedRankingRoute,
+  AuthenticatedTasksRoute: AuthenticatedTasksRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -377,7 +481,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicAtsRoute: ApiPublicAtsRoute,
   ApiPublicExportSheetRoute: ApiPublicExportSheetRoute,
+  ApiPublicPipedriveSincronizarRoute: ApiPublicPipedriveSincronizarRoute,
+  ApiPublicPipedriveWebhookRoute: ApiPublicPipedriveWebhookRoute,
   ApiPublicPlanilhaContatosDotcsvRoute: ApiPublicPlanilhaContatosDotcsvRoute,
   ApiPublicPlanilhaRankingDotcsvRoute: ApiPublicPlanilhaRankingDotcsvRoute,
 }

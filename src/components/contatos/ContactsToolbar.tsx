@@ -13,7 +13,9 @@ import { STATUS_LABEL } from "@/lib/cadencia";
 import {
   CONTACT_STATUSES,
   MISSING_LABEL,
+  RESPOSTA_FILTER_LABEL,
   type MissingFilter,
+  type RespostaFilter,
   type StatusFilter,
 } from "@/lib/contatos";
 
@@ -29,6 +31,8 @@ export function ContactsToolbar({
   onStatus,
   missing,
   onMissing,
+  resposta,
+  onResposta,
   actions,
   onExport,
 }: {
@@ -39,6 +43,8 @@ export function ContactsToolbar({
   onStatus: (v: StatusFilter) => void;
   missing: MissingFilter;
   onMissing: (v: MissingFilter) => void;
+  resposta: RespostaFilter;
+  onResposta: (v: RespostaFilter) => void;
   /** Botões extras (ex.: preenchimento automático). */
   actions?: ReactNode;
   onExport: () => void;
@@ -99,6 +105,18 @@ export function ContactsToolbar({
           {(Object.keys(MISSING_LABEL) as MissingFilter[]).map((m) => (
             <option key={m} value={m}>
               {MISSING_LABEL[m]}
+            </option>
+          ))}
+        </NativeSelect>
+        <NativeSelect
+          aria-label="Resposta"
+          className="w-48"
+          value={resposta}
+          onChange={(e) => onResposta(e.target.value as RespostaFilter)}
+        >
+          {(Object.keys(RESPOSTA_FILTER_LABEL) as RespostaFilter[]).map((r) => (
+            <option key={r} value={r}>
+              {RESPOSTA_FILTER_LABEL[r]}
             </option>
           ))}
         </NativeSelect>

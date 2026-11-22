@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { AlertCircle, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { pct } from "@/lib/dashboard";
+import type { IndicadoresBusca } from "@/lib/indicadores";
 import { cn } from "@/lib/utils";
 import { Section } from "./shared";
 import { dm, num, pctText, type Dash } from "./format";
@@ -146,7 +148,14 @@ function Rate({ n, of, mature }: { n: number; of: number; mature: boolean }) {
 const ALERTS_SHOWN = 5;
 
 /** Lista do que precisa de ação hoje, mais urgente primeiro (os 5 primeiros; o resto abre sob demanda). */
-export function Alertas({ d }: { d: Dash }) {
+export function Alertas({
+  d,
+  linkFor,
+}: {
+  d: Dash;
+  /** Busca do atalho para a Execução do hunter; nulo quando o nome não leva a um hunter só. */
+  linkFor: (name: string) => IndicadoresBusca | null;
+}) {
   const [all, setAll] = useState(false);
   const shown = all ? d.alerts : d.alerts.slice(0, ALERTS_SHOWN);
   return (
@@ -159,24 +168,45 @@ export function Alertas({ d }: { d: Dash }) {
       ) : (
         <>
           <ul className="divide-y">
-            {shown.map((a, i) => (
-              <li key={i} className="flex items-start gap-3 py-2.5 text-dense first:pt-0 last:pb-0">
-                <span
-                  className={cn(
-                    "mt-px w-14 shrink-0 rounded-sm py-0.5 text-center text-caption font-bold uppercase",
-                    a.level === "alta"
-                      ? "bg-destructive-soft text-destructive-text"
-                      : "bg-warning-soft text-warning-text",
-                  )}
+            {shown.map((a, i) => {
+              const to = a.hunter ? linkFor(a.hunter) : null;
+              return (
+                <li
+                  key={i}
+                  className="flex items-start gap-3 py-2.5 text-dense first:pt-0 last:pb-0"
                 >
-                  {a.level === "alta" ? "Alta" : "Média"}
-                </span>
-                <span>
-                  {a.hunter && <strong className="text-heading">{a.hunter}: </strong>}
-                  {a.text}
-                </span>
-              </li>
-            ))}
+                  <span
+                    className={cn(
+                      "mt-px w-14 shrink-0 rounded-sm py-0.5 text-center text-caption font-bold uppercase",
+                      a.level === "alta"
+                        ? "bg-destructive-soft text-destructive-text"
+                        : "bg-warning-soft text-warning-text",
+                    )}
+                  >
+                    {a.level === "alta" ? "Alta" : "Média"}
+                  </span>
+                  <span>
+                    {a.hunter &&
+                      (to ? (
+                        <>
+                          <Link
+                            to="/indicadores"
+                            search={to}
+                            hash="execucao"
+                            className="font-semibold text-heading underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                          >
+                            {a.hunter}
+                          </Link>
+                          {": "}
+                        </>
+                      ) : (
+                        <strong className="text-heading">{a.hunter}: </strong>
+                      ))}
+                    {a.text}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
           {d.alerts.length > ALERTS_SHOWN && (
             <Button

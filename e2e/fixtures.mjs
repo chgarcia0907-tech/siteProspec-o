@@ -35,6 +35,7 @@ const blank = {
   step1_date: null,
   respondeu_em: null,
   resposta_etapa: null,
+  resposta_tipo: null,
   resposta_modelo: null,
   sent1_at: null,
   sent2_at: null,
@@ -118,6 +119,7 @@ export function makeContacts() {
       sent1_at: "2026-10-20",
       sent2_at: "2026-10-21",
       status: "respondeu",
+      resposta_tipo: "positiva",
       at_marcada_em: "2026-11-14",
       at_registrado_em: "2026-11-06T13:00:00Z",
     }),
@@ -371,6 +373,155 @@ export function initialDb() {
       },
     ],
     admin_attempts: [],
+    time_comercial: [
+      {
+        login: "hunter1",
+        nome: "Hunter Um",
+        papel: "hunter",
+        apelidos: ["Hunter Um"],
+        ativo: true,
+        user_id: U1,
+      },
+      {
+        login: "hunter2",
+        nome: "Hunter Dois",
+        papel: "hunter",
+        apelidos: ["Hunter Dois"],
+        ativo: true,
+        user_id: U2,
+      },
+      {
+        login: "ana.cn",
+        nome: "Ana Coordenadora",
+        papel: "cn",
+        apelidos: ["Ana", "Aninha"],
+        ativo: true,
+        user_id: null,
+      },
+      {
+        login: "rui.cn",
+        nome: "Rui Coordenador",
+        papel: "cn",
+        apelidos: ["Rui"],
+        ativo: true,
+        user_id: null,
+      },
+    ],
+    ats: [
+      at({
+        id: AT_ALFA,
+        user_id: U1,
+        hunter_login: "hunter1",
+        cn_login: "ana.cn",
+        empresa: "Alfa",
+        prospect: "Ana Souza",
+        cargo: "Diretora de Operações",
+        canal: "LinkedIn",
+        motivo_prospeccao: "Operação grande com processos manuais.",
+        agendada_original: "2026-11-13T13:00:00+00:00",
+        agendada_atual: "2026-11-17T17:00:00+00:00",
+        registrada_em: "2026-11-10T15:00:00+00:00",
+      }),
+      at({
+        id: AT_OMEGA,
+        user_id: U2,
+        hunter_login: "hunter2",
+        cn_login: "rui.cn",
+        empresa: "Ômega Log",
+        prospect: "Paulo Reis",
+        canal: "WhatsApp",
+        status: "realizada",
+        agendada_original: "2026-11-11T18:00:00+00:00",
+        agendada_atual: "2026-11-11T18:00:00+00:00",
+        registrada_em: "2026-11-05T14:00:00+00:00",
+        origem: "skill",
+        pipedrive_deal_id: 94307,
+      }),
+      at({
+        id: AT_SIGMA,
+        user_id: U2,
+        hunter_login: "hunter2",
+        cn_login: "ana.cn",
+        empresa: "Sigma",
+        prospect: "Lia Prado",
+        canal: "E-mail",
+        status: "no_show",
+        agendada_original: "2026-11-09T12:00:00+00:00",
+        agendada_atual: "2026-11-09T12:00:00+00:00",
+        registrada_em: "2026-11-04T14:00:00+00:00",
+      }),
+    ],
+    at_eventos: [
+      ev(AT_ALFA, 1, "marcada", "2026-11-10T15:00:00+00:00", {
+        horario_novo: "2026-11-13T13:00:00+00:00",
+      }),
+      ev(AT_ALFA, 2, "remarcada", "2026-11-12T12:00:00+00:00", {
+        horario_anterior: "2026-11-13T13:00:00+00:00",
+        horario_novo: "2026-11-17T17:00:00+00:00",
+        motivo: "Prospect pediu outro dia",
+      }),
+      ev(AT_OMEGA, 3, "marcada", "2026-11-05T14:00:00+00:00", {
+        horario_novo: "2026-11-11T18:00:00+00:00",
+        origem: "skill",
+      }),
+      ev(AT_OMEGA, 4, "realizada", "2026-11-11T19:00:00+00:00", { origem: "pipedrive_webhook" }),
+      ev(AT_SIGMA, 5, "marcada", "2026-11-04T14:00:00+00:00", {
+        horario_novo: "2026-11-09T12:00:00+00:00",
+      }),
+      ev(AT_SIGMA, 6, "no_show", "2026-11-09T13:00:00+00:00", { motivo: "Não entrou na sala" }),
+    ],
+  };
+}
+
+export const AT_ALFA = "15151515-0000-4000-8000-000000000001";
+const AT_OMEGA = "15151515-0000-4000-8000-000000000002";
+const AT_SIGMA = "15151515-0000-4000-8000-000000000003";
+
+/** Linha de `ats` com os campos que o teste não precisa variar. */
+function at(o) {
+  return {
+    tipo: "diagnostico",
+    mensagem_ficha: null,
+    contact_id: null,
+    resposta_etapa: null,
+    resposta_modelo: null,
+    cargo: null,
+    setor: null,
+    linkedin: null,
+    motivo_prospeccao: null,
+    ficha_original: null,
+    status: "agendada",
+    status_em: null,
+    pipedrive_deal_id: null,
+    pipedrive_person_id: null,
+    pipedrive_org_id: null,
+    pipedrive_stage_id: null,
+    pipedrive_activity_at_id: null,
+    pipedrive_activity_tp1_id: null,
+    pipedrive_activity_tp3_id: null,
+    pipedrive_activity_tp4_id: null,
+    origem: "app",
+    created_by: o.user_id,
+    created_at: o.registrada_em,
+    updated_at: o.registrada_em,
+    ...o,
+  };
+}
+
+/** Evento do log de uma AT. */
+function ev(at_id, n, evento, ocorrido_em, o = {}) {
+  return {
+    id: `16161616-0000-4000-8000-${String(n).padStart(12, "0")}`,
+    at_id,
+    evento,
+    ocorrido_em,
+    created_at: ocorrido_em,
+    horario_anterior: null,
+    horario_novo: null,
+    motivo: null,
+    origem: "app",
+    pipedrive_stage_id: null,
+    ...o,
   };
 }
 
@@ -426,4 +577,133 @@ export const RPC = {
       respostas: 0,
     },
   ],
+};
+
+/**
+ * Pipedrive simulado: o card 94307 (AT da Ômega Log, realizada em 11/11 no banco) voltou para
+ * "AT Diag. Agendada" com uma task nova para 19/11 às 15h, ou seja, foi remarcado.
+ */
+export const PIPEDRIVE = {
+  /** GET /deals (lista): só os cards 94307 e 94500 entram na tela Tasks. */
+  lista: [
+    "94307",
+    {
+      id: 94500,
+      title: "Sigma Fretes - Rita Lopes",
+      stage_id: 31,
+      status: "open",
+      label_ids: [34],
+      custom_fields: { "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 901 },
+    },
+    {
+      id: 94600,
+      title: "Em negociação",
+      stage_id: 35,
+      status: "open",
+      label_ids: [34],
+      custom_fields: { "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 900 },
+    },
+    {
+      id: 94700,
+      title: "Card de outro núcleo",
+      stage_id: 108,
+      status: "open",
+      label_ids: [12],
+      custom_fields: {},
+    },
+  ],
+  dealFields: [
+    {
+      field_code: "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4",
+      options: [
+        { id: 458, label: "Nenhum" },
+        { id: 900, label: "hunter1" },
+        { id: 901, label: "hunter2" },
+      ],
+    },
+  ],
+  deals: {
+    94307: {
+      id: 94307,
+      title: "Ômega Log - Paulo Reis",
+      label_ids: [34],
+      custom_fields: { "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 900 },
+      stage_id: 108,
+      status: "open",
+      lost_reason: null,
+      update_time: "2026-11-12T13:00:00Z",
+      stage_change_time: "2026-11-12T13:00:00Z",
+      lost_time: null,
+    },
+  },
+  activities: {
+    94500: [
+      {
+        id: 500010,
+        deal_id: 94500,
+        subject: "follow up 1",
+        type: "task",
+        due_date: "2026-11-12",
+        due_time: null,
+        done: false,
+        is_deleted: false,
+        marked_as_done_time: null,
+        outcome: null,
+      },
+      {
+        id: 500011,
+        deal_id: 94500,
+        subject: "AT - 10h @hunter2",
+        type: "meeting",
+        due_date: "2026-11-05",
+        due_time: null,
+        done: true,
+        is_deleted: false,
+        marked_as_done_time: "2026-11-06T13:00:00Z",
+        outcome: 663,
+      },
+    ],
+    94307: [
+      {
+        id: 500003,
+        deal_id: 94307,
+        subject: "WhatsApp - TP3 pré-AT, enviar 14h",
+        type: "mensagem",
+        due_date: "2026-11-10",
+        due_time: null,
+        done: false,
+        is_deleted: false,
+        add_time: "2026-11-05T14:00:00Z",
+        update_time: "2026-11-05T14:00:00Z",
+        marked_as_done_time: null,
+        outcome: null,
+      },
+      {
+        id: 500001,
+        subject: "AT - 15h @hunter2",
+        type: "meeting",
+        due_date: "2026-11-11",
+        due_time: null,
+        done: true,
+        is_deleted: false,
+        add_time: "2026-11-05T14:00:00Z",
+        update_time: "2026-11-11T19:00:00Z",
+        marked_as_done_time: "2026-11-11T19:00:00Z",
+        outcome: 664,
+      },
+      {
+        id: 500002,
+        subject: "AT - 15h @hunter2",
+        type: "reuniao_remarcada",
+        due_date: "2026-11-19",
+        due_time: null,
+        done: false,
+        is_deleted: false,
+        add_time: "2026-11-12T13:05:00Z",
+        update_time: "2026-11-12T13:05:00Z",
+        marked_as_done_time: null,
+        outcome: null,
+      },
+    ],
+  },
 };

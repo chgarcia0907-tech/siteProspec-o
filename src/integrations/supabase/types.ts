@@ -29,6 +29,178 @@ export type Database = {
         };
         Relationships: [];
       };
+      at_eventos: {
+        Row: {
+          at_id: string;
+          autor: string | null;
+          created_at: string;
+          evento: string;
+          horario_anterior: string | null;
+          horario_novo: string | null;
+          id: string;
+          motivo: string | null;
+          ocorrido_em: string;
+          origem: string;
+          pipedrive_ref: string | null;
+          pipedrive_stage_id: number | null;
+        };
+        Insert: {
+          at_id: string;
+          autor?: string | null;
+          created_at?: string;
+          evento: string;
+          horario_anterior?: string | null;
+          horario_novo?: string | null;
+          id?: string;
+          motivo?: string | null;
+          ocorrido_em?: string;
+          origem?: string;
+          pipedrive_ref?: string | null;
+          pipedrive_stage_id?: number | null;
+        };
+        Update: {
+          at_id?: string;
+          autor?: string | null;
+          created_at?: string;
+          evento?: string;
+          horario_anterior?: string | null;
+          horario_novo?: string | null;
+          id?: string;
+          motivo?: string | null;
+          ocorrido_em?: string;
+          origem?: string;
+          pipedrive_ref?: string | null;
+          pipedrive_stage_id?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "at_eventos_at_id_fkey";
+            columns: ["at_id"];
+            isOneToOne: false;
+            referencedRelation: "ats";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ats: {
+        Row: {
+          agendada_atual: string;
+          agendada_original: string;
+          canal: string | null;
+          cargo: string | null;
+          cn_login: string | null;
+          contact_id: string | null;
+          created_at: string;
+          created_by: string | null;
+          empresa: string;
+          ficha_original: string | null;
+          hunter_login: string | null;
+          id: string;
+          linkedin: string | null;
+          mensagem_ficha: string | null;
+          motivo_prospeccao: string | null;
+          origem: string;
+          pipedrive_activity_at_id: number | null;
+          pipedrive_activity_tp1_id: number | null;
+          pipedrive_activity_tp3_id: number | null;
+          pipedrive_activity_tp4_id: number | null;
+          pipedrive_deal_id: number | null;
+          pipedrive_org_id: number | null;
+          pipedrive_person_id: number | null;
+          pipedrive_stage_id: number | null;
+          prospect: string;
+          registrada_em: string;
+          resposta_etapa: number | null;
+          resposta_modelo: string | null;
+          setor: string | null;
+          status: string;
+          status_em: string | null;
+          tipo: string;
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          agendada_atual: string;
+          agendada_original: string;
+          canal?: string | null;
+          cargo?: string | null;
+          cn_login?: string | null;
+          contact_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          empresa: string;
+          ficha_original?: string | null;
+          hunter_login?: string | null;
+          id?: string;
+          linkedin?: string | null;
+          mensagem_ficha?: string | null;
+          motivo_prospeccao?: string | null;
+          origem?: string;
+          pipedrive_activity_at_id?: number | null;
+          pipedrive_activity_tp1_id?: number | null;
+          pipedrive_activity_tp3_id?: number | null;
+          pipedrive_activity_tp4_id?: number | null;
+          pipedrive_deal_id?: number | null;
+          pipedrive_org_id?: number | null;
+          pipedrive_person_id?: number | null;
+          pipedrive_stage_id?: number | null;
+          prospect: string;
+          registrada_em?: string;
+          resposta_etapa?: number | null;
+          resposta_modelo?: string | null;
+          setor?: string | null;
+          status?: string;
+          status_em?: string | null;
+          tipo?: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          agendada_atual?: string;
+          agendada_original?: string;
+          canal?: string | null;
+          cargo?: string | null;
+          cn_login?: string | null;
+          contact_id?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          empresa?: string;
+          ficha_original?: string | null;
+          hunter_login?: string | null;
+          id?: string;
+          linkedin?: string | null;
+          mensagem_ficha?: string | null;
+          motivo_prospeccao?: string | null;
+          origem?: string;
+          pipedrive_activity_at_id?: number | null;
+          pipedrive_activity_tp1_id?: number | null;
+          pipedrive_activity_tp3_id?: number | null;
+          pipedrive_activity_tp4_id?: number | null;
+          pipedrive_deal_id?: number | null;
+          pipedrive_org_id?: number | null;
+          pipedrive_person_id?: number | null;
+          pipedrive_stage_id?: number | null;
+          prospect?: string;
+          registrada_em?: string;
+          resposta_etapa?: number | null;
+          resposta_modelo?: string | null;
+          setor?: string | null;
+          status?: string;
+          status_em?: string | null;
+          tipo?: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ats_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       companies: {
         Row: {
           created_at: string;
@@ -511,6 +683,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      pipedrive_webhook_log: {
+        Row: {
+          erro: string | null;
+          evento: string | null;
+          id: number;
+          objeto_id: number | null;
+          payload: Json;
+          processado_em: string | null;
+          recebido_em: string;
+        };
+        Insert: {
+          erro?: string | null;
+          evento?: string | null;
+          id?: number;
+          objeto_id?: number | null;
+          payload: Json;
+          processado_em?: string | null;
+          recebido_em?: string;
+        };
+        Update: {
+          erro?: string | null;
+          evento?: string | null;
+          id?: number;
+          objeto_id?: number | null;
+          payload?: Json;
+          processado_em?: string | null;
+          recebido_em?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           created_at: string;
@@ -722,6 +924,45 @@ export type Database = {
           step?: number;
           updated_at?: string;
           user_id?: string;
+        };
+        Relationships: [];
+      };
+      time_comercial: {
+        Row: {
+          apelidos: string[];
+          ativo: boolean;
+          created_at: string;
+          login: string;
+          nome: string;
+          papel: string;
+          pipedrive_hunter_option_id: number | null;
+          pipedrive_user_id: number | null;
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          apelidos?: string[];
+          ativo?: boolean;
+          created_at?: string;
+          login: string;
+          nome: string;
+          papel: string;
+          pipedrive_hunter_option_id?: number | null;
+          pipedrive_user_id?: number | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          apelidos?: string[];
+          ativo?: boolean;
+          created_at?: string;
+          login?: string;
+          nome?: string;
+          papel?: string;
+          pipedrive_hunter_option_id?: number | null;
+          pipedrive_user_id?: number | null;
+          updated_at?: string;
+          user_id?: string | null;
         };
         Relationships: [];
       };

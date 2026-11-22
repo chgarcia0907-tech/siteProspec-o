@@ -1,11 +1,10 @@
-import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import type { GoalMetric, GoalProgress, GoalSet, GoalStatus } from "@/lib/dashboard";
+import type { GoalMetric, GoalProgress, GoalSet } from "@/lib/dashboard";
 import { cn } from "@/lib/utils";
 import { GoalsDialog } from "./GoalsDialog";
 import { Section } from "./shared";
-import { num, type Dash, type DashData } from "./format";
+import { GOAL_STATUS, num, type Dash, type DashData } from "./format";
 
 const METRICS: { key: GoalMetric; label: string; unit?: string }[] = [
   { key: "envios", label: "Mensagens" },
@@ -13,15 +12,6 @@ const METRICS: { key: GoalMetric; label: string; unit?: string }[] = [
   { key: "ats", label: "ATs" },
   { key: "noPrazo", label: "No prazo", unit: "%" },
 ];
-
-const STATUS: Record<
-  GoalStatus,
-  { label: string; icon: typeof CheckCircle2; cls: string; bar: string }
-> = {
-  ok: { label: "Na meta", icon: CheckCircle2, cls: "text-success", bar: "bg-success" },
-  atencao: { label: "Perto", icon: AlertCircle, cls: "text-warning-text", bar: "bg-warning" },
-  abaixo: { label: "Abaixo", icon: XCircle, cls: "text-destructive-text", bar: "bg-destructive" },
-};
 
 /** Metas por hunter com semáforo (ícone + rótulo, nunca só cor) e o editor de metas. */
 export function Metas({ d, data, title = "Metas" }: { d: Dash; data: DashData; title?: string }) {
@@ -112,7 +102,7 @@ function GoalRow({ name, goals, strong }: { name: string; goals: GoalSet; strong
 
 function Progress({ p, unit = "" }: { p: GoalProgress | null; unit?: string | undefined }) {
   if (!p) return <span className="text-muted-foreground">—</span>;
-  const st = STATUS[p.status];
+  const st = GOAL_STATUS[p.status];
   const Icon = st.icon;
   const fill = p.target > 0 ? Math.min(100, (p.real / p.target) * 100) : 0;
   return (
