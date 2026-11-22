@@ -5,8 +5,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
-import { STEPS } from "./cadencia";
-import { PERSONA_KEYS, isPersona, type Persona } from "./personas";
+import { cadenceInputSchema } from "./setores.schema";
 
 type Ctx = { supabase: SupabaseClient<Database>; userId: string };
 
@@ -70,28 +69,7 @@ export const sectorSave = createServerFn({ method: "POST" })
  */
 export const sectorSaveCadence = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) =>
-    z
-      .object({
-        sectorId: z.string().uuid(),
-        steps: z
-          .array(
-            z.object({
-              step: z.number().int().min(1).max(STEPS.length),
-              persona: z
-                .string()
-                .refine((v) => v === "" || isPersona(v), "Persona inválida")
-                .transform((v) => v as Persona | "")
-                .default(""),
-              code: z.string().trim().max(20),
-              body: z.string().max(4000),
-            }),
-          )
-          .min(1)
-          .max(STEPS.length * (PERSONA_KEYS.length + 1)),
-      })
-      .parse(d),
-  )
+  .inputValidator((d) => cadenceInputSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const db = await admin();
@@ -120,6 +98,7 @@ export const sectorDelete = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const db = await admin();
+    // A interpolação no .or() é segura só porque `id` é validado como uuid pelo zod acima: mantenha.
     const { count, error: countError } = await db
       .from("companies")
       .select("id", { count: "exact", head: true })
@@ -130,7 +109,7 @@ export const sectorDelete = createServerFn({ method: "POST" })
       .select("id", { count: "exact", head: true })
       .eq("parent_id", data.id);
     if (subsError) throw new Error("Falha ao verificar subsetores");
-    if (subs) throw new Error("Exclua ou desative os subsetores antes");
+    if (subs) throw new Error("Exclua os subsetores antes (ou desative o setor)");
     if (count) throw new Error(`Setor usado por ${count} empresa(s): desative em vez de excluir`);
     const { error } = await db.from("sectors").delete().eq("id", data.id);
     if (error) throw new Error("Falha ao excluir o setor");
