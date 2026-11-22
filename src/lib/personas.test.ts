@@ -40,6 +40,7 @@ describe("suggestPersona", () => {
     ["Sócia", "patrocinador_executivo"],
     ["Sócios Fundadores", "patrocinador_executivo"],
     ["Cofundador", "patrocinador_executivo"],
+    ["Fundadora", "patrocinador_executivo"],
     ["Owner", "patrocinador_executivo"],
     // operação
     ["Gerente de Compras", "owner_operacao"],
@@ -91,6 +92,11 @@ describe("suggestPersona", () => {
     expect(suggestPersona("Product Owner")).toBe("owner_operacao");
     // Sem palavra de tecnologia: cai no padrão.
     expect(suggestPersona("Engenheiro de Software")).toBe("owner_operacao");
+  });
+
+  it("trata acento solto (texto decomposto) como o acento junto", () => {
+    expect(suggestPersona("Li\u0301der de Time")).toBe("owner_processo");
+    expect(suggestPersona("Dire\u0301tor de TI")).toBe("owner_tecnologia");
   });
 
   it("usa o headline quando o cargo não diz nada", () => {
@@ -170,6 +176,10 @@ describe("par com o SQL (match_persona)", () => {
     const pos = PERSONA_RULES.map((r) => body.indexOf(`RETURN '${r.persona}'`));
     expect([...pos].sort((a, b) => a - b)).toEqual(pos);
     expect(pos.every((p) => p >= 0)).toBe(true);
+  });
+
+  it("tira acento solto no SQL, sem depender de normalize()", () => {
+    expect(body).toContain("[\\u0300-\\u036f]");
   });
 
   it("devolve owner_operacao como padrão em suggest_persona", () => {

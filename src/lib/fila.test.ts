@@ -287,6 +287,18 @@ describe("resolveTemplate", () => {
     expect(resolveTemplate({ ...base, cadences: undefined, defaults: undefined })).toBeNull();
   });
 
+  it("setor ou subsetor inativo continua valendo para quem já o usa", () => {
+    const inativos: SectorNode[] = sectors.map((s) => ({ ...s, active: false }));
+    const r = resolveTemplate({ ...base, cadences: full })!;
+    expect(r.level).toBe("subsetor_persona");
+    expect(templateOriginLabel(r, inativos)).toBe("Indústria › Metalurgia · Owner da Operação");
+  });
+
+  it("templateOriginLabel cai em 'Setor' quando o setor de origem não existe mais", () => {
+    const r = resolveTemplate({ ...base, subsectorId: null, cadences: full })!;
+    expect(templateOriginLabel(r, [])).toBe("Setor · Owner da Operação");
+  });
+
   it("templateOriginLabel nos três formatos", () => {
     const sub = resolveTemplate({ ...base, cadences: full })!;
     expect(templateOriginLabel(sub, sectors)).toBe("Indústria › Metalurgia · Owner da Operação");

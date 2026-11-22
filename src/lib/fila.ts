@@ -168,6 +168,10 @@ export type ResolvedTemplate = TemplateText & {
  * Mensagem da etapa para o lead: a primeira não vazia na ordem subsetor+persona, subsetor,
  * setor+persona, setor, modelo padrão da equipe. Sem subsetor começa no setor+persona; sem setor
  * vai direto ao padrão. Par SQL: `stamp_resposta_origem` (mesma ordem; ao mudar uma, revise a outra).
+ *
+ * Para um contato, passe `contactPersona(c).persona` (a persona efetiva): o trigger SQL sempre usa
+ * `COALESCE(persona, suggest_persona(cargo, headline))`, então a fila e o `resposta_modelo`
+ * carimbado só concordam se o chamador também usar a efetiva.
  */
 export function resolveTemplate(args: {
   step: StepDef;
@@ -215,9 +219,10 @@ export function templateOriginLabel(
 ): string {
   if (t.level === "padrao" || !t.sourceSectorId) return "Modelo padrão da equipe";
   const node = sectors.find((s) => s.id === t.sourceSectorId);
-  const path = node?.parent_id
-    ? sectorPath(sectors, node.parent_id, node.id)
-    : sectorPath(sectors, t.sourceSectorId);
+  const path =
+    (node?.parent_id
+      ? sectorPath(sectors, node.parent_id, node.id)
+      : sectorPath(sectors, t.sourceSectorId)) || "Setor";
   return `${path} · ${t.persona ? PERSONA_LABEL[t.persona] : "qualquer persona"}`;
 }
 
