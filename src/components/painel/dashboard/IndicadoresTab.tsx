@@ -1,11 +1,16 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Info } from "lucide-react";
-import { useState } from "react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatBR, spParts } from "@/lib/cadencia";
-import { presetRange } from "@/lib/dashboard";
+import {
+  DETALHE_ABAS,
+  buscaDosFiltros,
+  filtrosDaBusca,
+  type IndicadoresBusca,
+} from "@/lib/indicadores";
 import { painelDashboard } from "@/lib/painel.functions";
 import { cn } from "@/lib/utils";
 import { Execucao, Heatmap, Ritmo } from "./Execucao";
@@ -39,19 +44,16 @@ const DETALHE = [
  * Aba "Indicadores": primeiro a pergunta "a equipe está no ritmo?" (KPIs), depois quem precisa
  * de ajuda e as metas, e o detalhamento um nível abaixo, em abas internas.
  */
-export function IndicadoresTab() {
+export function IndicadoresTab({
+  search,
+  onSearch,
+}: {
+  search: IndicadoresBusca;
+  onSearch: (next: IndicadoresBusca) => void;
+}) {
   const today = spParts().iso;
-  const [filters, setFilters] = useState<DashFilters>(() => ({
-    preset: "semana",
-    ...presetRange("semana", today),
-    periodId: null,
-    groupId: null,
-    subgroupId: null,
-    hunterId: null,
-    sectorId: null,
-    channel: "todos",
-  }));
-  const [detalhe, setDetalhe] = useState<string>("execucao");
+  const filters = useMemo(() => filtrosDaBusca(search, today), [search, today]);
+  const detalhe = search.detalhe ?? "execucao";
   const fn = useServerFn(painelDashboard);
   const { preset: _preset, ...input } = filters;
   const q = useQuery({
@@ -64,10 +66,15 @@ export function IndicadoresTab() {
   // O servidor escolhe o período ativo quando nenhum foi escolhido; o filtro passa a mostrá-lo.
   const shown: DashFilters = { ...filters, periodId: filters.periodId ?? q.data?.periodId ?? null };
   const semana = filters.preset === "semana";
+  // O período escolhido pelo servidor só é exibido: nunca vai para a URL.
+  const onFilters = (f: DashFilters) => {
+    const periodId = !search.periodo && f.periodId === q.data?.periodId ? null : f.periodId;
+    onSearch({ ...search, ...buscaDosFiltros({ ...f, periodId }) });
+  };
 
   return (
     <div className="space-y-6">
-      <Filters value={shown} onChange={setFilters} options={q.data?.options} today={today} />
+      <Filters value={shown} onChange={onFilters} options={q.data?.options} today={today} />
       {q.isError && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive-border bg-destructive-soft/40 px-4 py-3">
           <p className="text-dense text-destructive-text">
@@ -133,7 +140,15 @@ export function IndicadoresTab() {
             <h2 id="detalhe-titulo" className="text-section font-semibold">
               Detalhamento
             </h2>
-            <Tabs value={detalhe} onValueChange={setDetalhe}>
+            <Tabs
+              value={detalhe}
+              onValueChange={(v) =>
+                onSearch({
+                  ...search,
+                  detalhe: DETALHE_ABAS.find((a) => a === v && a !== "execucao"),
+                })
+              }
+            >
               <TabsList className="h-auto flex-wrap justify-start">
                 {DETALHE.map(([v, label]) => (
                   <TabsTrigger key={v} value={v}>

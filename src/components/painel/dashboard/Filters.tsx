@@ -2,19 +2,10 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { RANGE_LABEL, presetRange, type ChannelFilter, type RangePreset } from "@/lib/dashboard";
+import type { IndicadoresFiltros } from "@/lib/indicadores";
 import type { DashData } from "./format";
 
-export type DashFilters = {
-  from: string;
-  to: string;
-  preset: RangePreset | "periodo" | "livre";
-  periodId: string | null;
-  groupId: string | null;
-  subgroupId: string | null;
-  hunterId: string | null;
-  sectorId: string | null;
-  channel: ChannelFilter;
-};
+export type DashFilters = IndicadoresFiltros;
 
 /** Filtros em uma linha, acima de tudo: valem para a página inteira. */
 export function Filters({

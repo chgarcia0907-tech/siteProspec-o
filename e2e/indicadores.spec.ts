@@ -181,4 +181,66 @@ test.describe("Indicadores", () => {
     await bloco.getByRole("button", { name: "Conexões" }).click();
     await expect(bloco.getByRole("button", { name: /Conexões/ })).toContainText("↓");
   });
+
+  test("filtros e aba ficam na url e voltam ao recarregar", async ({ page }) => {
+    await page.goto(
+      "/indicadores?intervalo=semana_passada&grupo=bbbbbbbb-0000-4000-8000-000000000001",
+    );
+    await expect(page.getByText("02/11/2026 a 08/11/2026 · comparado com")).toBeVisible();
+    const tile = (name: string) => page.getByRole("group", { name, exact: true });
+    await expect(tile("Mensagens enviadas")).toContainText("4");
+    await expect(page.getByRole("combobox", { name: "Grupo", exact: true })).toHaveValue(
+      "bbbbbbbb-0000-4000-8000-000000000001",
+    );
+    await page.getByRole("button", { name: "Esta semana" }).click();
+    await expect(page).not.toHaveURL(/intervalo=/);
+    await page.getByRole("button", { name: "Semana passada" }).click();
+    await expect(page).toHaveURL(/intervalo=semana_passada/);
+    await expect(page).not.toHaveURL(/periodo=/);
+    await page.reload();
+    await expect(page.getByText("02/11/2026 a 08/11/2026 · comparado com")).toBeVisible();
+  });
+
+  test("voltar a todos os grupos tira o grupo da url", async ({ page }) => {
+    await page.goto("/indicadores");
+    const grupo = page.getByRole("combobox", { name: "Grupo", exact: true });
+    await grupo.selectOption({ label: "Squad Azul" });
+    await expect(page).toHaveURL(/grupo=bbbbbbbb/);
+    await grupo.selectOption({ label: "Todos os grupos" });
+    await expect(page).not.toHaveURL(/grupo=/);
+  });
+
+  test("a aba do detalhamento fica na url", async ({ page }) => {
+    await page.goto("/indicadores");
+    await page.getByRole("tab", { name: "Funil", exact: true }).click();
+    await expect(page).toHaveURL(/detalhe=funil/);
+    await page.getByRole("tab", { name: "Execução por hunter", exact: true }).click();
+    await expect(page).not.toHaveURL(/detalhe=/);
+    await page.goto("/indicadores?detalhe=origem");
+    await expect(page.getByRole("region", { name: "Canal de entrada" })).toBeVisible();
+  });
+
+  test("trocar a aba com a página rolada não volta ao topo", async ({ page }) => {
+    await page.goto("/indicadores");
+    await expect(page.getByRole("tab", { name: "Funil", exact: true })).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, 500));
+    await page.getByRole("tab", { name: "Funil", exact: true }).click();
+    await expect(page).toHaveURL(/detalhe=funil/);
+    await expect(page.getByRole("region", { name: "Funil no intervalo" })).toBeVisible();
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  });
+
+  test("url inválida cai no padrão sem erro", async ({ page }) => {
+    await page.goto(
+      "/indicadores?intervalo=xyz&grupo=nao-e-uuid&de=2026-11-20&ate=2026-11-01&canal=email",
+    );
+    await expect(page.getByText("09/11/2026 a 15/11/2026 · comparado com")).toBeVisible();
+    await expect(page.getByText("Não foi possível carregar os indicadores.")).toHaveCount(0);
+  });
+
+  test("a tela padrão não escreve nada na url", async ({ page }) => {
+    await page.goto("/indicadores");
+    await expect(page.getByRole("group", { name: "ATs marcadas", exact: true })).toBeVisible();
+    await expect(page).toHaveURL(/\/indicadores$/);
+  });
 });
