@@ -267,7 +267,15 @@ export const painelDashboard = createServerFn({ method: "POST" })
       // Só setores de primeiro nível: `companies.sector_id` nunca é subsetor, então subsetores
       // não casariam com nenhuma empresa no filtro e no alerta de cadência.
       db.from("sectors").select("id, name, active, sort").is("parent_id", null),
-      db.from("sector_templates").select("sector_id, persona, step, code, body"),
+      fetchAll((a, b) =>
+        db
+          .from("sector_templates")
+          .select("sector_id, persona, step, code, body")
+          .order("sector_id")
+          .order("persona")
+          .order("step")
+          .range(a, b),
+      ).then((data) => ({ data, error: null })),
       db
         .from("goals")
         .select("id, user_id, group_id, envios_dia, l1_semana, ats_semana, no_prazo_pct"),

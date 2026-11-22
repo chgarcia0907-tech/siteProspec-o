@@ -314,17 +314,26 @@ export function useSectorTree() {
   });
 }
 
+/** Todas as linhas de `sector_templates` (passa de 1.000 com subsetores e personas). */
+const fetchTemplateRows = () =>
+  fetchAll((a, b) =>
+    supabase
+      .from("sector_templates")
+      .select("sector_id, persona, step, code, body")
+      .order("sector_id")
+      .order("persona")
+      .order("step")
+      .range(a, b),
+  );
+
 /** Mensagens "qualquer persona" das cadências (setor → etapa → modelo). */
 export function useSectorTemplates() {
   return useQuery({
     queryKey: ["sector_templates"],
     queryFn: async (): Promise<SectorTemplates> => {
-      const { data, error } = await supabase
-        .from("sector_templates")
-        .select("sector_id, persona, step, code, body");
-      if (error) throw error;
+      const data = await fetchTemplateRows();
       const map: SectorTemplates = {};
-      for (const row of data ?? []) {
+      for (const row of data) {
         // O filtro fica aqui (e não na consulta) para uma linha sem o campo, como nos dados de teste, valer.
         if ((row.persona ?? "") !== "") continue;
         const step = row.step as 1 | 2 | 3 | 4 | 5;
@@ -341,12 +350,9 @@ export function useSectorCadences() {
   return useQuery({
     queryKey: ["sector_templates", "cadences"],
     queryFn: async (): Promise<SectorCadences> => {
-      const { data, error } = await supabase
-        .from("sector_templates")
-        .select("sector_id, persona, step, code, body");
-      if (error) throw error;
+      const data = await fetchTemplateRows();
       const map: SectorCadences = {};
-      for (const row of data ?? []) {
+      for (const row of data) {
         const step = row.step as 1 | 2 | 3 | 4 | 5;
         const persona = (row.persona ?? "") as PersonaKey;
         ((map[row.sector_id] ??= {})[persona] ??= {})[step] = { code: row.code, body: row.body };
