@@ -175,7 +175,8 @@ AT da equipe em `bg-primary-soft`, vaga livre em `bg-surface-inset`, atrasados e
 
 ## 6a. Nome da plataforma
 
-O nome é **Outbound NTec**, com "NTec" em `text-primary`. Use sempre o componente `Marca`
+O nome é **Outbound NTec**, com "NTec" em `text-primary`, precedido do macaquinho do NTec
+(`public/favicon.png`, o mesmo do favicon, decorativo). Use sempre o componente `Marca`
 (`src/components/Marca.tsx`) na navegação lateral e nas páginas públicas; nos títulos das abas
 do navegador, o texto simples "Outbound NTec".
 
