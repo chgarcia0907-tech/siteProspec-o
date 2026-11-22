@@ -16,9 +16,6 @@
 --   resolveTemplate (src/lib/fila.ts)                  <->  stamp_resposta_origem abaixo
 --   (ordem: subsetor+persona, subsetor, setor+persona, setor, modelo padrão)
 
--- Falha rápido em vez de travar a tabela esperando um bloqueio (vale só nesta transação).
-SET LOCAL lock_timeout = '5s';
-
 -- ---------------------------------------------------------------------------------------------
 -- Subsetores
 -- ---------------------------------------------------------------------------------------------
@@ -36,10 +33,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS sectors_name_key ON public.sectors (
 CREATE OR REPLACE FUNCTION public.sector_check_level()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
 BEGIN
-  -- O pai não muda depois de criado: trocar o pai moveria as empresas do subsetor de setor.
-  IF TG_OP = 'UPDATE' AND NEW.parent_id IS DISTINCT FROM OLD.parent_id THEN
-    RAISE EXCEPTION 'O setor pai não pode ser trocado';
-  END IF;
   IF NEW.parent_id IS NULL THEN
     RETURN NEW;
   END IF;
@@ -48,6 +41,9 @@ BEGIN
   END IF;
   IF EXISTS (SELECT 1 FROM public.sectors WHERE id = NEW.parent_id AND parent_id IS NOT NULL) THEN
     RAISE EXCEPTION 'Subsetor não pode ter subsetores';
+  END IF;
+  IF TG_OP = 'UPDATE' AND EXISTS (SELECT 1 FROM public.sectors WHERE parent_id = NEW.id) THEN
+    RAISE EXCEPTION 'Um setor com subsetores não pode virar subsetor';
   END IF;
   RETURN NEW;
 END $$;
@@ -106,8 +102,7 @@ ALTER TABLE public.sector_templates ADD PRIMARY KEY (sector_id, persona, step);
 -- ---------------------------------------------------------------------------------------------
 -- Sugestão de persona pelo cargo (espelho de src/lib/personas.ts)
 -- Texto sem acento e em minúsculas, palavra inteira, primeira regra que casar vence:
--- tecnologia, patrocinador, operação, processo. Acento solto (texto decomposto) sai pelo
--- intervalo U+0300-U+036F, sem depender de normalize() (que exige Postgres 13+).
+-- tecnologia, patrocinador, operação, processo.
 -- ---------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.match_persona(texto text)
 RETURNS text LANGUAGE plpgsql IMMUTABLE SET search_path = public AS $$
@@ -116,7 +111,7 @@ DECLARE
   s text;
 BEGIN
   t := lower(translate(
-    regexp_replace(coalesce(texto, ''), '[\u0300-\u036f]', '', 'g'),
+    coalesce(texto, ''),
     'ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑáàâãäéèêëíìîïóòôõöúùûüçñ',
     'AAAAAEEEEIIIIOOOOOUUUUCNaaaaaeeeeiiiiooooouuuucn'
   ));
@@ -157,12 +152,6 @@ CREATE OR REPLACE FUNCTION public.suggest_persona(cargo text, headline text)
 RETURNS text LANGUAGE sql IMMUTABLE SET search_path = public AS $$
   SELECT coalesce(public.match_persona(cargo), public.match_persona(headline), 'owner_operacao');
 $$;
-
--- Quem grava contatos (authenticated) e o service role disparam o trigger, que chama estas funções.
-REVOKE ALL ON FUNCTION public.match_persona(text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.suggest_persona(text, text) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.match_persona(text) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.suggest_persona(text, text) TO authenticated, service_role;
 
 -- ---------------------------------------------------------------------------------------------
 -- resposta_modelo: mesma escolha de resolveTemplate (src/lib/fila.ts)
@@ -215,7 +204,7 @@ BEGIN
     ) AS lv(ord, sid, persona, name)
     JOIN sector_templates st
       ON st.sector_id = lv.sid AND st.persona = lv.persona
-     AND st.step = NEW.resposta_etapa AND st.body ~ '\S'
+     AND st.step = NEW.resposta_etapa AND btrim(st.body) <> ''
     ORDER BY lv.ord
     LIMIT 1;
   END IF;
@@ -229,5 +218,3 @@ BEGIN
   RETURN NEW;
 END $$;
 -- O trigger trg_stamp_resposta_origem (migração 20261115200000) continua o mesmo.
-
-NOTIFY pgrst, 'reload schema';
