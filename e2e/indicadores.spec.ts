@@ -375,4 +375,23 @@ test.describe("Indicadores", () => {
     await expect(exec).toBeVisible();
     await expect(exec.locator('button[aria-expanded="true"]')).toHaveCount(0);
   });
+
+  test("o KPI de ATs mostra a meta da equipe com o mesmo semáforo de Metas", async ({ page }) => {
+    await page.goto("/indicadores");
+    const ats = page.getByRole("group", { name: "ATs marcadas", exact: true });
+    // A equipe tem 1 AT para a meta de 1,6 (2 membros × 0,8): 63% e "Abaixo".
+    await expect(ats).toContainText("meta 1,6 · 63%");
+    await expect(ats).toContainText("Abaixo");
+    const metas = page.getByRole("region", { name: "Metas da semana" });
+    const equipe = metas.getByRole("row", { name: /^Equipe/ });
+    await expect(equipe).toContainText("1 / 1,6");
+    await expect(equipe).toContainText("Abaixo");
+  });
+
+  test("sem dia útil até hoje o KPI de ATs não mostra meta", async ({ page }) => {
+    await page.goto("/indicadores?intervalo=livre&de=2026-11-16&ate=2026-11-20");
+    const ats = page.getByRole("group", { name: "ATs marcadas", exact: true });
+    await expect(ats).toBeVisible();
+    await expect(ats).not.toContainText("meta");
+  });
 });

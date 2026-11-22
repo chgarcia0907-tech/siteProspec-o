@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
-import { deltaPct, pct, type Kpi } from "@/lib/dashboard";
+import { deltaPct, pct, type GoalProgress, type Kpi } from "@/lib/dashboard";
 import type { ExecSortKey, IndicadoresBusca } from "@/lib/indicadores";
 import { cn } from "@/lib/utils";
-import { num, pctText, type Dash } from "./format";
+import { GOAL_STATUS, num, pctText, type Dash } from "./format";
 
 /**
  * Os 4 KPIs que respondem "a equipe está no ritmo?": o resultado (ATs, a métrica-guia), o
@@ -22,7 +22,12 @@ export function KpisPrincipais({
   const convPrev = pct(k.ats.prev ?? 0, k.l1.prev ?? 0);
   return (
     <div className="grid grid-cols-[1.35fr_1fr_1fr_1fr] gap-4">
-      <Tile label="ATs marcadas" kpi={k.ats} guide />
+      <Tile
+        label="ATs marcadas"
+        kpi={k.ats}
+        guide
+        goal={d.goals.elapsedDays > 0 ? d.goals.team.ats : null}
+      />
       <Tile label="Mensagens enviadas" kpi={k.envios} />
       <Tile
         label="Conversão LinkedIn 1 → AT"
@@ -85,6 +90,7 @@ function Tile({
   alert,
   small,
   action,
+  goal,
 }: {
   label: string;
   kpi?: Kpi;
@@ -97,8 +103,11 @@ function Tile({
   small?: boolean;
   /** Atalho para a Execução por hunter, dentro do tile. */
   action?: { label: string; search: IndicadoresBusca } | undefined;
+  /** Meta da equipe para esta métrica (mesmo semáforo da seção Metas). */
+  goal?: GoalProgress | null | undefined;
 }) {
   const delta = kpi ? deltaPct(kpi) : null;
+  const st = goal ? GOAL_STATUS[goal.status] : null;
   return (
     <div
       role="group"
@@ -158,6 +167,15 @@ function Tile({
             {sub}
           </p>
         )
+      )}
+      {goal && st && (
+        <p className="mt-1 flex flex-wrap items-center gap-1.5 text-dense">
+          <st.icon className={cn("size-3.5 shrink-0", st.cls)} aria-hidden />
+          <span className="text-muted-foreground tabular-nums">
+            meta {num(goal.target)} · {goal.pct}%
+          </span>
+          <span className={cn("font-semibold", st.cls)}>{st.label}</span>
+        </p>
       )}
       {action && (
         <Link
