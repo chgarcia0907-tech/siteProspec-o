@@ -160,7 +160,7 @@ Mudou uma palavra? Crie outra migração (nunca edite uma aplicada). O teste de 
 ### 3.2 Hunter: empresas da semana (aba Empresas)
 
 1. Cola uma ou várias empresas, uma por linha (também aceita `;`).
-2. Escolhe o setor, e o subsetor se houver (obrigatório, só os ativos), a concordância e um dia qualquer da semana; a
+2. Escolhe o setor (obrigatório) e, se houver, o subsetor (opcional; só os ativos), a concordância e um dia qualquer da semana; a
    tela mostra a semana de segunda a domingo.
 3. A tela avisa quantas são novas e quantas já estão cadastradas; só as novas são gravadas, todas
    com o mesmo setor, concordância e semana.
