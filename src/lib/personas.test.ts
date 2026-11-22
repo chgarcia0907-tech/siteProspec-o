@@ -151,9 +151,13 @@ describe("par com o SQL (match_persona)", () => {
     .filter((f) => f.endsWith(".sql"))
     .sort()
     .reverse()
-    .find((f) => readFileSync(join(dir, f), "utf8").includes("FUNCTION public.match_persona"));
+    .find((f) =>
+      readFileSync(join(dir, f), "utf8").includes(
+        "CREATE OR REPLACE FUNCTION public.match_persona",
+      ),
+    );
   const sql = file ? readFileSync(join(dir, file), "utf8") : "";
-  const body = sql.slice(sql.indexOf("FUNCTION public.match_persona"));
+  const body = sql.slice(sql.indexOf("CREATE OR REPLACE FUNCTION public.match_persona"));
   const bound = (words: string[]) => `(^|[^a-z0-9])(${words.join("|")})([^a-z0-9]|$)`;
 
   it("encontra a migração", () => {
@@ -183,10 +187,21 @@ describe("par com o SQL (match_persona)", () => {
   });
 
   it("devolve owner_operacao como padrão em suggest_persona", () => {
-    const todas = readdirSync(dir)
-      .filter((f) => f.endsWith(".sql"))
-      .map((f) => readFileSync(join(dir, f), "utf8"))
-      .join("\n");
-    expect(todas).toContain("public.match_persona(headline), 'owner_operacao'");
+    // Vale a migração mais recente que define suggest_persona.
+    const f = readdirSync(dir)
+      .filter((n) => n.endsWith(".sql"))
+      .sort()
+      .reverse()
+      .find((n) =>
+        readFileSync(join(dir, n), "utf8").includes(
+          "CREATE OR REPLACE FUNCTION public.suggest_persona",
+        ),
+      );
+    expect(f).toBeTruthy();
+    const suggest = readFileSync(join(dir, f!), "utf8");
+    const corpo = suggest.slice(
+      suggest.indexOf("CREATE OR REPLACE FUNCTION public.suggest_persona"),
+    );
+    expect(corpo).toContain("public.match_persona(headline), 'owner_operacao'");
   });
 });
