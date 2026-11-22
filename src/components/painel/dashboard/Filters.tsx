@@ -37,13 +37,20 @@ export function Filters({
     io.observe(el);
     return () => io.disconnect();
   }, []);
-  const editar = () => {
-    // Foca antes de rolar: a barra some quando o cartão volta à tela.
+  const focarAtivo = () =>
     card.current?.querySelector<HTMLElement>('[aria-pressed="true"], input')?.focus({
       preventScroll: true,
     });
+  const editar = () => {
+    // Foca antes de rolar: a barra some quando o cartão volta à tela.
+    focarAtivo();
     const reduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.scrollTo({ top: 0, behavior: reduzido ? "auto" : "smooth" });
+  };
+  // Depois de limpar, o foco vai para o atalho de intervalo (a barra compacta pode sumir).
+  const limpar = () => {
+    focarAtivo();
+    onClear?.();
   };
   const set = (patch: Partial<DashFilters>) => onChange({ ...value, ...patch });
   const period = options?.periods.find((p) => p.id === value.periodId);
@@ -190,12 +197,13 @@ export function Filters({
                 <Chip key={c}>{c}</Chip>
               ))}
             </ul>
-            <Button size="sm" variant="ghost" onClick={onClear}>
+            <Button size="sm" variant="ghost" onClick={limpar}>
               Limpar filtros
             </Button>
           </div>
         )}
       </div>
+      {/* `mb-0` cancela a margem extra do `space-y` do pai: o invólucro tem altura zero. */}
       <div className="sticky top-0 z-10 mb-0 h-0">
         <div
           role="region"
@@ -204,15 +212,15 @@ export function Filters({
           className="absolute inset-x-0 top-0 flex items-center gap-3 rounded-lg border bg-card px-4 py-2"
         >
           <ul className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-            {chips.map((c) => (
-              <Chip key={c}>{c}</Chip>
+            {chips.map((c, i) => (
+              <Chip key={`${i}-${c}`}>{c}</Chip>
             ))}
           </ul>
           <Button size="sm" variant="ghost" onClick={editar}>
             Editar filtros
           </Button>
           {onClear && (
-            <Button size="sm" variant="ghost" onClick={onClear}>
+            <Button size="sm" variant="ghost" onClick={limpar}>
               Limpar filtros
             </Button>
           )}

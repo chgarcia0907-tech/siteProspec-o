@@ -11,6 +11,7 @@ const DESCRICAO = "A equipe está no ritmo? Envios, atrasados, metas e funil de 
  */
 function validarBusca(raw: Record<string, unknown>): IndicadoresBusca {
   const b = parseIndicadoresBusca(raw);
+  // `satisfies` exige todas as chaves: acrescentar uma chave em IndicadoresBusca quebra o typecheck.
   return {
     intervalo: b.intervalo,
     de: b.de,
@@ -25,7 +26,7 @@ function validarBusca(raw: Record<string, unknown>): IndicadoresBusca {
     ordem: b.ordem,
     sentido: b.sentido,
     aberto: b.aberto,
-  };
+  } satisfies { [K in keyof IndicadoresBusca]-?: IndicadoresBusca[K] };
 }
 
 export const Route = createFileRoute("/_authenticated/indicadores")({

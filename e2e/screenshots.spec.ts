@@ -46,7 +46,7 @@ const SHOTS: Shot[] = [
   { name: "09-indicadores", path: "/indicadores" },
   {
     name: "09-indicadores-execucao",
-    path: "/indicadores?aberto=22222222-2222-4222-8222-222222222222&ordem=late#execucao",
+    path: "/indicadores?aberto=22222222-2222-4222-8222-222222222222&ordem=late",
   },
   { name: "10-painel-hunters", path: "/painel", tab: "Hunters" },
   { name: "11-painel-periodos", path: "/painel", tab: "Períodos e grupos" },

@@ -338,13 +338,26 @@ test.describe("Indicadores", () => {
       "descending",
     );
     await expect(exec.getByRole("button", { name: /Atrasados/ })).toContainText("↓");
+    // Hunter Um tem 2 atrasados e Hunter Dois 1: a primeira linha prova a ordenação.
+    await expect(exec.locator("tbody tr").first()).toContainText("Hunter Um");
+    await exec.getByRole("button", { name: /Atrasados/ }).click();
+    await expect(exec.locator("tbody tr").first()).toContainText("Hunter Dois");
     await page
       .getByRole("group", { name: "Hunters parados (2+ dias úteis)", exact: true })
       .getByRole("link", { name: "Ver por hunter" })
       .click();
     await expect(page).toHaveURL(/ordem=idle/);
     await expect(exec.getByRole("button", { name: /Último envio/ })).toContainText("↓");
+    // Hunter Dois está parado há 6 dias úteis e Hunter Um há 5.
+    await expect(exec.locator("tbody tr").first()).toContainText("Hunter Dois");
     await expect(exec).toBeInViewport();
+  });
+
+  test("sem atrasados o KPI não oferece o atalho Ver por hunter", async ({ page }) => {
+    await page.goto("/indicadores?hunter=11111111-1111-4111-8111-111111111111&canal=linkedin");
+    const kpi = page.getByRole("group", { name: "Envios atrasados agora", exact: true });
+    await expect(kpi).toContainText("0");
+    await expect(kpi.getByRole("link", { name: "Ver por hunter" })).toHaveCount(0);
   });
 
   test("a ordenação da Execução fica na url e sobrevive à troca de aba", async ({ page }) => {
