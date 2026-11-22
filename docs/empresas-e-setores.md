@@ -5,12 +5,12 @@ subsetor e persona (migração `20261122180804_setor_subsetor_persona.sql`).
 
 ## 0. Situação
 
-| Parte                                    | Estado                                                                                                                                                             |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Empresas e setores (PR #6)               | No `dev` e no `main`. Migração `20261113120000_companies_sectors.sql` aplicada em 13/11/2026 no Supabase `ctxsmboaqbjgslctojeq`.                                   |
-| Subsetor e persona: migração             | `20261122180804_setor_subsetor_persona.sql`, aditiva. **Aplicada só depois do `bun run db:push`**; o código que lê as colunas novas só vai ao `main` depois disso. |
-| Subsetor e persona: regras (`src/lib/`)  | `personas.ts`, `resolveTemplate` em `fila.ts` e os auxiliares de `empresas.ts` já existem, com testes. Ainda não são usados pelas telas.                           |
-| Subsetor e persona: telas e server funcs | Entram em PRs seguintes (uma tela por PR). Até lá o app se comporta como antes: só setores de primeiro nível e cadência "qualquer persona".                        |
+| Parte                                    | Estado                                                                                                                                                                                                                                                                                                          |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Empresas e setores (PR #6)               | No `dev` e no `main`. Migração `20261113120000_companies_sectors.sql` aplicada em 13/11/2026 no Supabase `ctxsmboaqbjgslctojeq`.                                                                                                                                                                                |
+| Subsetor e persona: migração             | `20261122180804_setor_subsetor_persona.sql`, aditiva, já aplicada em produção (nunca editar). As correções (pai do setor não troca, acento solto, permissões das funções de persona, mensagem só com espaços) estão em `20261122185416_endurece_subsetor_persona.sql`, que só vale depois do `bun run db:push`. |
+| Subsetor e persona: regras (`src/lib/`)  | `personas.ts`, `resolveTemplate` em `fila.ts` e os auxiliares de `empresas.ts` já existem, com testes. Ainda não são usados pelas telas.                                                                                                                                                                        |
+| Subsetor e persona: telas e server funcs | Entram em PRs seguintes (uma tela por PR). Até lá o app se comporta como antes: só setores de primeiro nível e cadência "qualquer persona".                                                                                                                                                                     |
 
 ## 1. Dois conceitos que não se confundem
 

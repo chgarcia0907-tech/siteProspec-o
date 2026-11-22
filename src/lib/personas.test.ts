@@ -183,6 +183,10 @@ describe("par com o SQL (match_persona)", () => {
   });
 
   it("devolve owner_operacao como padrão em suggest_persona", () => {
-    expect(sql).toContain("public.match_persona(headline), 'owner_operacao'");
+    const todas = readdirSync(dir)
+      .filter((f) => f.endsWith(".sql"))
+      .map((f) => readFileSync(join(dir, f), "utf8"))
+      .join("\n");
+    expect(todas).toContain("public.match_persona(headline), 'owner_operacao'");
   });
 });
