@@ -1,11 +1,21 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Info } from "lucide-react";
-import { useState } from "react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatBR, spParts } from "@/lib/cadencia";
-import { presetRange } from "@/lib/dashboard";
+import {
+  DETALHE_ABAS,
+  buscaDosFiltros,
+  filtrosDaBusca,
+  filtrosPadrao,
+  hunterIdsByName,
+  type ExecSortKey,
+  resumoFiltros,
+  temFiltroAtivo,
+  type IndicadoresBusca,
+} from "@/lib/indicadores";
 import { painelDashboard } from "@/lib/painel.functions";
 import { cn } from "@/lib/utils";
 import { Execucao, Heatmap, Ritmo } from "./Execucao";
@@ -39,19 +49,16 @@ const DETALHE = [
  * Aba "Indicadores": primeiro a pergunta "a equipe está no ritmo?" (KPIs), depois quem precisa
  * de ajuda e as metas, e o detalhamento um nível abaixo, em abas internas.
  */
-export function IndicadoresTab() {
+export function IndicadoresTab({
+  search,
+  onSearch,
+}: {
+  search: IndicadoresBusca;
+  onSearch: (next: IndicadoresBusca) => void;
+}) {
   const today = spParts().iso;
-  const [filters, setFilters] = useState<DashFilters>(() => ({
-    preset: "semana",
-    ...presetRange("semana", today),
-    periodId: null,
-    groupId: null,
-    subgroupId: null,
-    hunterId: null,
-    sectorId: null,
-    channel: "todos",
-  }));
-  const [detalhe, setDetalhe] = useState<string>("execucao");
+  const filters = useMemo(() => filtrosDaBusca(search, today), [search, today]);
+  const detalhe = search.detalhe ?? "execucao";
   const fn = useServerFn(painelDashboard);
   const { preset: _preset, ...input } = filters;
   const q = useQuery({
@@ -64,10 +71,69 @@ export function IndicadoresTab() {
   // O servidor escolhe o período ativo quando nenhum foi escolhido; o filtro passa a mostrá-lo.
   const shown: DashFilters = { ...filters, periodId: filters.periodId ?? q.data?.periodId ?? null };
   const semana = filters.preset === "semana";
+  // O período escolhido pelo servidor só é exibido: nunca vai para a URL.
+  // O resumo parte dos filtros da URL (não do período do servidor); sem as opções ainda, só o intervalo.
+  const opcoes = q.data?.options;
+  const chips = resumoFiltros(
+    opcoes
+      ? filters
+      : {
+          ...filters,
+          periodId: null,
+          groupId: null,
+          subgroupId: null,
+          hunterId: null,
+          sectorId: null,
+        },
+    {
+      periods: opcoes?.periods ?? [],
+      groups: opcoes?.groups ?? [],
+      subgroups: opcoes?.subgroups ?? [],
+      hunters: opcoes?.hunters ?? [],
+      sectors: opcoes?.sectors ?? [],
+    },
+  );
+  // Ordenação e sentido da Execução (o padrão não vai para a URL).
+  const ordem: ExecSortKey = search.ordem ?? "total";
+  const padraoDesc = (k: ExecSortKey) => k !== "hunter";
+  const sort = { key: ordem, desc: search.sentido ? search.sentido === "desc" : padraoDesc(ordem) };
+  const onSort = (key: ExecSortKey) => {
+    const desc = sort.key === key ? !sort.desc : padraoDesc(key);
+    onSearch({
+      ...search,
+      ordem: key === "total" ? undefined : key,
+      sentido: desc === padraoDesc(key) ? undefined : desc ? "desc" : "asc",
+    });
+  };
+  // Atalhos para a Execução: voltam à aba padrão e levam à seção (#execucao).
+  const ids = useMemo(() => hunterIdsByName(d?.hunters ?? []), [d]);
+  const linkFor = (name: string): IndicadoresBusca | null => {
+    const id = ids.get(name);
+    return id ? { ...search, detalhe: undefined, aberto: id } : null;
+  };
+  const verPor = (key: ExecSortKey): IndicadoresBusca => ({
+    ...search,
+    detalhe: undefined,
+    aberto: undefined,
+    ordem: key === "total" ? undefined : key,
+    sentido: undefined,
+  });
+  const limpar = () => onSearch({ ...search, ...buscaDosFiltros(filtrosPadrao(today)) });
+  const onFilters = (f: DashFilters) => {
+    const periodId = !search.periodo && f.periodId === q.data?.periodId ? null : f.periodId;
+    onSearch({ ...search, ...buscaDosFiltros({ ...f, periodId }) });
+  };
 
   return (
     <div className="space-y-6">
-      <Filters value={shown} onChange={setFilters} options={q.data?.options} today={today} />
+      <Filters
+        value={shown}
+        onChange={onFilters}
+        options={opcoes}
+        today={today}
+        chips={chips}
+        onClear={temFiltroAtivo(search) ? limpar : undefined}
+      />
       {q.isError && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive-border bg-destructive-soft/40 px-4 py-3">
           <p className="text-dense text-destructive-text">
@@ -120,12 +186,12 @@ export function IndicadoresTab() {
                 {formatBR(d.range.prevFrom)} a {formatBR(d.range.prevTo)}
               </p>
             </div>
-            <KpisPrincipais d={d} />
-            <KpisSecundarios d={d} />
+            <KpisPrincipais d={d} verPor={verPor} />
+            <KpisSecundarios d={d} verPor={verPor} />
           </section>
 
-          <div className="grid grid-cols-2 items-stretch gap-6">
-            <Alertas d={d} />
+          <div className="space-y-6">
+            <Alertas d={d} linkFor={linkFor} />
             <Metas d={d} data={q.data!} title={semana ? "Metas da semana" : "Metas do intervalo"} />
           </div>
 
@@ -133,7 +199,15 @@ export function IndicadoresTab() {
             <h2 id="detalhe-titulo" className="text-section font-semibold">
               Detalhamento
             </h2>
-            <Tabs value={detalhe} onValueChange={setDetalhe}>
+            <Tabs
+              value={detalhe}
+              onValueChange={(v) =>
+                onSearch({
+                  ...search,
+                  detalhe: DETALHE_ABAS.find((a) => a === v && a !== "execucao"),
+                })
+              }
+            >
               <TabsList className="h-auto flex-wrap justify-start">
                 {DETALHE.map(([v, label]) => (
                   <TabsTrigger key={v} value={v}>
@@ -142,7 +216,13 @@ export function IndicadoresTab() {
                 ))}
               </TabsList>
               <TabsContent value="execucao">
-                <Execucao d={d} />
+                <Execucao
+                  d={d}
+                  sort={sort}
+                  onSort={onSort}
+                  open={search.aberto ?? null}
+                  onOpen={(id) => onSearch({ ...search, aberto: id ?? undefined })}
+                />
               </TabsContent>
               <TabsContent value="envios">
                 <Heatmap d={d} />

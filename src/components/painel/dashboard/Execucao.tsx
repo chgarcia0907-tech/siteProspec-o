@@ -1,24 +1,14 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Fragment, useState } from "react";
+import { useLocation } from "@tanstack/react-router";
+import { Fragment, useEffect, useRef } from "react";
 import { formatBR } from "@/lib/cadencia";
 import { pct, type HunterRow } from "@/lib/dashboard";
+import type { ExecSortKey } from "@/lib/indicadores";
 import { cn } from "@/lib/utils";
 import { Section } from "./shared";
 import { dm, num, pctText, type Dash } from "./format";
 
-type SortKey =
-  | "hunter"
-  | "importados"
-  | "total"
-  | "noPrazo"
-  | "late"
-  | "idle"
-  | "started"
-  | "inProgress"
-  | "ats"
-  | "responses"
-  | "conv";
-const SORT: Record<SortKey, (r: HunterRow) => number | string> = {
+const SORT: Record<ExecSortKey, (r: HunterRow) => number | string> = {
   hunter: (r) => r.hunter,
   importados: (r) => r.importados,
   total: (r) => r.total,
@@ -33,21 +23,43 @@ const SORT: Record<SortKey, (r: HunterRow) => number | string> = {
 };
 
 /** Execução da cadência por hunter: envios por etapa, prazo, atrasados e situação da fila. */
-export function Execucao({ d }: { d: Dash }) {
-  const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: "total", desc: true });
-  const [open, setOpen] = useState<string | null>(null);
+export function Execucao({
+  d,
+  sort,
+  onSort,
+  open,
+  onOpen,
+}: {
+  d: Dash;
+  sort: { key: ExecSortKey; desc: boolean };
+  onSort: (key: ExecSortKey) => void;
+  open: string | null;
+  onOpen: (id: string | null) => void;
+}) {
+  const box = useRef<HTMLDivElement>(null);
+  const hash = useLocation({ select: (l) => l.hash });
+  // Chegou por um atalho (#execucao): o foco vai para o hunter aberto. Abrir uma linha pela
+  // própria tabela não mexe no foco.
+  useEffect(() => {
+    if (!open || hash !== "execucao") return;
+    if (box.current?.contains(document.activeElement)) return;
+    box.current?.querySelector<HTMLElement>('button[aria-expanded="true"]')?.focus();
+  }, [open, hash]);
   const rows = [...d.hunters].sort((a, b) => {
     const x = SORT[sort.key](a);
     const y = SORT[sort.key](b);
     const c = typeof x === "string" ? x.localeCompare(String(y), "pt-BR") : x - (y as number);
     return sort.desc ? -c : c;
   });
-  const th = (key: SortKey, label: string, title?: string) => (
-    <th className="p-2 text-right first:sticky first:left-0 first:min-w-40 first:bg-surface-inset first:text-left">
+  const th = (key: ExecSortKey, label: string, title?: string) => (
+    <th
+      aria-sort={sort.key === key ? (sort.desc ? "descending" : "ascending") : "none"}
+      className="p-2 text-right first:sticky first:left-0 first:min-w-40 first:bg-surface-inset first:text-left"
+    >
       <button
         className="inline-flex items-center gap-0.5 hover:text-heading"
         title={title}
-        onClick={() => setSort((s) => ({ key, desc: s.key === key ? !s.desc : key !== "hunter" }))}
+        onClick={() => onSort(key)}
       >
         {label}
         {sort.key === key && <span aria-hidden>{sort.desc ? "↓" : "↑"}</span>}
@@ -58,10 +70,12 @@ export function Execucao({ d }: { d: Dash }) {
 
   return (
     <Section
+      id="execucao"
+      className="scroll-mt-20"
       title="Execução da cadência por hunter"
       hint="Envios no intervalo por etapa. “No prazo” = etapas previstas no intervalo que saíram até a data prevista. Clique no hunter para ver os atrasados."
     >
-      <div className="overflow-x-auto rounded-xl border">
+      <div ref={box} className="overflow-x-auto rounded-xl border">
         <table className="table-dense w-full text-dense">
           <thead className="bg-surface-inset text-caption text-muted-foreground">
             <tr>
@@ -105,7 +119,7 @@ export function Execucao({ d }: { d: Dash }) {
                       <button
                         className="flex items-center gap-1 text-left font-medium"
                         aria-expanded={expanded}
-                        onClick={() => setOpen(expanded ? null : r.hunter_id)}
+                        onClick={() => onOpen(expanded ? null : r.hunter_id)}
                       >
                         {expanded ? (
                           <ChevronDown className="h-3.5 w-3.5" />

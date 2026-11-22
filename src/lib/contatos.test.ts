@@ -84,6 +84,22 @@ describe("contatos", () => {
     expect(ids("todos")).toEqual(["1", "2", "3", "4"]);
   });
 
+  it("filtra respostas positivas e negativas", () => {
+    const list = [
+      c({ id: "1", status: "respondeu", resposta_tipo: "positiva" }),
+      c({ id: "2", status: "respondeu", resposta_tipo: "negativa" }),
+      c({ id: "3", status: "respondeu", resposta_tipo: null }),
+      c({ id: "4" }),
+      // Voltou à cadência: o tipo antigo continua gravado, mas não conta mais.
+      c({ id: "5", status: "em_cadencia", resposta_tipo: "positiva" }),
+    ];
+    const ids = (r: "todos" | "positiva" | "negativa") =>
+      filterContacts(list, "", "todos", "todos", r).map((x) => x.id);
+    expect(ids("positiva")).toEqual(["1"]);
+    expect(ids("negativa")).toEqual(["2"]);
+    expect(ids("todos")).toEqual(["1", "2", "3", "4", "5"]);
+  });
+
   it("acrescenta a situação só quando ela muda", () => {
     expect(withSyncedStatus(c({}), { sent1_at: "2026-11-12" })).toEqual({
       sent1_at: "2026-11-12",
