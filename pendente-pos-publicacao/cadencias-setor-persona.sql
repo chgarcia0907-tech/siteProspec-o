@@ -1,4 +1,5 @@
--- Cadências por setor e persona do NTec (documento "Mensagens por Setor e Persona · NTec", 22/11/2026).
+-- Cadências por setor e persona do NTec (documento "Mensagens por Setor e Persona · NTec", 22/11/2026,
+-- versão revisada: dor como padrão do segmento, case em "mapeamos, desenvolvemos, resultado" e dados de mercado).
 --
 -- Rodar no SQL Editor do Supabase de produção (ctxsmboaqbjgslctojeq), uma vez, depois de aplicada
 -- a migração 20261122185416_endurece_subsetor_persona.sql. Tudo roda numa transação: se uma
@@ -103,425 +104,475 @@ SELECT a.id, v.persona, v.step, v.code, v.body
 FROM (VALUES
   ('LOG', '', 1, 'LOG-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em operações como a [DA_EMPRESA], conferência e auditoria de mercadoria ainda costumam passar por planilha de divergência, item a item.
+Um padrão que vemos em operações logísticas do porte [DA_EMPRESA] é a conferência ainda passar por planilha de divergência. É ela que costuma travar primeiro com mais volume.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida que digitalizam a conferência e a auditoria. Num grande outlet internacional de roupas, a auditoria levava 229 segundos por peça, e mapeamos até 70% de ganho.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, medimos a auditoria (229 segundos por peça) e desenvolvemos o sistema que a digitaliza, com até 70% de ganho mapeado.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos na operação [DA_EMPRESA], antes do orçamento de 2027?$msg$),
-  ('LOG', '', 2, 'LOG-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a operação [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos na operação [DA_EMPRESA]?$msg$),
+  ('LOG', '', 2, 'LOG-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto tempo a conferência de uma carga leva hoje e quanto disso é planilha. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+O custo logístico já consome 12,3% do faturamento das empresas brasileiras (Fundação Dom Cabral). É comum boa parte disso estar em conferência e retrabalho. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('LOG', '', 3, 'LOG-OP-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-No outlet que atendemos, cada peça passava por auditoria, preenchimento de documentos e planilha de divergência. A plataforma que entregamos passou a gerar os documentos em PDF e Excel sozinha. Em 10 mil itens por mês, cada minuto a menos por item devolve mais de 160 horas ao time.
+O ILOS estima que o custo logístico chegou a 15,5% do PIB brasileiro em 2025. Uma parte costuma estar no que ninguém mede, como conferir de novo o que já foi conferido.
+
+No outlet que atendemos, primeiro cronometramos a auditoria, depois desenvolvemos a plataforma que gera os documentos sozinha. Em 10 mil itens por mês, cada minuto a menos por item devolve mais de 160 horas ao time.
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com os números [DA_EMPRESA]?$msg$),
-  ('LOG', '', 4, 'LOG-WT02', $msg$[SAUDACAO], [FIRST NAME]! Vou direto: não é para substituir o time de vocês, e sim para tirar do papel o que fica parado por falta de braço. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso na operação [DA_EMPRESA]? Se não for o momento, é só me avisar.$msg$),
+  ('LOG', '', 4, 'LOG-WT02', $msg$[SAUDACAO], [FIRST NAME]! Em logística, é comum o gargalo aparecer como hora extra e planilha, não como pedido de sistema. A ideia é somar ao time, não substituir. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso na operação [DA_EMPRESA]? Se não for o momento, me avisa.$msg$),
   ('LOG', '', 5, 'LOG-IN03', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Vou parar de te escrever por aqui. Antes, um último convite, pensando no planejamento de 2027: vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de conferência, estoque e expedição [NA_EMPRESA]?
+Vou parar de te escrever por aqui. Deixo um dado para o planejamento de 2027. O custo logístico já consome 12,3% do faturamento das empresas brasileiras (Fundação Dom Cabral).
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de conferência, estoque e expedição [NA_EMPRESA]?
 
 Se for outra pessoa, me passa o contato que eu sigo com ela.$msg$),
   ('LOG', 'owner_processo', 1, 'LOG-PR-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em operações como a [DA_EMPRESA], a mesma informação costuma ser digitada de novo da planilha de divergência para o relatório.
+Em centros de distribuição, um dos retrabalhos que mais encontramos é a mesma informação ser digitada duas vezes, da planilha para o relatório. É ali que o erro costuma aparecer.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas que geram relatórios e documentos automaticamente. Na auditoria de um grande outlet internacional de roupas, os documentos passaram a sair prontos em PDF e Excel.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, acompanhamos a auditoria e depois desenvolvemos um sistema em que o dado entra uma vez e os documentos saem prontos.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde a planilha mais gera retrabalho no seu dia a dia, antes do orçamento de 2027?$msg$),
-  ('LOG', 'owner_processo', 2, 'LOG-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a conferência [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde a planilha mais gera retrabalho no seu dia a dia?$msg$),
+  ('LOG', 'owner_processo', 2, 'LOG-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quantas vezes a mesma informação é digitada entre o recebimento e o relatório de divergência. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Estudos apontam que a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Na conferência, isso costuma virar divergência para caçar depois. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('LOG', 'owner_processo', 3, 'LOG-PR-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-A digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Em mil itens conferidos, são de 10 a 50 divergências para alguém caçar depois. No outlet que atendemos, tiramos a digitação do caminho e os documentos da auditoria passaram a sair prontos, em PDF e Excel.
+Em logística, é comum o custo do erro aparecer depois, em devolução, reentrega e inventário refeito. O ILOS estima que o custo logístico chegou a 15,5% do PIB brasileiro em 2025.
+
+No outlet que atendemos, mapeamos cada passo da auditoria antes de desenvolver qualquer tela. Depois entregamos o sistema, e os documentos passaram a sair prontos.
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece na conferência [DA_EMPRESA]?$msg$),
   ('LOG', 'patrocinador_executivo', 1, 'LOG-EX-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-O custo logístico já consome 12,3% do faturamento das empresas brasileiras (Fundação Dom Cabral). Em operações como a [DA_EMPRESA], cada pedido a mais exige mais gente conferindo.
+O custo logístico já consome 12,3% do faturamento das empresas brasileiras (Fundação Dom Cabral). Em operações que crescem, é comum cada pedido a mais exigir mais gente conferindo.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida para processos críticos. Num grande outlet internacional de roupas, mapeamos até 70% de ganho na auditoria.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, medimos a auditoria e depois desenvolvemos o sistema que a digitaliza, com até 70% de ganho mapeado.
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto os gargalos da operação [DA_EMPRESA] custam por ano, antes do orçamento de 2027?$msg$),
-  ('LOG', 'patrocinador_executivo', 2, 'LOG-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a operação [DA_EMPRESA].
+  ('LOG', 'patrocinador_executivo', 2, 'LOG-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto do custo da operação hoje é conferência, correção e retrabalho. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Com a Selic em 13,75%, crescer sem aumentar estrutura costuma virar prioridade em 2027. Em logística, conferência e retrabalho costumam ser o primeiro lugar a olhar. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('LOG', 'patrocinador_executivo', 3, 'LOG-EX-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
+Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos com as áreas, estimamos mais de 2.000 horas por ano recuperáveis e priorizamos por retorno o que desenvolver primeiro. Você sai da conversa com um primeiro esboço desse mapa para a operação [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
   ('RE', '', 1, 'RE-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em obras como as [DA_EMPRESA], diário de obra e checklists ainda passam do papel para a planilha.
+Um padrão que vemos em construtoras do porte [DA_EMPRESA] é o diário de obra só virar planilha no fim do dia.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida que digitalizam processos de obra. Para a Modera, criamos um app de gestão de obras que funciona offline no canteiro.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Para a Modera, mapeamos o caminho da informação até o escritório e desenvolvemos um app de obras que funciona offline. O cliente nos avaliou como o melhor time de tecnologia com que já trabalhou.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos os principais gargalos nas obras [DA_EMPRESA], antes do orçamento de 2027?$msg$),
-  ('RE', '', 2, 'RE-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as obras [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos os principais gargalos nas obras [DA_EMPRESA]?$msg$),
+  ('RE', '', 2, 'RE-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto tempo a informação leva hoje para sair do canteiro e chegar a quem aprova. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+A Deloitte estima que obras imobiliárias chegam a durar até 13 meses a mais por ineficiência. É comum parte disso ser informação do canteiro que chega tarde. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('RE', '', 3, 'RE-OP-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Se 10 engenheiros e técnicos gastam 30 minutos por dia passando diário de obra e checklist do papel para a planilha, são cerca de 110 horas por mês longe da obra. Na Modera, esse registro passou a ser feito no celular, no próprio canteiro, mesmo sem internet.
+Segundo a Deloitte, a ineficiência custou cerca de R$ 59 bilhões à construção entre 2023 e 2025. É comum o atraso começar pequeno, num checklist que fica no papel até o fim da semana.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com os números [DA_EMPRESA]?$msg$),
-  ('RE', '', 4, 'RE-WT02', $msg$[SAUDACAO], [FIRST NAME]! Vou direto: não é para substituir o time de vocês, e sim para tirar do papel o que fica parado por falta de braço. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso nas obras [DA_EMPRESA]? Se não for o momento, é só me avisar.$msg$),
+Na Modera, o app que desenvolvemos registra a obra no celular, mesmo sem sinal, sem depender de papel.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde a informação do canteiro mais atrasa [NA_EMPRESA]?$msg$),
+  ('RE', '', 4, 'RE-WT02', $msg$[SAUDACAO], [FIRST NAME]! Em construtoras, é comum o gargalo aparecer como medição refeita e planilha, não como pedido de sistema. A ideia é somar ao time, não substituir. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso nas obras [DA_EMPRESA]? Se não for o momento, me avisa.$msg$),
   ('RE', '', 5, 'RE-IN03', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Vou parar de te escrever por aqui. Antes, um último convite, pensando no planejamento de 2027: vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida das obras e do pós-obra [NA_EMPRESA]?
+Vou parar de te escrever por aqui. Deixo um dado para o planejamento de 2027. A ineficiência custou cerca de R$ 59 bilhões à construção entre 2023 e 2025 (Deloitte para a Fiesp).
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de obras, planejamento ou engenharia [NA_EMPRESA]?
 
 Se for outra pessoa, me passa o contato que eu sigo com ela.$msg$),
   ('RE', 'owner_processo', 1, 'RE-PR-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em obras como as [DA_EMPRESA], cada área costuma ter sua planilha, e alguém junta tudo no fim do dia.
+Em construtoras e incorporadoras, um dos retrabalhos que mais encontramos é cada área manter sua planilha e alguém consolidar tudo no fim do dia. É ali que as versões costumam se desencontrar.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas que integram as áreas da obra num só lugar. Para a CTE, criamos uma gestão de obras em que cada perfil acessa só o que precisa.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Para a CTE, primeiro mapeamos quem usava cada informação da obra, depois desenvolvemos um sistema único em que cada perfil acessa só o que precisa.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde as planilhas paralelas mais geram retrabalho nas obras, antes do orçamento de 2027?$msg$),
-  ('RE', 'owner_processo', 2, 'RE-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre os controles de obra [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde as planilhas paralelas mais geram retrabalho nas obras?$msg$),
+  ('RE', 'owner_processo', 2, 'RE-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quantas planilhas diferentes o time usa hoje para acompanhar uma única obra. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Estudos apontam que a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Em obra, isso costuma virar medição e pedido de compra refeitos. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('RE', 'owner_processo', 3, 'RE-PR-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Na CTE, vários perfis de usuário com regras próprias precisavam interagir na mesma obra. Hoje as regras de negócio estão no sistema e cada etapa fica num lugar só. A digitação manual erra de 1% a 5% dos registros (Journal of Accountancy), e é aí que medição e checklist se perdem.
+A Deloitte estima que obras imobiliárias chegam a durar até 13 meses a mais por ineficiência. É comum parte disso nascer em informação espalhada em planilhas paralelas.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso nas obras [DA_EMPRESA]?$msg$),
+Na CTE, juntamos essas planilhas num sistema único, com um perfil para cada área. Na Modera, levamos o registro da obra para o celular, offline.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso pesa mais nas obras [DA_EMPRESA]?$msg$),
   ('RE', 'patrocinador_executivo', 1, 'RE-EX-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Ineficiência e atrasos podem custar R$ 59 bilhões às construtoras e alongar obras imobiliárias em até 13 meses (Deloitte para a Fiesp).
+Ineficiência e atrasos custaram cerca de R$ 59 bilhões à construção entre 2023 e 2025 (Deloitte para a Fiesp). É comum parte disso vir de informação do campo que chega tarde.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas que dão visibilidade de prazo e custo da obra, como fizemos para a CTE e a Modera.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Para a Modera e a CTE, desenvolvemos sistemas de gestão de obras que levam o registro do canteiro ao escritório.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto os atrasos de informação do campo custam à [A_EMPRESA] por ano, antes do orçamento de 2027?$msg$),
-  ('RE', 'patrocinador_executivo', 2, 'RE-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as obras [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto esses atrasos custam por ano, antes do orçamento de 2027?$msg$),
+  ('RE', 'patrocinador_executivo', 2, 'RE-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto tempo um desvio de obra leva hoje para chegar à diretoria. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Com a Selic em 13,75%, cada mês a mais de obra pesa mais no custo financeiro. É comum parte do atraso vir de informação de campo que chega tarde. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('RE', 'patrocinador_executivo', 3, 'RE-EX-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para as obras [DA_EMPRESA].
+Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos com as áreas, estimamos mais de 2.000 horas por ano recuperáveis e priorizamos por retorno o que desenvolver primeiro. Você sai da conversa com um primeiro esboço desse mapa para as obras [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
   ('IND', '', 1, 'IND-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em fábricas como a [DA_EMPRESA], apontamentos, paradas e inspeções de qualidade ainda vão do papel para a planilha a cada turno.
+Um padrão que vemos em fábricas do porte [DA_EMPRESA] é apontamento e paradas ainda irem do papel para a planilha. É aí que a perda costuma ficar invisível.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos apps que digitalizam apontamento e inspeção. Num grande outlet internacional de roupas, a auditoria levava 229 segundos por peça, e mapeamos até 70% de ganho.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, medimos a auditoria (229 segundos por peça) e desenvolvemos o sistema que a digitaliza, com até 70% de ganho mapeado.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos no chão de fábrica [DA_EMPRESA], antes do orçamento de 2027?$msg$),
-  ('IND', '', 2, 'IND-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a produção [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos no chão de fábrica [DA_EMPRESA]?$msg$),
+  ('IND', '', 2, 'IND-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender se vocês sabem, ainda no mesmo turno, quanto a linha parou e por quê. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+A produção industrial caiu 0,8% em setembro, o segundo mês seguido de queda (IBGE). Nesse cenário, é comum a cobrança ser produzir mais com a mesma equipe. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('IND', '', 3, 'IND-OP-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-"Gastamos em média 229 segundos por peça para realizar uma auditoria, preencher documentos e criar a planilha de divergência." Foi assim que um cliente nos descreveu o processo dele. Com a plataforma que entregamos, os documentos passaram a sair prontos em PDF e Excel, e o ganho mapeado chegou a 70%.
+A Siemens estima que as 500 maiores indústrias do mundo perdem cerca de 11% da receita com paradas não planejadas. É comum a parada nem chegar ao relatório quando o apontamento é no papel.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para medirmos esse tempo nas inspeções [DA_EMPRESA]?$msg$),
-  ('IND', '', 4, 'IND-WT02', $msg$[SAUDACAO], [FIRST NAME]! Vou direto: não é para substituir o time de vocês, e sim para tirar do papel o que fica parado por falta de braço. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso no chão de fábrica [DA_EMPRESA]? Se não for o momento, é só me avisar.$msg$),
+Nosso jeito de trabalhar é primeiro medir o processo e depois desenvolver o app que registra no momento em que acontece. Foi assim no outlet que atendemos, com até 70% de ganho mapeado.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com os números [DA_EMPRESA]?$msg$),
+  ('IND', '', 4, 'IND-WT02', $msg$[SAUDACAO], [FIRST NAME]! Na indústria, é comum o gargalo aparecer como hora extra e apontamento refeito, não como pedido de sistema. A ideia é somar ao time, não substituir. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso na produção [DA_EMPRESA]? Se não for o momento, me avisa.$msg$),
   ('IND', '', 5, 'IND-IN03', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Vou parar de te escrever por aqui. Antes, um último convite, pensando no planejamento de 2027: vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de produção, qualidade ou manutenção [NA_EMPRESA]?
+Vou parar de te escrever por aqui. Deixo um dado para o planejamento de 2027. As 500 maiores indústrias do mundo perdem cerca de 11% da receita com paradas não planejadas (Siemens, 2024).
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de produção, qualidade ou manutenção [NA_EMPRESA]?
 
 Se for outra pessoa, me passa o contato que eu sigo com ela.$msg$),
   ('IND', 'owner_processo', 1, 'IND-PR-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em fábricas como a [DA_EMPRESA], o mesmo apontamento costuma ser escrito no papel e digitado de novo na planilha.
+No chão de fábrica, um dos retrabalhos que mais encontramos é o mesmo apontamento ser escrito no papel e digitado de novo na planilha. Somado no mês, costuma virar dias de trabalho.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos apps de apontamento e sistemas que geram os relatórios sozinhos. Na auditoria de um grande outlet internacional de roupas, os documentos passaram a sair prontos em PDF e Excel.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, acompanhamos a auditoria e depois desenvolvemos um sistema em que o dado entra uma vez e os documentos saem prontos.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde o apontamento manual mais gera retrabalho, antes do orçamento de 2027?$msg$),
-  ('IND', 'owner_processo', 2, 'IND-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre os apontamentos [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde o apontamento manual mais gera retrabalho?$msg$),
+  ('IND', 'owner_processo', 2, 'IND-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto tempo o time gasta por turno passando apontamentos do papel para a planilha. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Estudos apontam que a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Em apontamento de produção, isso costuma virar relatório refeito. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('IND', 'owner_processo', 3, 'IND-PR-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Se 20 operadores e inspetores gastam 15 minutos por turno com apontamentos, são cerca de 110 horas por mês. E a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy), justamente nos dados de perda e parada. No outlet que atendemos, tiramos a digitação do caminho.
+Com a produção industrial em queda há dois meses (IBGE), é comum o time ser cobrado por mais resultado sem ganhar gente. O apontamento manual costuma ser a primeira hora que dá para devolver.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com os números [DA_EMPRESA]?$msg$),
+No outlet que atendemos, o sistema que desenvolvemos passou a gerar os relatórios da auditoria sozinho, em PDF e Excel.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece no seu dia a dia?$msg$),
   ('IND', 'patrocinador_executivo', 1, 'IND-EX-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-As 500 maiores empresas do mundo perdem cerca de 11% da receita com paradas não planejadas (Siemens, 2024). Com a produção em queda, cada perda não medida pesa mais [NA_EMPRESA].
+As 500 maiores indústrias do mundo perdem cerca de 11% da receita com paradas não planejadas (Siemens, 2024). É comum parte dessa perda nem ser medida.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida para processos críticos da produção. Num grande outlet internacional de roupas, mapeamos até 70% de ganho na auditoria.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, medimos a auditoria e depois desenvolvemos o sistema que a digitaliza, com até 70% de ganho mapeado.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto as perdas não medidas custam por ano, antes do orçamento de 2027?$msg$),
-  ('IND', 'patrocinador_executivo', 2, 'IND-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a produção [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto as perdas não medidas custam à [A_EMPRESA] por ano, antes do orçamento de 2027?$msg$),
+  ('IND', 'patrocinador_executivo', 2, 'IND-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender se as perdas e paradas de cada turno chegam até você em números confiáveis. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Com a Selic em 13,75% e a produção industrial em queda (IBGE), crescer sem aumentar estrutura costuma virar prioridade em 2027. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('IND', 'patrocinador_executivo', 3, 'IND-EX-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
+Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos com as áreas, estimamos mais de 2.000 horas por ano recuperáveis e priorizamos por retorno o que desenvolver primeiro. Você sai da conversa com um primeiro esboço desse mapa para a produção [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
   ('ALI', '', 1, 'ALI-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em fábricas como a [DA_EMPRESA], controle de lote e checklists de qualidade ainda vão do papel para a planilha a cada turno.
+Um padrão que vemos em indústrias de alimentos do porte [DA_EMPRESA] é o controle de lote ainda ir do papel para a planilha. É o ponto que costuma pesar numa auditoria.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas que digitalizam lote e qualidade. Num grande outlet internacional de roupas, a auditoria levava 229 segundos por peça, e mapeamos até 70% de ganho.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, medimos a auditoria (229 segundos por peça) e desenvolvemos o sistema que a digitaliza, com até 70% de ganho mapeado.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos na produção [DA_EMPRESA], antes do orçamento de 2027?$msg$),
-  ('ALI', '', 2, 'ALI-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a produção [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos na produção [DA_EMPRESA]?$msg$),
+  ('ALI', '', 2, 'ALI-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto tempo vocês levam hoje para rastrear um lote, da matéria-prima à expedição. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+A produção de alimentos ficou 5,9% abaixo de setembro de 2025 (IBGE). Com volume menor, é comum a cobrança ser cortar perda e retrabalho. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('ALI', '', 3, 'ALI-OP-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Quando um cliente pede a rastreabilidade de um lote, quanto tempo o time leva para juntar as planilhas? Essa é uma dor recorrente na indústria de alimentos. No outlet que atendemos, a auditoria por peça passou a gerar os documentos em PDF e Excel sozinha, com até 70% de ganho mapeado.
+Um recall custa em média US$ 10 milhões em custos diretos a uma empresa de alimentos (FMI e GMA). É comum a conta crescer quando achar um lote depende de planilha.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para medirmos esse tempo na produção [DA_EMPRESA]?$msg$),
-  ('ALI', '', 4, 'ALI-WT02', $msg$[SAUDACAO], [FIRST NAME]! Vou direto: não é para substituir o time de vocês, e sim para tirar do papel o que fica parado por falta de braço. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso na produção [DA_EMPRESA]? Se não for o momento, é só me avisar.$msg$),
+No outlet que atendemos, primeiro medimos a auditoria, depois desenvolvemos o sistema que a registra, com até 70% de ganho mapeado. O mesmo método serve para lote e qualidade.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece na produção [DA_EMPRESA]?$msg$),
+  ('ALI', '', 4, 'ALI-WT02', $msg$[SAUDACAO], [FIRST NAME]! Em alimentos, é comum o gargalo aparecer como registro refeito e lote difícil de achar, não como pedido de sistema. A ideia é somar ao time, não substituir. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso na produção [DA_EMPRESA]? Se não for o momento, me avisa.$msg$),
   ('ALI', '', 5, 'ALI-IN03', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Vou parar de te escrever por aqui. Antes, um último convite, pensando no planejamento de 2027: vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de qualidade e PCP [NA_EMPRESA]?
+Vou parar de te escrever por aqui. Deixo um dado para o planejamento de 2027. Um recall custa em média US$ 10 milhões em custos diretos a uma empresa de alimentos (FMI e GMA).
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de qualidade, produção ou PCP [NA_EMPRESA]?
 
 Se for outra pessoa, me passa o contato que eu sigo com ela.$msg$),
   ('ALI', 'owner_processo', 1, 'ALI-PR-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em fábricas como a [DA_EMPRESA], o mesmo registro de qualidade costuma ser preenchido no papel e digitado de novo na planilha.
+Na qualidade de indústrias de alimentos, um dos retrabalhos que mais encontramos é o mesmo registro ser preenchido no papel e digitado de novo na planilha.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos apps de registro de qualidade e sistemas que geram os documentos sozinhos, como fizemos na auditoria de um grande outlet internacional de roupas.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, acompanhamos a auditoria e depois desenvolvemos um sistema em que o dado entra uma vez e os documentos saem prontos.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde o registro manual de qualidade mais gera retrabalho, antes do orçamento de 2027?$msg$),
-  ('ALI', 'owner_processo', 2, 'ALI-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre os registros de qualidade [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde o registro manual de qualidade mais gera retrabalho?$msg$),
+  ('ALI', 'owner_processo', 2, 'ALI-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quantas planilhas o time de qualidade preenche por turno e quantas vezes o mesmo dado é digitado. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Estudos apontam que a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Em registro de lote, isso costuma virar não conformidade. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('ALI', 'owner_processo', 3, 'ALI-PR-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-A digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Em registro de lote e de qualidade, cada erro aparece na auditoria. No outlet que atendemos, tiramos a digitação do caminho e os documentos da inspeção passaram a sair prontos.
+Num recall, cada hora para achar o lote conta. Um recall custa em média US$ 10 milhões em custos diretos a uma empresa de alimentos (FMI e GMA).
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece na qualidade [DA_EMPRESA]?$msg$),
+No outlet que atendemos, o sistema que desenvolvemos tirou a digitação do caminho, e os documentos da auditoria passaram a sair prontos.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece no seu dia a dia?$msg$),
   ('ALI', 'patrocinador_executivo', 1, 'ALI-EX-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Um recall custa em média US$ 10 milhões em custos diretos a uma empresa de alimentos (FMI e GMA), e a conta cresce quando a rastreabilidade depende de planilha.
+Um recall custa em média US$ 10 milhões em custos diretos a uma empresa de alimentos (FMI e GMA). É comum a conta crescer quando a rastreabilidade é feita em planilha.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas de rastreabilidade sob medida. Já atendemos a Ambev e um grande outlet de roupas.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, medimos a auditoria e depois desenvolvemos o sistema que a digitaliza, com até 70% de ganho mapeado.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto a falta de rastreabilidade custa à [A_EMPRESA] por ano, antes do orçamento de 2027?$msg$),
-  ('ALI', 'patrocinador_executivo', 2, 'ALI-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a operação [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto a falta de rastreabilidade custa por ano, antes do orçamento de 2027?$msg$),
+  ('ALI', 'patrocinador_executivo', 2, 'ALI-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto tempo a empresa levaria hoje para responder a um recolhimento de lote. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+A produção de alimentos ficou 5,9% abaixo de setembro de 2025 (IBGE). Com volume menor e Selic em 13,75%, é comum a prioridade de 2027 ser cortar perda. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('ALI', 'patrocinador_executivo', 3, 'ALI-EX-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
+Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos com as áreas, estimamos mais de 2.000 horas por ano recuperáveis e priorizamos por retorno o que desenvolver primeiro. Você sai da conversa com um primeiro esboço desse mapa para a produção [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
   ('AUT', '', 1, 'AUT-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em fábricas como a [DA_EMPRESA], inspeção por peça, apontamento de produção e controle de refugo ainda costumam passar por papel e planilha.
+Um padrão que vemos em autopeças do porte [DA_EMPRESA] é inspeção e refugo ainda passarem por papel e planilha. É aí que o refugo costuma ficar sem medida.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos apps que digitalizam inspeção e apontamento. Num grande outlet internacional de roupas, a auditoria levava 229 segundos por peça, e mapeamos até 70% de ganho.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, medimos a auditoria (229 segundos por peça) e desenvolvemos o sistema que a digitaliza, com até 70% de ganho mapeado.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos no chão de fábrica [DA_EMPRESA], antes do orçamento de 2027?$msg$),
-  ('AUT', '', 2, 'AUT-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a produção [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos no chão de fábrica [DA_EMPRESA]?$msg$),
+  ('AUT', '', 2, 'AUT-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto tempo a inspeção de cada peça leva hoje e quanto disso é preenchimento de planilha. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+A produção de veículos ficou 7,3% acima de setembro de 2025 (IBGE). Para fornecedores, é comum isso virar mais pedido com a mesma equipe. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('AUT', '', 3, 'AUT-OP-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-"Gastamos em média 229 segundos por peça para realizar uma auditoria, preencher documentos e criar a planilha de divergência." Foi assim que um cliente nos descreveu o processo dele. Com a plataforma que entregamos, os documentos passaram a sair prontos em PDF e Excel, e o ganho mapeado chegou a 70%.
+Numa grande fábrica automotiva, uma hora de linha parada pode custar até US$ 2,3 milhões (Siemens, 2024). Para fornecedores, é comum cada atraso de peça virar cobrança do cliente.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para medirmos esse tempo na inspeção [DA_EMPRESA]?$msg$),
-  ('AUT', '', 4, 'AUT-WT02', $msg$[SAUDACAO], [FIRST NAME]! Vou direto: não é para substituir o time de vocês, e sim para tirar do papel o que fica parado por falta de braço. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso na inspeção [DA_EMPRESA]? Se não for o momento, é só me avisar.$msg$),
+No outlet que atendemos, primeiro medimos a auditoria peça a peça, depois desenvolvemos o sistema que a registra, com até 70% de ganho mapeado.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com os números [DA_EMPRESA]?$msg$),
+  ('AUT', '', 4, 'AUT-WT02', $msg$[SAUDACAO], [FIRST NAME]! Em autopeças, é comum o gargalo aparecer como refugo e relatório refeito, não como pedido de sistema. A ideia é somar ao time, não substituir. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso na produção [DA_EMPRESA]? Se não for o momento, me avisa.$msg$),
   ('AUT', '', 5, 'AUT-IN03', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Vou parar de te escrever por aqui. Antes, um último convite, pensando no planejamento de 2027: vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de qualidade e produção [NA_EMPRESA]?
+Vou parar de te escrever por aqui. Deixo um dado para o planejamento de 2027. A produção de veículos ficou 7,3% acima de setembro de 2025 (IBGE). É comum esse volume chegar antes da estrutura.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de engenharia industrial, qualidade ou produção [NA_EMPRESA]?
 
 Se for outra pessoa, me passa o contato que eu sigo com ela.$msg$),
   ('AUT', 'owner_processo', 1, 'AUT-PR-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em fábricas como a [DA_EMPRESA], o relatório de inspeção e o de não conformidade costumam ser montados à mão, peça a peça, para cada cliente.
+Em autopeças, um dos retrabalhos que mais encontramos é montar à mão o relatório de inspeção e o de não conformidade de cada cliente. Com mais volume, isso costuma consumir horas por semana.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas que geram relatórios de inspeção sozinhos. Na auditoria de um grande outlet internacional de roupas, os relatórios passaram a sair prontos em PDF e Excel.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, acompanhamos a auditoria e depois desenvolvemos um sistema em que o dado entra uma vez e os documentos saem prontos.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde o relatório manual mais gera retrabalho, antes do orçamento de 2027?$msg$),
-  ('AUT', 'owner_processo', 2, 'AUT-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre os relatórios de inspeção [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde o relatório manual mais gera retrabalho?$msg$),
+  ('AUT', 'owner_processo', 2, 'AUT-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto tempo o time gasta por semana montando relatórios de inspeção e de não conformidade. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Estudos apontam que a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Em inspeção, isso costuma virar não conformidade. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('AUT', 'owner_processo', 3, 'AUT-PR-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Se 20 operadores e inspetores gastam 15 minutos por turno com apontamentos e relatórios, são cerca de 110 horas por mês. E a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy), justamente no dado que o cliente audita.
+A produção de veículos ficou 7,3% acima de setembro de 2025 (IBGE). É comum o volume de relatórios crescer mais rápido que o time.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com os números [DA_EMPRESA]?$msg$),
+No outlet que atendemos, o sistema que desenvolvemos passou a gerar os relatórios sozinho, em PDF e Excel.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece no seu dia a dia?$msg$),
   ('AUT', 'patrocinador_executivo', 1, 'AUT-EX-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Uma hora de linha parada pode custar até US$ 2,3 milhões numa grande fábrica automotiva (Siemens, 2024). Para fornecedores, cada refugo não medido vira atraso na entrega.
+Numa grande fábrica automotiva, uma hora de linha parada pode custar até US$ 2,3 milhões (Siemens, 2024). Para fornecedores, é comum cada refugo não medido virar atraso de entrega.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas que digitalizam a inspeção e medem o refugo. Num grande outlet de roupas, mapeamos até 70% de ganho na inspeção por peça.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, medimos a auditoria e depois desenvolvemos o sistema que a digitaliza, com até 70% de ganho mapeado.
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto o refugo custa à [A_EMPRESA] por ano, antes do orçamento de 2027?$msg$),
-  ('AUT', 'patrocinador_executivo', 2, 'AUT-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a produção [DA_EMPRESA].
+  ('AUT', 'patrocinador_executivo', 2, 'AUT-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender se refugo e retrabalho de cada turno chegam até você em números confiáveis. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+A produção de veículos ficou 7,3% acima de setembro de 2025 (IBGE). Para fornecedores, crescer sem aumentar estrutura costuma virar prioridade em 2027. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('AUT', 'patrocinador_executivo', 3, 'AUT-EX-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
+Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos com as áreas, estimamos mais de 2.000 horas por ano recuperáveis e priorizamos por retorno o que desenvolver primeiro. Você sai da conversa com um primeiro esboço desse mapa para a produção [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
   ('FAR', '', 1, 'FAR-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em fábricas como a [DA_EMPRESA], registros de lote e documentação de auditoria ainda rodam em planilha.
+Um padrão que vemos em farma e cosméticos do porte [DA_EMPRESA] é registro de lote e documentação de auditoria ainda rodarem em planilha. É o ponto que costuma pesar numa inspeção.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas que digitalizam o registro de lote e geram a documentação de auditoria. No CalcSoro, automatizamos cálculos que dependiam de planilha.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Num grande outlet de roupas, acompanhamos a auditoria e depois desenvolvemos um sistema em que o dado entra uma vez e os documentos saem prontos.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos na produção [DA_EMPRESA], antes do orçamento de 2027?$msg$),
-  ('FAR', '', 2, 'FAR-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a produção [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos na produção [DA_EMPRESA]?$msg$),
+  ('FAR', '', 2, 'FAR-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto tempo a documentação de um lote leva hoje até ficar pronta para auditoria. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+A produção farmacêutica ficou 17% abaixo de setembro de 2025 (IBGE). Com volume menor, é comum a cobrança ser cortar perda e retrabalho. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('FAR', '', 3, 'FAR-OP-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Rastreabilidade por lote não é opcional no setor, mas ainda costuma depender de planilha. A digitação manual erra de 1% a 5% dos registros (Journal of Accountancy), e cada erro vira retrabalho na auditoria. No outlet que atendemos, os documentos da auditoria passaram a sair prontos em PDF e Excel.
+O custo da má qualidade pode chegar a 15% a 20% das vendas na indústria (Autodesk). Em farma, é comum ele aparecer em lote reprovado e documentação refeita.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso na produção [DA_EMPRESA]?$msg$),
-  ('FAR', '', 4, 'FAR-WT02', $msg$[SAUDACAO], [FIRST NAME]! Vou direto: não é para substituir o time de vocês, e sim para tirar do papel o que fica parado por falta de braço. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso nos registros de lote [DA_EMPRESA]? Se não for o momento, é só me avisar.$msg$),
+No CalcSoro, primeiro entendemos como a médica refazia o cálculo de soro em planilha, depois desenvolvemos um sistema que faz o cálculo sozinho, pelas regras dela.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece na produção [DA_EMPRESA]?$msg$),
+  ('FAR', '', 4, 'FAR-WT02', $msg$[SAUDACAO], [FIRST NAME]! Em farma, é comum o gargalo aparecer como documentação refeita para a auditoria, não como pedido de sistema. A ideia é somar ao time, não substituir. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso na produção [DA_EMPRESA]? Se não for o momento, me avisa.$msg$),
   ('FAR', '', 5, 'FAR-IN03', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Vou parar de te escrever por aqui. Antes, um último convite, pensando no planejamento de 2027: vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de qualidade e registros de lote [NA_EMPRESA]?
+Vou parar de te escrever por aqui. Deixo um dado para o planejamento de 2027. O custo da má qualidade pode chegar a 15% a 20% das vendas na indústria (Autodesk).
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de qualidade, produção ou assuntos regulatórios [NA_EMPRESA]?
 
 Se for outra pessoa, me passa o contato que eu sigo com ela.$msg$),
   ('FAR', 'owner_processo', 1, 'FAR-PR-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em fábricas como a [DA_EMPRESA], o mesmo dado de lote costuma ser registrado no papel, digitado na planilha e conferido de novo para a auditoria.
+Em farma e cosméticos, um dos retrabalhos que mais encontramos é o mesmo dado de lote ser registrado no papel, digitado na planilha e conferido de novo para a auditoria.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas em que o dado entra uma vez e o documento sai pronto, como no CalcSoro, que eliminou o cálculo repetido em planilha.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). No CalcSoro, primeiro entendemos como a médica refazia o cálculo de soro em planilha, depois desenvolvemos um sistema que faz o cálculo sozinho, pelas regras dela.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde a digitação repetida mais gera retrabalho, antes do orçamento de 2027?$msg$),
-  ('FAR', 'owner_processo', 2, 'FAR-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre os registros de lote [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde a digitação repetida mais gera retrabalho?$msg$),
+  ('FAR', 'owner_processo', 2, 'FAR-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quantas vezes o mesmo dado de lote é digitado até a documentação ficar pronta. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Estudos apontam que a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Em registro de lote, isso costuma virar desvio para investigar. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('FAR', 'owner_processo', 3, 'FAR-PR-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-No CalcSoro, eliminamos o preenchimento manual em planilha e padronizamos os cálculos pelas regras do cliente. Em registro de lote, a lógica é a mesma, com o dado digitado uma vez e o documento gerado sozinho. A digitação manual erra de 1% a 5% dos registros (Journal of Accountancy).
+O custo da má qualidade pode chegar a 15% a 20% das vendas na indústria (Autodesk). É comum ele começar num dado digitado duas vezes.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso nos registros [DA_EMPRESA]?$msg$),
+No outlet que atendemos, o sistema que desenvolvemos fez o dado entrar uma vez, e os documentos da auditoria passaram a sair prontos.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece no seu dia a dia?$msg$),
   ('FAR', 'patrocinador_executivo', 1, 'FAR-EX-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-O custo da má qualidade pode chegar a 15% a 20% das vendas na indústria (Autodesk). Em empresas como a [A_EMPRESA], ele aparece em lote reprovado, auditoria e recolhimento.
+O custo da má qualidade pode chegar a 15% a 20% das vendas na indústria (Autodesk). É comum ele aparecer em lote reprovado.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida de rastreabilidade e documentação, como no CalcSoro, que automatizou rotinas que dependiam de planilha.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). No CalcSoro, entendemos como a médica refazia o cálculo em planilha e depois desenvolvemos um sistema que o faz sozinho.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto a documentação manual custa por ano, antes do orçamento de 2027?$msg$),
-  ('FAR', 'patrocinador_executivo', 2, 'FAR-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a operação [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto a documentação manual custa à [A_EMPRESA] por ano, antes do orçamento de 2027?$msg$),
+  ('FAR', 'patrocinador_executivo', 2, 'FAR-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto tempo a empresa levaria hoje para rastrear um lote numa auditoria surpresa. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+A produção farmacêutica ficou 17% abaixo de setembro de 2025 (IBGE). Com volume menor e Selic em 13,75%, é comum a prioridade de 2027 ser cortar perda. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('FAR', 'patrocinador_executivo', 3, 'FAR-EX-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
+Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos com as áreas, estimamos mais de 2.000 horas por ano recuperáveis e priorizamos por retorno o que desenvolver primeiro. Você sai da conversa com um primeiro esboço desse mapa para a produção [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
   ('ENE', '', 1, 'ENE-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em operações como a [DA_EMPRESA], ordens de serviço e inspeções ainda voltam em papel ou foto no WhatsApp.
+Um padrão que vemos em operações de energia é ordem de serviço e inspeção voltarem do campo em papel ou foto no WhatsApp. É aí que a manutenção costuma perder tempo.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos apps de campo e sistemas que centralizam ordens de serviço. Já entregamos registro offline no celular para a Modera e ocorrências em mapa para o Nautilus.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Para a Modera, desenvolvemos um app de registro de campo que funciona offline. Para o Nautilus, um sistema que centraliza ocorrências num mapa.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos na manutenção [DA_EMPRESA], antes do orçamento de 2027?$msg$),
-  ('ENE', '', 2, 'ENE-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a manutenção [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos na manutenção [DA_EMPRESA]?$msg$),
+  ('ENE', '', 2, 'ENE-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto tempo passa hoje entre um alarme numa usina e a equipe de campo agir. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Segundo a ABB, 44% das indústrias enfrentam falhas de equipamento ao menos uma vez por mês. É comum a demora estar em fazer a informação do campo chegar. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('ENE', '', 3, 'ENE-OP-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Se 18 ocorrências relevantes por mês geram perda média de R$ 6 mil cada, e metade poderia ser evitada com acompanhamento em tempo real, são R$ 648 mil por ano (exemplo da nossa Matriz de Valor). O primeiro passo é ter cada ocorrência registrada em campo e vista num mapa, como fizemos no Nautilus.
+Para 76% dos líderes industriais, uma hora de parada não planejada custa até US$ 500 mil (ABB, 2025). É comum parte desse tempo ir para achar a informação do campo.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com os números [DA_EMPRESA]?$msg$),
-  ('ENE', '', 4, 'ENE-WT02', $msg$[SAUDACAO], [FIRST NAME]! Vou direto: não é para substituir o time de vocês, e sim para tirar do papel o que fica parado por falta de braço. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso no campo [DA_EMPRESA]? Se não for o momento, é só me avisar.$msg$),
+Para o Nautilus, primeiro mapeamos como as ocorrências chegavam, depois desenvolvemos um sistema que as centraliza e mostra no mapa.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde a informação de campo mais atrasa [NA_EMPRESA]?$msg$),
+  ('ENE', '', 4, 'ENE-WT02', $msg$[SAUDACAO], [FIRST NAME]! Em energia, é comum o gargalo aparecer como ordem de serviço parada e foto no WhatsApp, não como pedido de sistema. A ideia é somar ao time, não substituir. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso na manutenção [DA_EMPRESA]? Se não for o momento, me avisa.$msg$),
   ('ENE', '', 5, 'ENE-IN03', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Vou parar de te escrever por aqui. Antes, um último convite, pensando no planejamento de 2027: vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de O&M e campo [NA_EMPRESA]?
+Vou parar de te escrever por aqui. Deixo um dado para o planejamento de 2027. Segundo a ABB, 44% das indústrias enfrentam falhas de equipamento ao menos uma vez por mês.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de manutenção, operação ou campo [NA_EMPRESA]?
 
 Se for outra pessoa, me passa o contato que eu sigo com ela.$msg$),
   ('ENE', 'owner_processo', 1, 'ENE-PR-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em operações como a [DA_EMPRESA], o técnico costuma preencher a ordem de serviço no papel e alguém digita tudo de novo no escritório, foto por foto.
+Em energia, um dos retrabalhos que mais encontramos é o técnico preencher a ordem de serviço no papel e alguém digitar tudo de novo no escritório.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos apps em que o técnico preenche a ordem de serviço no celular, mesmo sem sinal, como fizemos para a Modera, em obras.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Para a Modera, primeiro entendemos como o registro saía do campo, depois desenvolvemos um app em que ele é feito no celular, mesmo sem sinal, sem redigitar.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde o controle de campo mais gera retrabalho, antes do orçamento de 2027?$msg$),
-  ('ENE', 'owner_processo', 2, 'ENE-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as ordens de serviço [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde o controle de campo mais gera retrabalho?$msg$),
+  ('ENE', 'owner_processo', 2, 'ENE-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender como uma inspeção de campo chega hoje ao sistema e quem digita. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Estudos apontam que a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Em ordem de serviço, isso costuma virar histórico de manutenção incompleto. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('ENE', 'owner_processo', 3, 'ENE-PR-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Se 10 técnicos gastam 30 minutos por dia repassando ordens de serviço e fotos, são cerca de 110 horas por mês fora do campo. No Nautilus, cada ocorrência passou a ser registrada uma vez só, com local no mapa, e toda a informação ficou num único ambiente.
+Segundo a ABB, 44% das indústrias enfrentam falhas de equipamento ao menos uma vez por mês. É comum cada falha gerar uma nova rodada de papel, foto e planilha.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com os números [DA_EMPRESA]?$msg$),
+Na Modera, o registro de campo passou para o celular, offline. No Nautilus, as ocorrências ficaram centralizadas num mapa.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece no seu dia a dia?$msg$),
   ('ENE', 'patrocinador_executivo', 1, 'ENE-EX-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
 Para 76% dos líderes industriais, uma hora de parada não planejada custa até US$ 500 mil, e 44% enfrentam falhas ao menos uma vez por mês (ABB, 2025).
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas que centralizam manutenção e campo, como fizemos para a Modera e o Nautilus.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Para a Modera e o Nautilus, desenvolvemos sistemas que levam o registro de campo para o celular e centralizam ocorrências num mapa.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto a resposta tardia em campo custa à [A_EMPRESA] por ano, antes do orçamento de 2027?$msg$),
-  ('ENE', 'patrocinador_executivo', 2, 'ENE-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a operação [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto a resposta tardia em campo custa por ano, antes do orçamento de 2027?$msg$),
+  ('ENE', 'patrocinador_executivo', 2, 'ENE-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto a operação perde hoje entre um alarme e a ação da equipe. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Com a Selic em 13,75%, crescer sem aumentar estrutura costuma virar prioridade em 2027. Em energia, a resposta do campo costuma ser o primeiro lugar a olhar. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('ENE', 'patrocinador_executivo', 3, 'ENE-EX-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
+Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos com as áreas, estimamos mais de 2.000 horas por ano recuperáveis e priorizamos por retorno o que desenvolver primeiro. Você sai da conversa com um primeiro esboço desse mapa para a operação [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
   ('SAU', '', 1, 'SAU-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em instituições como a [A_EMPRESA], conferências e controles do dia a dia ainda rodam em planilha, refeitos a cada atendimento.
+Um padrão que vemos em hospitais e clínicas é conferências e controles do dia a dia ainda rodarem em planilha, refeitos a cada atendimento. É onde a equipe costuma perder tempo.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida que digitalizam conferências e cálculos. No CalcSoro, o cálculo de soro que a médica refazia em planilha passou a sair automaticamente, pelas regras dela.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). No CalcSoro, primeiro entendemos como a médica refazia o cálculo de soro em planilha, depois desenvolvemos um sistema que faz o cálculo sozinho, pelas regras dela.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos na operação [DA_EMPRESA], antes do orçamento de 2027?$msg$),
-  ('SAU', '', 2, 'SAU-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a operação [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde estão os principais gargalos na operação [DA_EMPRESA]?$msg$),
+  ('SAU', '', 2, 'SAU-OP-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quais conferências e controles ainda são refeitos à mão a cada atendimento ou conta. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Em 2024, os planos de saúde glosaram ou retiveram R$ 5,8 bilhões em pagamentos a hospitais (Anahp). É comum parte disso começar num dado digitado errado. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('SAU', '', 3, 'SAU-OP-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Se 5 pessoas gastam 2 horas por dia conferindo contas e respondendo glosas à mão, são cerca de 220 horas por mês. E cada glosa segura o caixa por meses. No CalcSoro, tiramos a planilha do caminho e padronizamos os cálculos pelas regras da própria médica.
+Estudos apontam que a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Em saúde, é comum esse erro aparecer depois, como conta refeita ou glosa.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com os números [DA_EMPRESA]?$msg$),
-  ('SAU', '', 4, 'SAU-WT02', $msg$[SAUDACAO], [FIRST NAME]! Vou direto: não é para substituir o time de vocês, e sim para tirar do papel o que fica parado por falta de braço. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso no faturamento [DA_EMPRESA]? Se não for o momento, é só me avisar.$msg$),
+No CalcSoro, o sistema que desenvolvemos fez o cálculo sair sozinho, sem planilha no meio.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece na operação [DA_EMPRESA]?$msg$),
+  ('SAU', '', 4, 'SAU-WT02', $msg$[SAUDACAO], [FIRST NAME]! Em saúde, é comum o gargalo aparecer como conta refeita e glosa, não como pedido de sistema. A ideia é somar ao time, não substituir. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos isso no faturamento [DA_EMPRESA]? Se não for o momento, me avisa.$msg$),
   ('SAU', '', 5, 'SAU-IN03', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Vou parar de te escrever por aqui. Antes, um último convite, pensando no planejamento de 2027: vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de faturamento e auditoria de contas [NA_EMPRESA]?
+Vou parar de te escrever por aqui. Deixo um dado para o planejamento de 2027. Em 2024, os planos de saúde glosaram ou retiveram R$ 5,8 bilhões em pagamentos a hospitais (Anahp).
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima, com você ou com quem cuida de faturamento e auditoria de contas [NA_EMPRESA]?
 
 Se for outra pessoa, me passa o contato que eu sigo com ela.$msg$),
   ('SAU', 'owner_processo', 1, 'SAU-PR-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em instituições como a [A_EMPRESA], o mesmo dado do paciente ou da conta costuma ser digitado em mais de uma planilha, item a item.
+Em hospitais e clínicas, um dos retrabalhos que mais encontramos é o mesmo dado do paciente ou da conta ser digitado em mais de uma planilha. É ali que o erro costuma nascer.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas em que o dado entra uma vez e o resultado sai pronto. No CalcSoro, os dados do paciente deixaram de ser reinseridos a cada atendimento.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). No CalcSoro, primeiro entendemos a rotina, depois desenvolvemos um sistema em que os dados do paciente entram uma vez e o cálculo sai pronto.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde a digitação repetida mais gera retrabalho, antes do orçamento de 2027?$msg$),
-  ('SAU', 'owner_processo', 2, 'SAU-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre a conferência de contas [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde a digitação repetida mais gera retrabalho?$msg$),
+  ('SAU', 'owner_processo', 2, 'SAU-PR-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quantas etapas da conferência de uma conta ainda são feitas à mão. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Estudos apontam que a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Em contas médicas, isso costuma virar glosa. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('SAU', 'owner_processo', 3, 'SAU-PR-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-A digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Em contas médicas, cada erro pode virar glosa. No CalcSoro, eliminamos o preenchimento manual em planilha e padronizamos os cálculos com base nas regras da médica.
+Em 2024, os planos de saúde glosaram ou retiveram R$ 5,8 bilhões em pagamentos a hospitais (Anahp). É comum parte disso nascer em dado digitado duas vezes.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece [NA_EMPRESA]?$msg$),
+No CalcSoro, o sistema que desenvolvemos tirou a planilha do meio do caminho, pelas regras da própria médica.
+
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos onde isso acontece no seu dia a dia?$msg$),
   ('SAU', 'patrocinador_executivo', 1, 'SAU-EX-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em 2024, os planos de saúde glosaram ou retiveram R$ 5,8 bilhões em pagamentos a hospitais (Anahp). Em instituições como a [A_EMPRESA], cada conta com erro vira risco de glosa.
+Em 2024, os planos de saúde glosaram ou retiveram R$ 5,8 bilhões em pagamentos a hospitais (Anahp). É comum cada conta com erro virar risco de glosa.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida que digitalizam rotinas críticas. Já automatizamos cálculos clínicos no CalcSoro.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). No CalcSoro, entendemos como a médica refazia o cálculo em planilha e depois desenvolvemos um sistema que o faz sozinho.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto as glosas e o retrabalho custam por ano, antes do orçamento de 2027?$msg$),
-  ('SAU', 'patrocinador_executivo', 2, 'SAU-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre o faturamento [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para estimarmos quanto as glosas e o retrabalho custam à [A_EMPRESA] por ano, antes do orçamento de 2027?$msg$),
+  ('SAU', 'patrocinador_executivo', 2, 'SAU-EX-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quanto do faturamento fica parado hoje por glosa ou conta devolvida. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Em 2024, os planos de saúde glosaram ou retiveram R$ 5,8 bilhões em pagamentos a hospitais (Anahp). É comum a conta começar em erro de digitação. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('SAU', 'patrocinador_executivo', 3, 'SAU-EX-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
+Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos com as áreas, estimamos mais de 2.000 horas por ano recuperáveis e priorizamos por retorno o que desenvolver primeiro. Você sai da conversa com um primeiro esboço desse mapa para a operação [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
   ('*', 'owner_tecnologia', 1, 'TEC-TI-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Em empresas como a [A_EMPRESA], o TI costuma ter mais pedidos da operação do que gente, e bons projetos ficam parados na fila.
+Um padrão que vemos em empresas do porte [DA_EMPRESA] é o TI com mais pedidos da operação do que gente, e bons projetos parados na fila, que costuma crescer no fim de ano.
 
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida, documentados e fáceis de manter, junto com o time interno. Na Ambev, reconstruímos o assistente de IA interno.
+Sou [NOME], [CONSULTOR] do Núcleo de Tecnologia da Poli Júnior (Escola Politécnica da USP). Desenvolvemos sistemas documentados para o time interno manter. Na Ambev, reconstruímos o assistente de IA interno em squad com o Núcleo de Dados.
 
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos quais demandas da operação estão paradas na fila, antes do orçamento de 2027?$msg$),
-  ('*', 'owner_tecnologia', 2, 'TEC-TI-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as demandas da operação [DA_EMPRESA].
+Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos quais demandas da operação estão paradas na fila?$msg$),
+  ('*', 'owner_tecnologia', 2, 'TEC-TI-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn.
 
-Quero entender quais projetos da operação estão parados hoje por falta de braço no time. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
+Onde o sistema não chega, é comum a operação criar planilhas paralelas. Estudos apontam que a digitação manual erra de 1% a 5% dos registros (Journal of Accountancy). Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
   ('*', 'owner_tecnologia', 3, 'TEC-TI-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
-Se 3 projetos da operação esperam 6 meses na fila, cada um economizando 100 horas por mês, são 1.800 horas perdidas na espera. Entramos como braço extra, com entregas documentadas e fáceis de manter, como fizemos na Ambev e na Riachuelo.
+Se 3 projetos da operação esperam 6 meses na fila, cada um economizando 100 horas por mês, são 1.800 horas perdidas na espera. É comum essa conta nem aparecer no planejamento.
+
+Entramos como braço extra do TI. Na Riachuelo, unificamos num só ambiente dados que estavam espalhados. Na Ambev, trabalhamos em squad, com entregas documentadas.
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com a fila [DA_EMPRESA]?$msg$)
 ) AS v (chave, persona, step, code, body)
