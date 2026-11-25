@@ -71,6 +71,88 @@ test.describe("Envios de hoje", () => {
     );
   });
 
+  test("o cartão mostra a persona sugerida pelo cargo e a mensagem da persona", async ({
+    page,
+  }) => {
+    await page.goto("/hoje");
+    await page.getByRole("tab", { name: /^WhatsApp 2/ }).click();
+    const card = page.getByRole("article", { name: "Diego Rocha" });
+    await expect(card.getByText("Patrocinador Executivo")).toBeVisible();
+    await expect(card.getByText("sugerida", { exact: true })).toBeVisible();
+    // Setor da empresa, código com a origem do modelo e a persona usada.
+    await expect(card.getByText("Varejo", { exact: true })).toBeVisible();
+    const codigo = card.getByText("VAR4PE", { exact: true });
+    await expect(codigo).toHaveAttribute("title", "Varejo · Patrocinador Executivo");
+    await card.getByRole("button", { name: "Copiar mensagem" }).click();
+    await expect(page.getByText("Mensagem copiada")).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      "Oi, Diego! Conversa de patrocinador na Delta.",
+    );
+  });
+
+  test("o código do modelo padrão diz a origem no title", async ({ page }) => {
+    await page.goto("/hoje");
+    await page.getByRole("tab", { name: /^WhatsApp 1/ }).click();
+    const card = page.getByRole("article", { name: "Bruno Lima" });
+    await expect(card.getByText("M2", { exact: true })).toHaveAttribute(
+      "title",
+      "Modelo padrão da equipe",
+    );
+    await expect(card.getByText("Owner da Tecnologia")).toBeVisible();
+  });
+
+  test("empresa com subsetor mostra setor › subsetor e a cadência do subsetor", async ({
+    page,
+  }) => {
+    await page.goto("/hoje");
+    const card = page.getByRole("article", { name: "Carla Dias" });
+    await expect(card.getByText("Indústria › Metalurgia", { exact: true })).toBeVisible();
+    await expect(card.getByText("MET1", { exact: true })).toHaveAttribute(
+      "title",
+      "Indústria › Metalurgia · qualquer persona",
+    );
+    await expect(card.getByText("cadência do setor")).toBeVisible();
+    await card.getByRole("button", { name: "Copiar mensagem" }).click();
+    await expect(page.getByText("Mensagem copiada")).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      "Olá, Carla! Metalurgia 1 na Ômicron.",
+    );
+  });
+
+  test("persona sugerida aparece com selo e escolher uma persona grava no contato", async ({
+    page,
+  }) => {
+    await page.goto("/hoje");
+    const card = page.getByRole("article", { name: "Ana Souza" });
+    await card.getByRole("button", { name: "Completar dados" }).click();
+    const persona = card.getByRole("combobox", { name: "Persona" });
+    await expect(persona).toHaveValue("");
+    await expect(persona.locator("option").first()).toHaveText("Sugerida: Patrocinador Executivo");
+    // Um selo na meta-linha do cartão e outro ao lado do seletor.
+    await expect(card.getByText("sugerida", { exact: true })).toHaveCount(2);
+    expect(await mutations()).toEqual([]);
+
+    await persona.selectOption({ label: "Owner da Tecnologia" });
+    await expect.poll(async () => (await mutations()).length).toBe(1);
+    const [m] = await mutations();
+    expect(m).toMatchObject({ method: "PATCH", table: "contacts" });
+    expect(JSON.parse(m!.body)).toEqual({ persona: "owner_tecnologia" });
+  });
+
+  test("escolher a persona sugerida na lista também grava (confirma a sugestão)", async ({
+    page,
+  }) => {
+    await page.goto("/hoje");
+    const card = page.getByRole("article", { name: "Ana Souza" });
+    await card.getByRole("button", { name: "Completar dados" }).click();
+    await card
+      .getByRole("combobox", { name: "Persona" })
+      .selectOption({ label: "Patrocinador Executivo" });
+    await expect.poll(async () => (await mutations()).length).toBe(1);
+    const [m] = await mutations();
+    expect(JSON.parse(m!.body)).toEqual({ persona: "patrocinador_executivo" });
+  });
+
   test("lead sem empresa pede a empresa antes de copiar", async ({ page }) => {
     await page.goto("/hoje");
     await page.getByRole("button", { name: "Copiar mensagem" }).first().click();

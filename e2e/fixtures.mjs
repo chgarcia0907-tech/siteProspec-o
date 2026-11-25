@@ -94,7 +94,9 @@ export function makeContacts() {
     ct(U1, {
       name: "Carla Dias",
       headline: "Gerente de TI",
-      company: "Gama",
+      company: "Ômicron",
+      company_gender: "feminino",
+      company_id: EMPRESA_OMICRON,
       sector: "Varejo",
       job_title: "Gerente de TI",
       connected_at: "2026-11-10",
@@ -278,6 +280,14 @@ export function initialDb() {
         step: 4,
         code: "VAR4",
         body: "Oi, [FIRST NAME]! Cadência do varejo [NA_EMPRESA].",
+      },
+      // Varejo, WhatsApp 2, só para quem é Patrocinador Executivo (ex.: CEO).
+      {
+        sector_id: SETOR_VAREJO,
+        persona: "patrocinador_executivo",
+        step: 4,
+        code: "VAR4PE",
+        body: "Oi, [FIRST NAME]! Conversa de patrocinador [NA_EMPRESA].",
       },
     ],
     companies: [
