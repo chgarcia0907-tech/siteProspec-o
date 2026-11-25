@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { CompanyGenderToggle } from "@/components/CompanyGender";
-import { IndustrySelect } from "@/components/IndustrySelect";
+import { IndustrySelect, type SectorChoice } from "@/components/IndustrySelect";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import {
   weekEndISO,
   weekStartISO,
   type Company,
-  type Sector,
+  type SectorNode,
 } from "@/lib/empresas";
 import { errorMessage } from "@/lib/utils";
 
@@ -25,12 +25,12 @@ export function CompanyForm({
   existing,
 }: {
   /** `undefined` enquanto os setores carregam. */
-  sectors: readonly Sector[] | undefined;
+  sectors: readonly SectorNode[] | undefined;
   existing: readonly Company[];
 }) {
   const add = useAddCompanies();
   const [text, setText] = useState("");
-  const [sectorId, setSectorId] = useState("");
+  const [choice, setChoice] = useState<SectorChoice | null>(null);
   const [gender, setGender] = useState<CompanyGender>("feminino");
   const [day, setDay] = useState(todayISO());
   const week = weekStartISO(day || todayISO());
@@ -39,11 +39,11 @@ export function CompanyForm({
   const names = parseCompanyLines(text);
   const fresh = names.filter((n) => !known.has(normalizeCompany(n)));
   const repeated = names.length - fresh.length;
-  const noSectors = !!sectors && sectors.every((s) => !s.active);
+  const noSectors = !!sectors && sectors.every((s) => !s.active || s.parent_id);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!sectorId) {
+    if (!choice) {
       toast.error("Escolha o setor da empresa");
       return;
     }
@@ -52,7 +52,14 @@ export function CompanyForm({
       return;
     }
     add.mutate(
-      fresh.map((name) => ({ name, gender, sector_id: sectorId, week_start: week })),
+      fresh.map((name) => ({
+        name,
+        gender,
+        sector_id: choice.sector_id,
+        // A chave só vai quando há subsetor.
+        ...(choice.subsector_id ? { subsector_id: choice.subsector_id } : {}),
+        week_start: week,
+      })),
       {
         onSuccess: (n) => {
           toast.success(n === 1 ? "Empresa cadastrada" : `${n} empresas cadastradas`);
@@ -99,8 +106,9 @@ export function CompanyForm({
                 <Label>Setor</Label>
                 <IndustrySelect
                   sectors={sectors}
-                  value={sectorId}
-                  onChange={setSectorId}
+                  sectorId={choice?.sector_id ?? ""}
+                  subsectorId={choice?.subsector_id ?? null}
+                  onChange={setChoice}
                   className="w-full"
                 />
               </div>
@@ -125,7 +133,7 @@ export function CompanyForm({
               <Button
                 type="submit"
                 className="w-full"
-                disabled={add.isPending || fresh.length === 0 || !sectorId}
+                disabled={add.isPending || fresh.length === 0 || !choice}
               >
                 Cadastrar
               </Button>

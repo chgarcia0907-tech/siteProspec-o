@@ -12,7 +12,9 @@ export const SETOR_VAREJO = "12121212-0000-4000-8000-000000000001";
 const SETOR_SAUDE = "12121212-0000-4000-8000-000000000002";
 export const SETOR_INDUSTRIA = "12121212-0000-4000-8000-000000000003";
 export const SUBSETOR_METALURGIA = "12121212-0000-4000-8000-000000000004";
+export const SUBSETOR_QUIMICA = "12121212-0000-4000-8000-000000000005";
 const EMPRESA_DELTA = "13131313-0000-4000-8000-000000000001";
+const EMPRESA_OMICRON = "13131313-0000-4000-8000-000000000002";
 export const GOAL_EQUIPE = "14141414-0000-4000-8000-000000000001";
 
 export const USER = {
@@ -251,9 +253,25 @@ export function initialDb() {
         sort: 0,
         parent_id: SETOR_INDUSTRIA,
       },
+      // Subsetor inativo: não aparece no seletor do hunter, mas o painel o lista.
+      {
+        id: SUBSETOR_QUIMICA,
+        name: "Química",
+        active: false,
+        sort: 1,
+        parent_id: SETOR_INDUSTRIA,
+      },
     ],
     // Cadência do Varejo só com o WhatsApp 2; as outras etapas usam o modelo padrão.
+    // Metalurgia (subsetor) tem as 5 etapas em "qualquer persona"; Indústria não tem nenhuma.
     sector_templates: [
+      ...[1, 2, 3, 4, 5].map((step) => ({
+        sector_id: SUBSETOR_METALURGIA,
+        persona: "",
+        step,
+        code: `MET${step}`,
+        body: `Olá, [FIRST NAME]! Metalurgia ${step} [NA_EMPRESA].`,
+      })),
       {
         sector_id: SETOR_VAREJO,
         persona: "",
@@ -270,6 +288,18 @@ export function initialDb() {
         gender: "feminino",
         sector_id: SETOR_VAREJO,
         subsector_id: null,
+        week_start: "2026-11-09",
+        period_id: P1,
+        created_at: "2026-11-09T12:00:00Z",
+        updated_at: "2026-11-09T12:00:00Z",
+      },
+      {
+        id: EMPRESA_OMICRON,
+        user_id: U1,
+        name: "Ômicron",
+        gender: "feminino",
+        sector_id: SETOR_INDUSTRIA,
+        subsector_id: SUBSETOR_METALURGIA,
         week_start: "2026-11-09",
         period_id: P1,
         created_at: "2026-11-09T12:00:00Z",
