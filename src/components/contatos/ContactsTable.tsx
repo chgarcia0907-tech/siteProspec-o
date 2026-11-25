@@ -63,7 +63,7 @@ export function ContactsTable({
             </TableHead>
             <TableHead>Contato</TableHead>
             <TableHead>Empresa</TableHead>
-            <TableHead>Área</TableHead>
+            <TableHead>Área e persona</TableHead>
             <TableHead>Telefone</TableHead>
             <TableHead>Cadência</TableHead>
             <TableHead>Próximo envio</TableHead>
@@ -99,6 +99,7 @@ export function ContactsTable({
                 marks={cadenceMarks(c, next)}
                 selected={selection.has(c.id)}
                 onToggle={() => selection.toggle(c.id)}
+                onPersona={(persona) => onPatch(c, { persona })}
                 onEdit={() => setEditingId(c.id)}
               />
             );

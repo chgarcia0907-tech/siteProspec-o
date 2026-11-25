@@ -95,10 +95,10 @@ test.describe("Indicadores", () => {
     const alertas = page.getByRole("region", { name: /^Quem precisa de ajuda/ });
     await expect(alertas.getByRole("listitem")).toHaveCount(5);
     await expect(alertas.getByText(/setor Varejo/)).toHaveCount(0);
-    // Inclui "empresa Ômicron sem nenhum contato" e "setor Indústria: cadência sem mensagem própria".
-    // Este último é falso positivo conhecido: o alerta olha só o setor, não a cadência do subsetor.
-    await alertas.getByRole("button", { name: "Ver todos os 9" }).click();
-    await expect(alertas.getByRole("listitem")).toHaveCount(9);
+    // Entre eles está "setor Indústria: cadência sem mensagem própria", o único falso positivo
+    // conhecido: o alerta olha só o setor, não a cadência do subsetor (a Ômicron tem a Carla Dias).
+    await alertas.getByRole("button", { name: "Ver todos os 8" }).click();
+    await expect(alertas.getByRole("listitem")).toHaveCount(8);
     await expect(alertas.getByText(/setor Varejo/)).toBeVisible();
     await alertas.getByRole("button", { name: "Mostrar só os mais urgentes" }).click();
     await expect(alertas.getByRole("listitem")).toHaveCount(5);

@@ -412,18 +412,23 @@ filas de envio**.
 - **Quem usa:** hunter. É só leitura; o modelo padrão é editado por SQL e as cadências de setor na
   aba "Setores e cadências" do painel.
 - **Dados exibidos:** H1 "Modelos" e um parágrafo que explica que contatos de empresas cadastradas
-  recebem a cadência do setor da empresa (etapas sem mensagem do setor usam o padrão), com as
-  variáveis ([FIRST NAME], [EMPRESA],
+  recebem a primeira mensagem que existir na ordem subsetor e persona, subsetor, setor e persona,
+  setor, modelo padrão da equipe, com as variáveis ([FIRST NAME], [EMPRESA],
   [CARGO], [DOR_DO_SETOR], [NOME], [CONSULTOR], [OBRIGADO], [JANELA], [SAUDACAO]) e o contato de
   exemplo (Mariana Souza · Gerente de Operações · Acme Indústria, setor Operações). Um Card por
   `STEPS`: `ChannelBadge` + `code` (mono). Em duas colunas (a partir de `md`): **Modelo** (texto
   cru) e **Pré-visualização** (renderizada com o nome e gênero do hunter). Com um setor escolhido,
-  a etapa sem mensagem própria mostra "(sem mensagem do setor — modelo padrão)" ao lado do código.
-- **Ações:** `NativeSelect` "Cadência" (`w-72`): **"Modelo padrão da equipe"** + "Setor: {nome}" para
-  cada setor ativo. Fora isso, nada (nem copiar).
+  o cartão mostra a origem da mensagem ao lado do código (ex.: "Indústria › Metalurgia · qualquer
+  persona"), ou "sem mensagem do setor: usa o modelo padrão" quando cai no padrão. Cada aba de etapa
+  tem um selo de nível: "própria do subsetor", "do setor" ou "padrão".
+- **Ações:** três `NativeSelect` (`w-60`), cada um com rótulo visível. **Setor**: "Modelo padrão da
+  equipe" + setores ativos de primeiro nível (trocar o setor zera o subsetor). **Subsetor**: "Sem
+  subsetor" + subsetores ativos do setor; desabilitado sem setor ou sem subsetores ativos.
+  **Persona**: "Qualquer persona" + as 4 de `PERSONAS`; desabilitada sem setor. Fora isso, nada
+  (nem copiar).
 - **Estados:** carregando: "Carregando..." no corpo do modelo e pré-visualização vazia. Sem estado
   de erro.
-- **Dados:** `message_templates`, `profiles`, `sectors`, `sector_templates` (via `pickTemplate`).
+- **Dados:** `message_templates`, `profiles`, `sectors` (árvore), `sector_templates` (via `resolveTemplate`).
 - **Componentes:** `StatusBadge.tsx` (`ChannelBadge`); ui: `card`, `native-select`.
 - **Observações de UX:** a lista de variáveis fica num parágrafo corrido, sem destaque das tags no
   modelo (e não cita as tags [NA_EMPRESA], [A_EMPRESA], [DA_EMPRESA], que o editor de setores

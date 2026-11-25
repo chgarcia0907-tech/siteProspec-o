@@ -218,4 +218,69 @@ test.describe("Contatos", () => {
       resposta_etapa: 0,
     });
   });
+
+  test("a linha mostra a persona sugerida pelo cargo, com o motivo no title", async ({ page }) => {
+    await page.goto("/contatos");
+    const diego = page.locator("main tbody tr", { hasText: "Diego Rocha" });
+    const persona = diego.getByRole("combobox", { name: "Persona (sugerida)" });
+    await expect(persona.locator("option:checked")).toHaveText("Patrocinador Executivo");
+    await expect(persona).toHaveAttribute(
+      "title",
+      "Sugerida pelo cargo: Patrocinador Executivo. Escolha para confirmar.",
+    );
+    await expect(persona).toHaveClass(/border-dashed/);
+    await expect(persona.locator("option", { hasText: "Owner d" })).toHaveCount(0);
+    // A sugestão não se repete na lista aberta: a opção "" fica escondida.
+    await expect(persona.locator('option[value=""]')).toHaveAttribute("hidden", "");
+  });
+
+  test("trocar a persona na linha grava a escolhida", async ({ page }) => {
+    await page.goto("/contatos");
+    const diego = page.locator("main tbody tr", { hasText: "Diego Rocha" });
+    await diego
+      .getByRole("combobox", { name: "Persona (sugerida)" })
+      .selectOption({ label: "Tecnologia" });
+    await expect.poll(async () => (await mutations()).length).toBe(1);
+    expect(JSON.parse((await mutations())[0]!.body)).toEqual({ persona: "owner_tecnologia" });
+    expect((await mutations())[0]!.query).toMatch(/id=eq\./);
+  });
+
+  test("escolher a persona sugerida na linha dispara a gravação", async ({ page }) => {
+    await page.goto("/contatos");
+    const diego = page.locator("main tbody tr", { hasText: "Diego Rocha" });
+    // A opção "sugerida" tem valor vazio e a persona real é outra opção, com o mesmo rótulo.
+    await diego
+      .getByRole("combobox", { name: "Persona (sugerida)" })
+      .selectOption("patrocinador_executivo");
+    await expect.poll(async () => (await mutations()).length).toBe(1);
+    expect(JSON.parse((await mutations())[0]!.body)).toEqual({
+      persona: "patrocinador_executivo",
+    });
+  });
+
+  test("contato com persona gravada não aparece como sugerido", async ({ page }) => {
+    await page.goto("/contatos");
+    const hugo = page.locator("main tbody tr", { hasText: "Hugo Melo" });
+    const persona = hugo.getByRole("combobox", { name: "Persona", exact: true });
+    await expect(persona).toHaveValue("owner_processo");
+    await expect(persona.locator("option:checked")).toHaveText("Processo");
+    await expect(persona).toHaveAttribute("title", "Owner do Processo");
+    await expect(persona).not.toHaveClass(/border-dashed/);
+    await expect(hugo.getByRole("combobox", { name: "Persona (sugerida)" })).toHaveCount(0);
+  });
+
+  test("a edição do contato mostra o selo 'sugerida' e grava a persona", async ({ page }) => {
+    await page.goto("/contatos");
+    await page
+      .locator("main tbody tr", { hasText: "Diego Rocha" })
+      .getByRole("button", { name: /^Editar / })
+      .click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByText("sugerida", { exact: true })).toBeVisible();
+    const persona = dialog.getByRole("combobox", { name: "Persona", exact: true });
+    await expect(persona.locator("option:checked")).toHaveText("Sugerida: Patrocinador Executivo");
+    await persona.selectOption({ label: "Owner da Operação" });
+    await expect.poll(async () => (await mutations()).length).toBe(1);
+    expect(JSON.parse((await mutations())[0]!.body)).toEqual({ persona: "owner_operacao" });
+  });
 });

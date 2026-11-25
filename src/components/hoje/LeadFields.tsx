@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { CompanyGenderToggle } from "@/components/CompanyGender";
 import { CompanySelect } from "@/components/CompanySelect";
+import { PersonaSelect } from "@/components/PersonaSelect";
 import { SectorSelect } from "@/components/SectorSelect";
 import { Input } from "@/components/ui/input";
 import type { Contact } from "@/lib/cadencia";
 import type { Company } from "@/lib/empresas";
+import { contactPersona } from "@/lib/personas";
 import { cn } from "@/lib/utils";
 
 /** Campos editáveis do lead na fila (nome, empresa e, no LinkedIn 1, área e cargo). */
@@ -21,6 +23,7 @@ export function LeadFields({
 }) {
   const [cargo, setCargo] = useState(contact.job_title);
   const [nome, setNome] = useState(contact.name);
+  const persona = contactPersona(contact);
   return (
     <div className="flex w-full flex-wrap items-center gap-2">
       <Input
@@ -53,6 +56,13 @@ export function LeadFields({
           />
         </span>
       )}
+      <PersonaSelect
+        value={contact.persona}
+        suggested={persona.persona}
+        onChange={(p) => onPatch({ persona: p })}
+        compact
+        className="w-56"
+      />
       {showStep1 && (
         <>
           <SectorSelect

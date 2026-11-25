@@ -1,6 +1,7 @@
 import { ChannelBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { StepDef } from "@/lib/cadencia";
+import type { TemplateLevel } from "@/lib/fila";
 
 /** Contato fictício usado na pré-visualização dos modelos. */
 export const EXEMPLO = {
@@ -14,12 +15,15 @@ export const EXEMPLO = {
 export function ModeloEtapa({
   step,
   template: t,
+  origin,
   sectorChosen,
   preview,
 }: {
   step: StepDef;
-  template: { code: string; body: string; fromSector: boolean } | null | undefined;
-  /** Uma cadência de setor está escolhida (mostra quando a etapa cai no modelo padrão). */
+  template: { code: string; body: string; level: TemplateLevel } | null | undefined;
+  /** De onde a mensagem vem (`templateOriginLabel`), ex.: "Varejo · Patrocinador Executivo". */
+  origin: string;
+  /** Um setor está escolhido (mostra a origem e quando a etapa cai no modelo padrão). */
   sectorChosen: boolean;
   preview: string;
 }) {
@@ -31,9 +35,9 @@ export function ModeloEtapa({
             <ChannelBadge channel={step.channel}>{step.label}</ChannelBadge>
             <span className="font-mono text-dense text-muted-foreground">{t?.code}</span>
           </CardTitle>
-          {sectorChosen && t && !t.fromSector && (
+          {sectorChosen && t && (
             <span className="text-caption text-subtle-foreground">
-              sem mensagem do setor: usa o modelo padrão
+              {t.level === "padrao" ? "sem mensagem do setor: usa o modelo padrão" : origin}
             </span>
           )}
         </CardHeader>

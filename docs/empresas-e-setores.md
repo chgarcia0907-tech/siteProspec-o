@@ -5,12 +5,12 @@ subsetor e persona (migração `20261122180804_setor_subsetor_persona.sql`).
 
 ## 0. Situação
 
-| Parte                                               | Estado                                                                                                                                                                                                                                                                                                                              |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Empresas e setores (PR #6)                          | No `dev` e no `main`. Migração `20261113120000_companies_sectors.sql` aplicada em 13/11/2026 no Supabase `ctxsmboaqbjgslctojeq`.                                                                                                                                                                                                    |
-| Subsetor e persona: migração                        | `20261122180804_setor_subsetor_persona.sql`, aditiva, já aplicada em produção (nunca editar). As correções (pai do setor não troca, acento solto, permissões das funções de persona, mensagem só com espaços) estão em `20261122185416_endurece_subsetor_persona.sql`, que só vale depois do `bun run db:push`.                     |
-| Subsetor e persona: regras (`src/lib/`)             | `personas.ts`, `resolveTemplate` em `fila.ts` e os auxiliares de `empresas.ts`, com testes. **Envios de hoje já usa `resolveTemplate`** (com a persona efetiva), e a planilha de contatos já exporta Subsetor e Persona no fim.                                                                                                     |
-| Subsetor e persona: server functions, hooks e telas | `setores.functions.ts` (subsetor, cadência por persona, exclusão e uso) e os hooks (`useSectorTree`, `useSectorCadences`) já estão prontos. Faltam só as **telas** (Painel, Empresas, Contatos, Importar, Modelos e a persona na fila), uma por PR; até lá `useSectors` mostra só o primeiro nível e a cadência "qualquer persona". |
+| Parte                                               | Estado                                                                                                                                                                                                                                                                                                          |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Empresas e setores (PR #6)                          | No `dev` e no `main`. Migração `20261113120000_companies_sectors.sql` aplicada em 13/11/2026 no Supabase `ctxsmboaqbjgslctojeq`.                                                                                                                                                                                |
+| Subsetor e persona: migração                        | `20261122180804_setor_subsetor_persona.sql`, aditiva, já aplicada em produção (nunca editar). As correções (pai do setor não troca, acento solto, permissões das funções de persona, mensagem só com espaços) estão em `20261122185416_endurece_subsetor_persona.sql`, que só vale depois do `bun run db:push`. |
+| Subsetor e persona: regras (`src/lib/`)             | `personas.ts`, `resolveTemplate` em `fila.ts` e os auxiliares de `empresas.ts`, com testes. **Envios de hoje já usa `resolveTemplate`** (com a persona efetiva), e a planilha de contatos já exporta Subsetor e Persona no fim.                                                                                 |
+| Subsetor e persona: server functions, hooks e telas | `setores.functions.ts` (subsetor, cadência por persona, exclusão e uso) e os hooks (`useSectorTree`, `useSectorCadences`) já estão prontos. As **telas** (Painel, Empresas, Envios de hoje, Contatos, Importar e Modelos) estão feitas nos PRs #47–#52.                                                         |
 
 ## 1. Dois conceitos que não se confundem
 
@@ -208,8 +208,8 @@ ou "Modelo padrão da equipe"). As tags são as mesmas em qualquer caso (`render
 No LinkedIn 1, a área e o cargo só são exigidos se a mensagem usar `[DOR_DO_SETOR]` ou `[CARGO]`.
 A empresa continua sempre obrigatória.
 
-A tela **Modelos** tem um seletor de cadência ("Modelo padrão da equipe" ou "Setor: ...") para o
-hunter ver o texto que vai sair.
+A tela **Modelos** tem três seletores (Setor, Subsetor e Persona) para o hunter ver o texto que vai
+sair; a mensagem de cada etapa segue a ordem de `resolveTemplate` e o selo mostra o nível.
 
 ## 4. Regras puras (`src/lib/empresas.ts`, testes em `empresas.test.ts`)
 
