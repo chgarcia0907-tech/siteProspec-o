@@ -239,13 +239,14 @@ export function initialDb() {
       body: `Olá, [FIRST NAME]! Mensagem ${step} [NA_EMPRESA].`,
     })),
     sectors: [
-      { id: SETOR_VAREJO, name: "Varejo", active: true, sort: 0 },
-      { id: SETOR_SAUDE, name: "Saúde", active: false, sort: 1 },
+      { id: SETOR_VAREJO, name: "Varejo", active: true, sort: 0, parent_id: null },
+      { id: SETOR_SAUDE, name: "Saúde", active: false, sort: 1, parent_id: null },
     ],
     // Cadência do Varejo só com o WhatsApp 2; as outras etapas usam o modelo padrão.
     sector_templates: [
       {
         sector_id: SETOR_VAREJO,
+        persona: "",
         step: 4,
         code: "VAR4",
         body: "Oi, [FIRST NAME]! Cadência do varejo [NA_EMPRESA].",
@@ -258,6 +259,7 @@ export function initialDb() {
         name: "Delta",
         gender: "feminino",
         sector_id: SETOR_VAREJO,
+        subsector_id: null,
         week_start: "2026-11-09",
         period_id: P1,
         created_at: "2026-11-09T12:00:00Z",

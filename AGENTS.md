@@ -156,6 +156,14 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   cada AT dos outros e a meta somada (`ats_semana` de cada hunter, com a herança de `resolveGoal`).
   A equipe é a dos Indicadores (ciclo ativo: só os membros). Envios, atrasados e conversão usam os
   contatos do próprio hunter, com `buildQueues`/`dayProgress` (mesma conta de Envios de hoje).
+- Subsetor e persona na cadência (detalhes em `docs/empresas-e-setores.md`): subsetor é uma linha de
+  `sectors` com `parent_id` (um nível; `companies.sector_id` continua sempre o setor de primeiro nível e
+  `companies.subsector_id` guarda o subsetor). `contacts.persona` nula = sugerida pelo cargo; gravada =
+  confirmada. A mensagem da etapa sai de `resolveTemplate` (`fila.ts`): subsetor+persona, subsetor,
+  setor+persona, setor, modelo padrão; `sector_templates.persona = ''` é "qualquer persona". Dois pares
+  TS/SQL andam juntos: `suggestPersona`/`matchPersona` (`personas.ts`) ↔ `suggest_persona`/`match_persona`,
+  e `resolveTemplate` ↔ `stamp_resposta_origem`. Ao mudar um lado, crie migração para o outro; quem
+  chama `resolveTemplate` para um contato passa `contactPersona(c).persona` (a efetiva, como o trigger).
 - Contato manual (botão "Adicionar contato" em Contatos): serve para AT marcada fora da cadência, como
   por e-mail. Regra em `manualAtRow`/`manualAtError` (`contatos.ts`), gravação por `useAddContact`.
   O contato entra como `respondeu`, com `at_marcada_em` na data informada (pode ser futura),

@@ -11,6 +11,7 @@ import {
   FUNNEL,
 } from "./cadencia";
 import { fetchAll } from "./fetch-all";
+import { PERSONA_LABEL, contactPersona } from "./personas";
 
 const TZ = "America/Sao_Paulo";
 
@@ -64,9 +65,46 @@ export function brDateTime(d: Date) {
 }
 const dec = (n: number) => String(n).replace(".", ",");
 
+/**
+ * Cabeçalho do CSV de contatos. As colunas existentes não mudam de nome nem de posição (a planilha
+ * lê por posição); "Subsetor" e "Persona" ficam sempre no fim. "Setor" é a **área** do contato.
+ */
+export const CONTATOS_HEADER = [
+  "Hunter",
+  "Nome",
+  "Cargo/Headline",
+  "Cargo na empresa",
+  "Empresa",
+  "Setor",
+  "Telefone",
+  "Data da conexão",
+  ...STEPS.flatMap((st) => [`${st.label} prevista`, `${st.label} enviada`]),
+  "Status",
+  ...FUNNEL.map((f) => f.label),
+  "Importado em",
+  "Período",
+  "Grupo",
+  "Subgrupo",
+  "Subsetor",
+  "Persona",
+];
+
+/**
+ * Células "Subsetor" e "Persona" do contato: o subsetor da empresa ligada (vazio sem empresa ou sem
+ * subsetor) e a persona efetiva (a gravada ou, se nula, a sugerida pelo cargo).
+ */
+export function contatoExtraCells(
+  ct: Pick<Contact, "company_id" | "persona" | "job_title" | "headline">,
+  companyById: ReadonlyMap<string, { subsector_id: string | null }>,
+  sectorName: ReadonlyMap<string, string>,
+): [string, string] {
+  const subId = ct.company_id ? companyById.get(ct.company_id)?.subsector_id : null;
+  return [(subId && sectorName.get(subId)) || "", PERSONA_LABEL[contactPersona(ct).persona]];
+}
+
 export async function contatosCsv(): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const [c, p, s, per, mem, grp, sub, hol] = await Promise.all([
+  const [c, p, s, per, mem, grp, sub, hol, comp, sec] = await Promise.all([
     fetchAll((a, b) => supabaseAdmin.from("contacts").select("*").order("id").range(a, b)).then(
       (data) => ({ data, error: null }),
     ),
@@ -87,7 +125,14 @@ export async function contatosCsv(): Promise<string> {
     supabaseAdmin.from("groups").select("id, name"),
     supabaseAdmin.from("subgroups").select("id, name"),
     supabaseAdmin.from("holidays").select("date"),
+    fetchAll((a, b) =>
+      supabaseAdmin.from("companies").select("id, subsector_id").order("id").range(a, b),
+    ),
+    supabaseAdmin.from("sectors").select("id, name"),
   ]);
+  if (sec.error) throw sec.error;
+  const companyById = new Map(comp.map((x) => [x.id, x]));
+  const sectorName = new Map((sec.data ?? []).map((x) => [x.id, x.name]));
   if (hol.error) throw hol.error;
   const holidays = new Set((hol.data ?? []).map((h) => h.date));
   const pern = new Map((per.data ?? []).map((x) => [x.id, x.name]));
@@ -103,23 +148,6 @@ export async function contatosCsv(): Promise<string> {
       (a, b) =>
         a.hunter.localeCompare(b.hunter, "pt-BR") || b.ct.created_at.localeCompare(a.ct.created_at),
     );
-  const header = [
-    "Hunter",
-    "Nome",
-    "Cargo/Headline",
-    "Cargo na empresa",
-    "Empresa",
-    "Setor",
-    "Telefone",
-    "Data da conexão",
-    ...STEPS.flatMap((st) => [`${st.label} prevista`, `${st.label} enviada`]),
-    "Status",
-    ...FUNNEL.map((f) => f.label),
-    "Importado em",
-    "Período",
-    "Grupo",
-    "Subgrupo",
-  ];
   const rows = items.map(({ ct, hunter }) => {
     const planned = plannedDates(ct, offs.get(ct.user_id) ?? DEFAULT_OFFSETS, holidays);
     return [
@@ -144,9 +172,10 @@ export async function contatosCsv(): Promise<string> {
           (m?.subgroup_id && sn.get(m.subgroup_id)) || "",
         ];
       })(),
+      ...contatoExtraCells(ct, companyById, sectorName),
     ];
   });
-  return toCsv([header, ...rows]);
+  return toCsv([CONTATOS_HEADER, ...rows]);
 }
 
 export async function rankingCsv(): Promise<string> {
