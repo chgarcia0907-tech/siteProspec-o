@@ -3,8 +3,8 @@ import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_OFFSETS, type Contact, type Offsets } from "@/lib/cadencia";
 import type { manualAtRow } from "@/lib/contatos";
-import type { Company, Sector, SectorTemplates } from "@/lib/empresas";
-import { sortSectors } from "@/lib/empresas";
+import type { Company, Sector, SectorCadences, SectorTemplates, PersonaKey } from "@/lib/empresas";
+import { sortSectors, topSectors } from "@/lib/empresas";
 import { groupPatches } from "@/lib/enriquecimento";
 import { fetchAll } from "@/lib/fetch-all";
 
@@ -285,10 +285,26 @@ export function useHolidays(): ReadonlySet<string> {
   return useMemo(() => new Set((data ?? []).map((h) => h.date)), [data]);
 }
 
-/** Ramos de atuação cadastrados pelo admin (ativos e inativos), na ordem definida. */
+/**
+ * Ramos de atuação de primeiro nível cadastrados pelo admin (ativos e inativos), na ordem
+ * definida. Subsetores não entram aqui: quem precisa deles usa `useSectorTree`.
+ */
 export function useSectors() {
   return useQuery({
     queryKey: ["sectors"],
+    queryFn: async (): Promise<Sector[]> => {
+      const { data, error } = await supabase.from("sectors").select("*");
+      if (error) throw error;
+      return topSectors(data ?? []);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/** Todos os setores e subsetores (ativos e inativos), na ordem definida; `parent_id` liga o filho. */
+export function useSectorTree() {
+  return useQuery({
+    queryKey: ["sectors", "tree"],
     queryFn: async (): Promise<Sector[]> => {
       const { data, error } = await supabase.from("sectors").select("*");
       if (error) throw error;
@@ -298,19 +314,48 @@ export function useSectors() {
   });
 }
 
-/** Mensagens das cadências por setor (setor → etapa → modelo). */
+/** Todas as linhas de `sector_templates` (passa de 1.000 com subsetores e personas). */
+const fetchTemplateRows = () =>
+  fetchAll((a, b) =>
+    supabase
+      .from("sector_templates")
+      .select("sector_id, persona, step, code, body")
+      .order("sector_id")
+      .order("persona")
+      .order("step")
+      .range(a, b),
+  );
+
+/** Mensagens "qualquer persona" das cadências (setor → etapa → modelo). */
 export function useSectorTemplates() {
   return useQuery({
     queryKey: ["sector_templates"],
     queryFn: async (): Promise<SectorTemplates> => {
-      const { data, error } = await supabase
-        .from("sector_templates")
-        .select("sector_id, step, code, body");
-      if (error) throw error;
+      const data = await fetchTemplateRows();
       const map: SectorTemplates = {};
-      for (const row of data ?? []) {
+      for (const row of data) {
+        // O filtro fica aqui (e não na consulta) para uma linha sem o campo, como nos dados de teste, valer.
+        if ((row.persona ?? "") !== "") continue;
         const step = row.step as 1 | 2 | 3 | 4 | 5;
         (map[row.sector_id] ??= {})[step] = { code: row.code, body: row.body };
+      }
+      return map;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/** Mensagens de todas as cadências (setor ou subsetor → persona → etapa → modelo). */
+export function useSectorCadences() {
+  return useQuery({
+    queryKey: ["sector_templates", "cadences"],
+    queryFn: async (): Promise<SectorCadences> => {
+      const data = await fetchTemplateRows();
+      const map: SectorCadences = {};
+      for (const row of data) {
+        const step = row.step as 1 | 2 | 3 | 4 | 5;
+        const persona = (row.persona ?? "") as PersonaKey;
+        ((map[row.sector_id] ??= {})[persona] ??= {})[step] = { code: row.code, body: row.body };
       }
       return map;
     },
@@ -340,7 +385,8 @@ export function useAddCompanies() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (
-      rows: Pick<Company, "name" | "gender" | "sector_id" | "week_start">[],
+      rows: (Pick<Company, "name" | "gender" | "sector_id" | "week_start"> &
+        Partial<Pick<Company, "subsector_id">>)[],
     ): Promise<number> => {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
@@ -367,9 +413,16 @@ export function useUpdateCompany() {
       patch,
     }: {
       id: string;
-      patch: Partial<Pick<Company, "name" | "gender" | "sector_id" | "week_start">>;
+      patch: Partial<
+        Pick<Company, "name" | "gender" | "sector_id" | "subsector_id" | "week_start">
+      >;
     }) => {
-      const { error } = await supabase.from("companies").update(patch).eq("id", id);
+      // Trocar o setor sem dizer o subsetor limpa o subsetor: o banco recusa um subsetor de outro setor.
+      const body =
+        "sector_id" in patch && !("subsector_id" in patch)
+          ? { ...patch, subsector_id: null }
+          : patch;
+      const { error } = await supabase.from("companies").update(body).eq("id", id);
       if (error) {
         if (error.code === "23505") throw new Error("Já existe outra empresa com esse nome");
         throw error;

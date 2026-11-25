@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { onlyDigits, type Contact, type StepDef } from "@/lib/cadencia";
 import { withSyncedStatus } from "@/lib/contatos";
 import { missingForMessage, type QueueItem } from "@/lib/fila";
+import { contactPersona, PERSONA_LABEL } from "@/lib/personas";
 import { cn } from "@/lib/utils";
 import { CompanyFix } from "./CompanyFix";
 import { LeadFields } from "./LeadFields";
@@ -44,6 +45,7 @@ export function QueueCard({
   const noArea = step.n === 1 && !contact.sector;
   const noCargo = step.n === 1 && !contact.job_title.trim();
   const sector = actions.sectorOf(contact);
+  const persona = contactPersona(contact);
   const template = actions.templateFor(contact, step);
   const missing = missingForMessage(contact, step, template?.body);
   const askedCompany = actions.needCompany === contact.id && noCompany;
@@ -104,14 +106,23 @@ export function QueueCard({
               </p>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-subtle-foreground">
                 <ChannelBadge channel={step.channel}>{step.label}</ChannelBadge>
+                {sector?.name && <span>{sector.name}</span>}
                 {template && (
                   <span>
-                    <span className="font-mono text-muted-foreground">
+                    <span className="font-mono text-muted-foreground" title={template.origin}>
                       {template.code || (template.fromSector ? "setor" : "padrão")}
                     </span>{" "}
                     {template.fromSector ? "cadência do setor" : "modelo padrão"}
                   </span>
                 )}
+                <span>
+                  {PERSONA_LABEL[persona.persona]}
+                  {persona.suggested && (
+                    <span className="ml-1.5 rounded-sm bg-warning-soft px-2 py-0.5 font-semibold text-warning-text">
+                      sugerida
+                    </span>
+                  )}
+                </span>
                 {!late && (
                   <span>
                     {step.n === 1 && !planned
@@ -119,7 +130,6 @@ export function QueueCard({
                       : `previsto ${ddmm(planned)}`}
                   </span>
                 )}
-                {sector && <span>{sector.name}</span>}
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">

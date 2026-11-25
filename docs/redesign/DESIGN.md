@@ -99,6 +99,7 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
     - Descartado: `destructive-soft`.
   - Funil (`FunnelBadge`): `rounded-sm`, azul que se intensifica por etapa de `FUNNEL`; a última etapa ("Projeto vendido") é `bg-success text-black`.
   - Pendência: `rounded-sm bg-warning-soft text-warning-text`, "sem empresa" / "sem área" / "sem cargo".
+  - Persona (`PersonaSelect`): `NativeSelect` (`h-8` no modo compacto); persona ainda não gravada mostra "Sugerida: <rótulo>" e o selo `text-caption bg-warning-soft` "sugerida".
 - **Tabela de dados**
   - Visual: `bg-card rounded-xl border overflow-x-auto` + `table-dense`.
   - Cabeçalho `bg-surface-inset`, hover de linha, seleção por checkbox com barra de lote acima (`bg-primary-soft border-primary/35`).
@@ -140,9 +141,9 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
 - **Envios de hoje (prioridade)**
   - Topo: barra de progresso do dia (feitos / total, atrasados, com dados faltando) e abas por etapa de `STEPS` com contagem.
   - Cartão:
-    - Linha principal: nome (`text-card-title`) + selos (Atrasado · previsto DD/MM, pendências), cargo · empresa, e a meta-linha (selo de canal, código do modelo em mono + "modelo padrão"/"cadência do setor", previsto, setor).
+    - Linha principal: nome (`text-card-title`) + selos (Atrasado · previsto DD/MM, pendências), cargo · empresa, e a meta-linha (selo de canal, código do modelo em mono + "modelo padrão"/"cadência do setor" com o `title` do código dizendo a origem, previsto, setor › subsetor e a persona usada).
     - Ações à direita, nesta ordem: Avançar no funil (ghost) · Copiar mensagem / Abrir WhatsApp (secundário) · **Marcar como enviado** (primário).
-    - Os campos do lead (nome, empresa, concordância, área, cargo) ficam **recolhidos** numa faixa `bg-surface-inset` que só aparece quando falta dado que a mensagem usa ("A mensagem usa empresa, área e cargo. Complete antes de copiar." + "Completar dados").
+    - Os campos do lead (nome, empresa, concordância, persona, área, cargo) ficam **recolhidos** numa faixa `bg-surface-inset` que só aparece quando falta dado que a mensagem usa ("A mensagem usa empresa, área e cargo. Complete antes de copiar." + "Completar dados").
     - Cartão atrasado: `border-destructive-border`.
   - Rodapé: "Mostrando X de Y" + "Mostrar mais 50".
 - **Indicadores**
@@ -151,7 +152,7 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
   3. "Quem precisa de ajuda" e "Metas da semana" em largura total, um abaixo do outro (a tabela de Metas não rola na horizontal em 1280 px). Alertas: 5 mais urgentes, "Ver todos" abre o resto, selo de severidade de largura fixa, nome do hunter é link para a Execução dele; a regra das metas vai em nota no rodapé de Metas.
   4. "Detalhamento" em abas internas: Execução por hunter, Envios por dia, Ritmo, Funil, Origem, Conversão, Tendência, Abastecimento.
 - **Contatos**: 9 colunas.
-  - Colunas: ☐, Contato (nome + cargo), Empresa (+ "texto livre" ou setor), Área, Telefone, Cadência, Próximo envio, Situação, menu de ações.
+  - Colunas: ☐, Contato (nome + cargo), Empresa (+ "texto livre" ou setor), Área e persona (a área em texto e, embaixo, o `PersonaSelect` compacto; sem selo, rótulo curto sem "Owner do/da"; a sugestão aparece com borda `border-dashed` e texto discreto até o hunter confirmar), Telefone, Cadência, Próximo envio, Situação, menu de ações.
   - Cadência: 5 marcadores, um por etapa de `STEPS`. Enviada = preenchida na cor do canal; próxima = contorno; atrasada = contorno `destructive`.
   - Edição detalhada no menu da linha, não em inputs na tabela inteira.
 - **ATs** (`/ats`): faixa de 5 números do filtro (ATs, Realizadas, No-show em alerta quando houver,
@@ -162,7 +163,7 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
   etapa, faixa de 5 números (abertas, atrasadas em alerta, vencem hoje, próximas, concluídas no prazo),
   tabela "Por hunter" só para o admin (clicar no nome filtra a tela) e "Tasks abertas" com selo de
   situação: "Atrasada N dias" `destructive-soft`, "Vence hoje" `warning-soft`, "No prazo" `success-soft`.
-- **Setores e cadências**: um editor com uma aba por etapa (status "própria"/"padrão"), código, mensagem, variáveis clicáveis e pré-visualização ao lado. Um botão "Salvar setor e cadência".
+- **Setores e cadências**: lista em árvore (setor e subsetores recuados, com empresas e contador `n/5` de "qualquer persona") e campo "Novo subsetor" do setor aberto. O editor tem abas de persona (Qualquer persona e as 4 personas, cada uma com contador `n/5` calculado de `STEPS`) e, dentro, uma aba por etapa com selo "própria" (texto na aba), "herdada" (vem do subsetor, do setor ou de qualquer persona) ou "padrão" (modelo padrão da equipe), código, mensagem, variáveis clicáveis e pré-visualização ao lado, que na etapa vazia diz de onde a mensagem sai. Um botão "Salvar setor e cadência".
 
 ## 6b. Início do hunter (`/inicio`)
 

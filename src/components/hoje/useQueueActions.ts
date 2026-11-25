@@ -3,23 +3,24 @@ import { toast } from "sonner";
 import {
   useCompanies,
   useProfile,
-  useSectorTemplates,
-  useSectors,
+  useSectorCadences,
+  useSectorTree,
   useTemplates,
   useUpdateContact,
 } from "@/hooks/useCadencia";
 import { renderTemplate, whatsappLink, type Contact, type StepDef } from "@/lib/cadencia";
-import { markSentPatch, missingForMessage, pickTemplate } from "@/lib/fila";
+import { markSentPatch, missingForMessage, resolveTemplate, templateOriginLabel } from "@/lib/fila";
+import { sectorPath } from "@/lib/empresas";
+import { contactPersona } from "@/lib/personas";
 
 /** Ações da fila do dia: marcar envio, copiar/abrir mensagem e completar dados do lead. */
 export function useQueueActions(ref: string) {
   const { data: templates } = useTemplates();
   const { data: profile } = useProfile();
   const { data: companies } = useCompanies();
-  const { data: sectors } = useSectors();
-  const { data: sectorTemplates } = useSectorTemplates();
+  const { data: sectors } = useSectorTree();
+  const { data: cadences } = useSectorCadences();
   const companyById = useMemo(() => new Map((companies ?? []).map((c) => [c.id, c])), [companies]);
-  const sectorName = useMemo(() => new Map((sectors ?? []).map((s) => [s.id, s.name])), [sectors]);
   const update = useUpdateContact();
   /** Lead que precisa da empresa preenchida antes de gerar a mensagem. */
   const [needCompany, setNeedCompany] = useState<string | null>(null);
@@ -40,15 +41,37 @@ export function useQueueActions(ref: string) {
       },
     );
 
-  /** Setor (ramo) da empresa vinculada ao contato, se houver. */
+  /** Setor (ramo) da empresa vinculada ao contato, com o subsetor quando há: "Indústria › Metalurgia". */
   function sectorOf(contact: Contact): { id: string; name: string } | null {
     const co = contact.company_id ? companyById.get(contact.company_id) : undefined;
-    return co ? { id: co.sector_id, name: sectorName.get(co.sector_id) ?? "" } : null;
+    return co
+      ? { id: co.sector_id, name: sectorPath(sectors ?? [], co.sector_id, co.subsector_id) }
+      : null;
   }
 
-  /** Modelo usado para o contato na etapa: o da cadência do setor ou o padrão. */
+  /**
+   * Modelo usado para o contato na etapa: subsetor e persona, subsetor, setor e persona, setor ou o
+   * padrão. A persona é a efetiva (gravada ou sugerida), a mesma que o trigger do banco usa.
+   */
   function templateFor(contact: Contact, step: StepDef) {
-    return pickTemplate(step, sectorOf(contact)?.id, sectorTemplates, templates);
+    const co = contact.company_id ? companyById.get(contact.company_id) : undefined;
+    const found = resolveTemplate({
+      step,
+      sectorId: co?.sector_id,
+      subsectorId: co?.subsector_id,
+      persona: contactPersona(contact).persona,
+      cadences,
+      defaults: templates,
+    });
+    return found
+      ? {
+          code: found.code,
+          body: found.body,
+          fromSector: found.level !== "padrao",
+          /** Ex.: "Varejo · Patrocinador Executivo" ou "Modelo padrão da equipe". */
+          origin: templateOriginLabel(found, sectors ?? []),
+        }
+      : null;
   }
 
   function messageFor(contact: Contact, step: StepDef): string | null {

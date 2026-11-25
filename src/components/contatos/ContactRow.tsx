@@ -1,11 +1,13 @@
 import { Pencil } from "lucide-react";
 import { FunnelBadge } from "@/components/Funnel";
+import { PersonaSelect } from "@/components/PersonaSelect";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { STEPS, computedStatus, formatBR, funnelIndex, type Contact } from "@/lib/cadencia";
 import type { NextSend, StepMark } from "@/lib/contatos";
+import { contactPersona, type Persona } from "@/lib/personas";
 import { cn } from "@/lib/utils";
 
 /** "2026-11-06" → "06/11". */
@@ -31,6 +33,7 @@ export function ContactRow({
   selected,
   onToggle,
   onEdit,
+  onPersona,
 }: {
   contact: Contact;
   /** Setor (ramo) da empresa cadastrada, quando o contato está vinculado a uma. */
@@ -40,7 +43,10 @@ export function ContactRow({
   selected: boolean;
   onToggle: () => void;
   onEdit: () => void;
+  /** Grava a persona escolhida (confirma a sugerida). */
+  onPersona: (persona: Persona) => void;
 }) {
+  const { persona, suggested } = contactPersona(c);
   return (
     <TableRow data-state={selected ? "selected" : undefined}>
       <TableCell>
@@ -50,7 +56,7 @@ export function ContactRow({
           aria-label={`Selecionar ${c.name}`}
         />
       </TableCell>
-      <TableCell className="max-w-56">
+      <TableCell className="max-w-44">
         <p className="truncate font-semibold text-heading">{c.name}</p>
         <p className="truncate text-caption text-muted-foreground" title={c.headline}>
           {c.job_title.trim() || c.headline || "Sem cargo"}
@@ -64,7 +70,17 @@ export function ContactRow({
           </p>
         )}
       </TableCell>
-      <TableCell className="whitespace-nowrap text-muted-foreground">{c.sector || "—"}</TableCell>
+      <TableCell>
+        <p className="whitespace-nowrap text-muted-foreground">{c.sector || "—"}</p>
+        <PersonaSelect
+          compact
+          noBadge
+          value={suggested ? null : persona}
+          suggested={persona}
+          onChange={onPersona}
+          className="mt-1 w-28"
+        />
+      </TableCell>
       <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
         {c.phone || "—"}
       </TableCell>

@@ -264,8 +264,18 @@ export const painelDashboard = createServerFn({ method: "POST" })
           .order("id")
           .range(a, b),
       ),
-      db.from("sectors").select("id, name, active, sort"),
-      db.from("sector_templates").select("sector_id, step, code, body"),
+      // Só setores de primeiro nível: `companies.sector_id` nunca é subsetor, então subsetores
+      // não casariam com nenhuma empresa no filtro e no alerta de cadência.
+      db.from("sectors").select("id, name, active, sort").is("parent_id", null),
+      fetchAll((a, b) =>
+        db
+          .from("sector_templates")
+          .select("sector_id, persona, step, code, body")
+          .order("sector_id")
+          .order("persona")
+          .order("step")
+          .range(a, b),
+      ).then((data) => ({ data, error: null })),
       db
         .from("goals")
         .select("id, user_id, group_id, envios_dia, l1_semana, ats_semana, no_prazo_pct"),
@@ -357,8 +367,9 @@ export const painelDashboard = createServerFn({ method: "POST" })
         : splitHackathon(allContacts, hackathonPeriods(allPeriods)).current;
     const sectorSteps: Record<string, number[]> = {};
     const templateCodes: TemplateCodes = { defaults: {}, sectors: {} };
+    // Só "qualquer persona" (persona ''): é o sentido atual de sectorSteps e templateCodes.
     for (const t of templates.data ?? [])
-      if (t.body.trim()) {
+      if (t.persona === "" && t.body.trim()) {
         (sectorSteps[t.sector_id] ??= []).push(t.step);
         (templateCodes.sectors[t.sector_id] ??= {})[t.step] = t.code;
       }

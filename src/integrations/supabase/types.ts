@@ -209,6 +209,7 @@ export type Database = {
           name: string;
           period_id: string | null;
           sector_id: string;
+          subsector_id: string | null;
           updated_at: string;
           user_id: string;
           week_start: string;
@@ -220,6 +221,7 @@ export type Database = {
           name: string;
           period_id?: string | null;
           sector_id: string;
+          subsector_id?: string | null;
           updated_at?: string;
           user_id: string;
           week_start: string;
@@ -231,6 +233,7 @@ export type Database = {
           name?: string;
           period_id?: string | null;
           sector_id?: string;
+          subsector_id?: string | null;
           updated_at?: string;
           user_id?: string;
           week_start?: string;
@@ -246,6 +249,13 @@ export type Database = {
           {
             foreignKeyName: "companies_sector_id_fkey";
             columns: ["sector_id"];
+            isOneToOne: false;
+            referencedRelation: "sectors";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "companies_subsector_id_fkey";
+            columns: ["subsector_id"];
             isOneToOne: false;
             referencedRelation: "sectors";
             referencedColumns: ["id"];
@@ -291,6 +301,7 @@ export type Database = {
           lead_registrado_em: string | null;
           name: string;
           period_id: string | null;
+          persona: string | null;
           phone: string;
           proposta_em: string | null;
           proposta_registrado_em: string | null;
@@ -329,6 +340,7 @@ export type Database = {
           lead_registrado_em?: string | null;
           name: string;
           period_id?: string | null;
+          persona?: string | null;
           phone?: string;
           proposta_em?: string | null;
           proposta_registrado_em?: string | null;
@@ -367,6 +379,7 @@ export type Database = {
           lead_registrado_em?: string | null;
           name?: string;
           period_id?: string | null;
+          persona?: string | null;
           phone?: string;
           proposta_em?: string | null;
           proposta_registrado_em?: string | null;
@@ -744,6 +757,7 @@ export type Database = {
         Row: {
           body: string;
           code: string;
+          persona: string;
           sector_id: string;
           step: number;
           updated_at: string;
@@ -751,6 +765,7 @@ export type Database = {
         Insert: {
           body?: string;
           code?: string;
+          persona?: string;
           sector_id: string;
           step: number;
           updated_at?: string;
@@ -758,6 +773,7 @@ export type Database = {
         Update: {
           body?: string;
           code?: string;
+          persona?: string;
           sector_id?: string;
           step?: number;
           updated_at?: string;
@@ -778,6 +794,7 @@ export type Database = {
           created_at: string;
           id: string;
           name: string;
+          parent_id: string | null;
           sort: number;
           updated_at: string;
         };
@@ -786,6 +803,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           name: string;
+          parent_id?: string | null;
           sort?: number;
           updated_at?: string;
         };
@@ -794,10 +812,19 @@ export type Database = {
           created_at?: string;
           id?: string;
           name?: string;
+          parent_id?: string | null;
           sort?: number;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "sectors_parent_id_fkey";
+            columns: ["parent_id"];
+            isOneToOne: false;
+            referencedRelation: "sectors";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       settings: {
         Row: {
@@ -996,6 +1023,7 @@ export type Database = {
         };
         Returns: boolean;
       };
+      match_persona: { Args: { texto: string }; Returns: string };
       ranking: {
         Args: { period_start: string };
         Returns: {
@@ -1010,6 +1038,10 @@ export type Database = {
           importados: number;
           respostas: number;
         }[];
+      };
+      suggest_persona: {
+        Args: { cargo: string; headline: string };
+        Returns: string;
       };
     };
     Enums: {

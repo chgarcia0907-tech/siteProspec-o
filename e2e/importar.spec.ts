@@ -71,4 +71,85 @@ test.describe("Importar conexões", () => {
     // Trocar o filtro volta para a primeira página.
     await expect(page.getByText("1–50 de 60 conexões")).toBeVisible();
   });
+
+  test.describe("persona na prévia", () => {
+    const PERSONAS_COLADO = [
+      "Ana Souza",
+      "Diretor de TI",
+      "Conexão feita em 11 de novembro de 2026",
+      "Bruno Lima",
+      "Analista de Dados",
+      "Conexão feita em 11 de novembro de 2026",
+      "Carla Dias",
+      "Gerente de Compras",
+      "Conexão feita em 11 de novembro de 2026",
+    ].join("\n");
+
+    const rotuloMostrado = (sel: import("@playwright/test").Locator) =>
+      sel.evaluate((el) => (el as HTMLSelectElement).selectedOptions[0]!.text);
+
+    async function colar(page: import("@playwright/test").Page) {
+      await page.goto("/importar");
+      await page.getByRole("textbox", { name: "Texto copiado do LinkedIn" }).fill(PERSONAS_COLADO);
+      await expect(page.getByText("3 detectados, 3 novos")).toBeVisible();
+    }
+
+    test("mostra a persona sugerida pelo cargo, sem o prefixo Owner", async ({ page }) => {
+      await colar(page);
+      const sugeridas = page.getByLabel("Persona (sugerida)");
+      await expect(sugeridas).toHaveCount(3);
+      expect(await rotuloMostrado(sugeridas.nth(0))).toBe("Tecnologia");
+      expect(await rotuloMostrado(sugeridas.nth(1))).toBe("Processo");
+      expect(await rotuloMostrado(sugeridas.nth(2))).toBe("Operação");
+    });
+
+    test("sem troca, nenhuma linha do POST leva persona", async ({ page }) => {
+      await colar(page);
+      await page.getByRole("button", { name: "Importar novos contatos" }).click();
+      await expect(page.getByText("3 contatos importados")).toBeVisible();
+      const [m] = await mutations();
+      const rows = JSON.parse(m!.body) as Record<string, unknown>[];
+      expect(rows).toHaveLength(3);
+      for (const r of rows) expect(r).not.toHaveProperty("persona");
+      expect(new Set(rows.map((r) => Object.keys(r).sort().join(","))).size).toBe(1);
+    });
+
+    test("trocar a persona de uma linha grava só nela; as outras ficam nulas", async ({ page }) => {
+      await colar(page);
+      await page.getByLabel("Persona (sugerida)").nth(1).selectOption("patrocinador_executivo");
+      // Trocada: deixa de ser sugerida (sem borda tracejada) e mostra a escolha.
+      await expect(page.getByLabel("Persona (sugerida)")).toHaveCount(2);
+      const trocada = page.getByRole("combobox", { name: "Persona", exact: true });
+      await expect(trocada).toHaveCount(1);
+      expect(await rotuloMostrado(trocada)).toBe("Patrocinador Executivo");
+
+      await page.getByRole("button", { name: "Importar novos contatos" }).click();
+      await expect(page.getByText("3 contatos importados")).toBeVisible();
+      const [m] = await mutations();
+      const rows = JSON.parse(m!.body) as Record<string, unknown>[];
+      expect(rows[1]).toMatchObject({ name: "Bruno Lima", persona: "patrocinador_executivo" });
+      expect(rows[0]).not.toHaveProperty("persona");
+      expect(rows[2]).not.toHaveProperty("persona");
+      // Aqui as chaves diferem entre linhas de propósito: o supabase-js manda `columns` com a união
+      // das chaves e o hook pede `missing=default`, então a linha sem a chave usa o padrão da coluna
+      // (NULL = sugerida).
+      // Diferente de empresa e área (NOT NULL), que recusariam o lote.
+      expect(m!.query).toContain("columns=");
+      expect(m!.query).toContain("persona");
+    });
+  });
+
+  test.describe("em 1280 px", () => {
+    test.use({ viewport: { width: 1280, height: 800 } });
+
+    test("a tabela da prévia não tem rolagem horizontal", async ({ page }) => {
+      await page.goto("/importar");
+      await page.getByRole("textbox").first().fill(COLADO);
+      await expect(page.getByText("3 detectados, 3 novos")).toBeVisible();
+      await expect(page.getByLabel("Persona (sugerida)").first()).toBeVisible();
+      const caixa = page.locator("main table").locator("xpath=..");
+      const cabe = await caixa.evaluate((el) => el.scrollWidth <= el.clientWidth);
+      expect(cabe).toBe(true);
+    });
+  });
 });

@@ -102,6 +102,9 @@ export type ChannelFilter = "todos" | Channel;
  * Códigos dos modelos de mensagem por etapa: o padrão (`message_templates`) e os dos setores
  * que têm mensagem própria naquela etapa (`sector_templates` com texto). Mesma escolha da fila
  * de envios (`pickTemplate`) e do trigger que carimba `contacts.resposta_modelo`.
+ *
+ * Limite: o código deduzido aqui considera só o setor (qualquer persona); não olha subsetor nem
+ * persona. O `resposta_modelo` carimbado pelo trigger é exato (usa subsetor e persona).
  */
 export type TemplateCodes = {
   defaults: Partial<Record<number, string>>;
@@ -273,7 +276,10 @@ export type MessageRow = {
 
 /* -------------------------------- Auxiliares ------------------------------ */
 
-/** Código do modelo em uso na etapa para um setor: o do setor, senão o padrão. */
+/**
+ * Código do modelo em uso na etapa para um setor: o do setor, senão o padrão. Ignora subsetor e
+ * persona (o `resposta_modelo` carimbado é exato).
+ */
 export function templateCode(
   codes: TemplateCodes | undefined,
   step: number,

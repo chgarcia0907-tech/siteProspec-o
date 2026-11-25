@@ -107,3 +107,22 @@ describe("importar", () => {
     expect(payloads[1]).toMatchObject({ sector: "", company: "", company_gender: "feminino" });
   });
 });
+
+describe("persona na importação", () => {
+  it("sugere a persona pelo cargo, senão pelo headline", () => {
+    const rows = buildImportRows(
+      [p("A", "Diretor de TI na Alfa", "2026-11-10"), p("B", "", "2026-11-10")],
+      new Set(),
+      "",
+      [],
+    );
+    expect(rows.map((r) => r.persona)).toEqual(["owner_tecnologia", "owner_operacao"]);
+  });
+
+  it("só leva a persona ao banco quando o hunter troca na prévia", () => {
+    const [r] = buildImportRows([p("A", "CEO na Alfa", "2026-11-10")], new Set(), "", []);
+    expect(r!.persona).toBe("patrocinador_executivo");
+    expect(importPayload(r!, null)).not.toHaveProperty("persona");
+    expect(importPayload(r!, null, "owner_processo")).toMatchObject({ persona: "owner_processo" });
+  });
+});
