@@ -6,6 +6,7 @@ import { PasteCard } from "@/components/importar/PasteCard";
 import { useCompanies, useContacts, useImportContacts } from "@/hooks/useCadencia";
 import { normalizeKey, parseLinkedInConnections } from "@/lib/cadencia";
 import { buildImportRows, importPayload, importable, type ImportRow } from "@/lib/importar";
+import type { Persona } from "@/lib/personas";
 export const Route = createFileRoute("/_authenticated/importar")({
   head: () => ({
     meta: [
@@ -32,6 +33,8 @@ function Importar() {
   const { data: companies } = useCompanies();
   /** Empresa escolhida à mão por linha (sobrepõe a sugestão pelo headline). */
   const [chosen, setChosen] = useState<Record<string, string | null>>({});
+  /** Persona trocada à mão por linha; sem troca, o contato fica com a sugerida (persona nula). */
+  const [personas, setPersonas] = useState<Record<string, Persona>>({});
   const importMutation = useImportContacts();
 
   const existing = useMemo(
@@ -48,12 +51,13 @@ function Importar() {
 
   function runImport() {
     importMutation.mutate(
-      toImport.map((r) => importPayload(r, companyOf(r))),
+      toImport.map((r) => importPayload(r, companyOf(r), personas[r.key])),
       {
         onSuccess: (n) => {
           toast.success(`${n} contatos importados`);
           setText("");
           setChosen({});
+          setPersonas({});
           navigate({ to: "/contatos" });
         },
         onError: (e) => toast.error(e.message),
@@ -67,8 +71,9 @@ function Importar() {
         <p className="eyebrow">Conexões do LinkedIn</p>
         <h1 className="mt-1 text-title font-bold">Importar conexões</h1>
         <p className="mt-2 max-w-3xl text-body text-muted-foreground">
-          Cole a página de conexões e confira a pré-visualização. Empresa e área são sugeridas pelo
-          headline; o que não der para descobrir fica em branco para você completar depois.
+          Cole a página de conexões e confira a pré-visualização. Empresa, área e persona são
+          sugeridas pelo headline; o que não der para descobrir fica em branco para você completar
+          depois.
         </p>
       </header>
       <PasteCard text={text} onText={setText} fromDate={fromDate} onFromDate={setFromDate} />
@@ -80,6 +85,8 @@ function Importar() {
           companies={companies ?? []}
           companyOf={companyOf}
           onCompany={(key, id) => setChosen((m) => ({ ...m, [key]: id }))}
+          personaOf={(r) => personas[r.key] ?? null}
+          onPersona={(key, p) => setPersonas((m) => ({ ...m, [key]: p }))}
           busy={importMutation.isPending}
           onImport={runImport}
         />
