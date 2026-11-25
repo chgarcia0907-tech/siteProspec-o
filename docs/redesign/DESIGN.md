@@ -162,7 +162,7 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
   etapa, faixa de 5 números (abertas, atrasadas em alerta, vencem hoje, próximas, concluídas no prazo),
   tabela "Por hunter" só para o admin (clicar no nome filtra a tela) e "Tasks abertas" com selo de
   situação: "Atrasada N dias" `destructive-soft`, "Vence hoje" `warning-soft`, "No prazo" `success-soft`.
-- **Setores e cadências**: um editor com uma aba por etapa (status "própria"/"padrão"), código, mensagem, variáveis clicáveis e pré-visualização ao lado. Um botão "Salvar setor e cadência".
+- **Setores e cadências**: lista em árvore (setor e subsetores recuados, com empresas e contador `n/5` de "qualquer persona") e campo "Novo subsetor" do setor aberto. O editor tem abas de persona (Qualquer persona e as 4 personas, cada uma com contador `n/5` calculado de `STEPS`) e, dentro, uma aba por etapa com selo "própria" (texto na aba), "herdada" (vem do subsetor, do setor ou de qualquer persona) ou "padrão" (modelo padrão da equipe), código, mensagem, variáveis clicáveis e pré-visualização ao lado, que na etapa vazia diz de onde a mensagem sai. Um botão "Salvar setor e cadência".
 
 ## 6b. Início do hunter (`/inicio`)
 

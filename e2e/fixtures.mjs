@@ -10,6 +10,8 @@ const G1 = "bbbbbbbb-0000-4000-8000-000000000001";
 const S1 = "cccccccc-0000-4000-8000-000000000001";
 export const SETOR_VAREJO = "12121212-0000-4000-8000-000000000001";
 const SETOR_SAUDE = "12121212-0000-4000-8000-000000000002";
+export const SETOR_INDUSTRIA = "12121212-0000-4000-8000-000000000003";
+export const SUBSETOR_METALURGIA = "12121212-0000-4000-8000-000000000004";
 const EMPRESA_DELTA = "13131313-0000-4000-8000-000000000001";
 export const GOAL_EQUIPE = "14141414-0000-4000-8000-000000000001";
 
@@ -241,6 +243,14 @@ export function initialDb() {
     sectors: [
       { id: SETOR_VAREJO, name: "Varejo", active: true, sort: 0, parent_id: null },
       { id: SETOR_SAUDE, name: "Saúde", active: false, sort: 1, parent_id: null },
+      { id: SETOR_INDUSTRIA, name: "Indústria", active: true, sort: 2, parent_id: null },
+      {
+        id: SUBSETOR_METALURGIA,
+        name: "Metalurgia",
+        active: true,
+        sort: 0,
+        parent_id: SETOR_INDUSTRIA,
+      },
     ],
     // Cadência do Varejo só com o WhatsApp 2; as outras etapas usam o modelo padrão.
     sector_templates: [
