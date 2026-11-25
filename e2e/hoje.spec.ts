@@ -6,9 +6,10 @@ test.describe("Envios de hoje", () => {
     const tab = (name: string) => page.getByRole("tab", { name: new RegExp(`^${name}`) });
     await expect(tab("LinkedIn 1")).toHaveText(/LinkedIn 1\s*2/);
     await expect(tab("WhatsApp 1")).toHaveText(/WhatsApp 1\s*1/);
-    await expect(tab("LinkedIn 2")).toHaveText(/LinkedIn 2\s*1/);
-    await expect(tab("WhatsApp 2")).toHaveText(/WhatsApp 2\s*2/);
-    await expect(tab("LinkedIn 3")).toHaveText(/LinkedIn 3\s*2/);
+    // Bruno atrasou o WhatsApp 1: as etapas seguintes só aparecem depois desse envio.
+    await expect(tab("LinkedIn 2")).toHaveText(/LinkedIn 2\s*0/);
+    await expect(tab("WhatsApp 2")).toHaveText(/WhatsApp 2\s*1/);
+    await expect(tab("LinkedIn 3")).toHaveText(/LinkedIn 3\s*0/);
 
     await tab("WhatsApp 1").click();
     await expect(page.getByText("Bruno Lima")).toBeVisible();

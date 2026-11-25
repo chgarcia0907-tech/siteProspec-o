@@ -91,6 +91,11 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Regras de cadência, parser do LinkedIn e utilitários de data ficam em `src/lib/cadencia.ts` — uma única fonte de verdade reutilizada por todas as telas.
 - Acesso a dados via cliente Supabase do navegador em hooks React Query (`src/hooks/useCadencia.ts`), protegido por RLS por hunter; não usar server functions para CRUD simples.
 - Datas previstas são calculadas (nunca gravadas) por `plannedDates` em `cadencia.ts`, em dias úteis (sem fins de semana nem feriados da tabela `holidays`, carregada uma vez por tela/export e passada como Set) e encadeadas a partir do envio real (ou previsão) da etapa anterior; todas as telas, CSVs e o export usam essa função única.
+- Atraso na cadência: as filas (`buildQueues`) mostram só a primeira etapa pendente do contato, na data encadeada,
+  então a etapa seguinte espera o intervalo normal depois do envio atrasado. O atraso é medido contra o
+  cronograma original (`originalDates`, só a partir de `step1_date`; vale a mais cedo das duas datas), então
+  as etapas depois de um atraso continuam marcadas como atrasadas. `lateStep` (`dashboard.ts`) e `lateRows`
+  (`inicio.ts`) usam a mesma regra.
 - Ranking é só do administrador: fica na aba "Competição" do /painel (`/ranking` redireciona para `/painel?aba=competicao`); `getCompetition` exige has_role e a função SQL `public.ranking(date)` (SECURITY DEFINER, porque agrega dados de outros hunters que o RLS esconde) devolve vazio para quem não é admin.
 - Exclusão de contatos e feriados só via server functions em `src/lib/admin.functions.ts`, após validar ADMIN_PASSWORD (bloqueio em `admin_attempts`); hunters não têm DELETE em `contacts`. O período da competição geral (`competition_settings`) só se edita no painel, aba "Competição" (`painelSetPeriod`, has_role).
 - Pontuação da competição: cálculo puro em `src/lib/competition.ts`, carregado com service role em `competition.server.ts`; o cliente recebe só totais.
