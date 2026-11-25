@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CompanySelect } from "@/components/CompanySelect";
+import { PersonaSelect } from "@/components/PersonaSelect";
 import { TablePagination } from "@/components/TablePagination";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,7 @@ import { formatBR } from "@/lib/cadencia";
 import type { Company } from "@/lib/empresas";
 import type { ImportRow } from "@/lib/importar";
 import { paginate } from "@/lib/paginate";
+import type { Persona } from "@/lib/personas";
 
 /** Linhas por página na pré-visualização (o mesmo limite das outras tabelas). */
 const PAGE_SIZE = 50;
@@ -26,6 +28,8 @@ export function ImportPreview({
   companies,
   companyOf,
   onCompany,
+  personaOf,
+  onPersona,
   busy,
   onImport,
 }: {
@@ -34,6 +38,9 @@ export function ImportPreview({
   companies: readonly Company[];
   companyOf: (r: ImportRow) => string | null;
   onCompany: (key: string, id: string | null) => void;
+  /** Persona trocada à mão na linha (`null` = continua a sugerida pelo cargo). */
+  personaOf: (r: ImportRow) => Persona | null;
+  onPersona: (key: string, persona: Persona) => void;
   busy: boolean;
   onImport: () => void;
 }) {
@@ -80,6 +87,7 @@ export function ImportPreview({
                 <TableHead>Conexão</TableHead>
                 <TableHead>Empresa</TableHead>
                 <TableHead>Área</TableHead>
+                <TableHead>Persona</TableHead>
                 <TableHead>Situação</TableHead>
               </TableRow>
             </TableHeader>
@@ -89,7 +97,10 @@ export function ImportPreview({
                 return (
                   <TableRow key={`${r.name}-${page}-${i}`}>
                     <TableCell className="font-semibold text-heading">{r.name}</TableCell>
-                    <TableCell className="max-w-[360px] truncate text-muted-foreground">
+                    <TableCell
+                      className="max-w-56 truncate text-muted-foreground"
+                      title={r.headline}
+                    >
                       {r.headline || "—"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{formatBR(r.connected_at)}</TableCell>
@@ -101,8 +112,8 @@ export function ImportPreview({
                               companies={companies}
                               value={companyOf(r)}
                               onChange={(id) => onCompany(r.key, id)}
-                              emptyLabel="Sem empresa cadastrada"
-                              className="h-8 w-44"
+                              emptyLabel="Sem empresa"
+                              className="h-8 w-40"
                             />
                           )}
                           {!companyOf(r) && (
@@ -115,6 +126,18 @@ export function ImportPreview({
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">
                       {novo ? (r.area ?? "—") : ""}
+                    </TableCell>
+                    <TableCell>
+                      {novo && (
+                        <PersonaSelect
+                          compact
+                          noBadge
+                          value={personaOf(r)}
+                          suggested={r.persona}
+                          onChange={(p) => onPersona(r.key, p)}
+                          className="w-28"
+                        />
+                      )}
                     </TableCell>
                     <TableCell>
                       <RowStatus row={r} />
