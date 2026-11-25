@@ -286,6 +286,30 @@ describe("indicadores", () => {
   });
 });
 
+describe("atraso pelo cronograma original", () => {
+  // WhatsApp 1 previsto para 03/11 e enviado em 10/11: LinkedIn 2 entra na fila em 11/11.
+  const tarde = ct({
+    id: "t",
+    name: "Tadeu",
+    status: "em_cadencia",
+    step1_date: "2026-10-30",
+    sent1_at: "2026-10-30",
+    sent2_at: "2026-11-10",
+  });
+  const lista = (today: string) =>
+    computeDashboard({ ...input, contacts: [tarde], today })
+      .hunters.find((x) => x.hunter_id === H1)!
+      .lateList.map((l) => [l.step, l.planned]);
+
+  it("a etapa seguinte não conta antes do intervalo normal depois do envio atrasado", () => {
+    expect(lista("2026-11-10")).toEqual([]);
+  });
+
+  it("quando entra na fila, segue atrasada desde a data original", () => {
+    expect(lista("2026-11-12")).toEqual([["LinkedIn 2", "2026-11-04"]]);
+  });
+});
+
 describe("filtros", () => {
   it("canal: conta só as etapas do canal", () => {
     const d = computeDashboard({ ...input, channel: "whatsapp" });
