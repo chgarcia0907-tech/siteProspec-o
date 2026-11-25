@@ -152,21 +152,6 @@ Quero entender quanto do custo da operação hoje é conferência, correção e 
 Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
-  ('LOG', 'owner_tecnologia', 1, 'TEC-TI-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Em empresas como a [A_EMPRESA], o TI costuma ter mais pedidos da operação do que gente, e bons projetos ficam parados na fila.
-
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida, documentados e fáceis de manter, junto com o time interno. Na Ambev, reconstruímos o assistente de IA interno.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos quais demandas da operação estão paradas na fila, antes do orçamento de 2027?$msg$),
-  ('LOG', 'owner_tecnologia', 2, 'TEC-TI-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as demandas da operação [DA_EMPRESA].
-
-Quero entender quais projetos da operação estão parados hoje por falta de braço no time. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
-  ('LOG', 'owner_tecnologia', 3, 'TEC-TI-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Se 3 projetos da operação esperam 6 meses na fila, cada um economizando 100 horas por mês, são 1.800 horas perdidas na espera. Entramos como braço extra, com entregas documentadas e fáceis de manter, como fizemos na Ambev e na Riachuelo.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com a fila [DA_EMPRESA]?$msg$),
   ('RE', '', 1, 'RE-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
 Em obras como as [DA_EMPRESA], diário de obra e checklists ainda passam do papel para a planilha.
@@ -218,21 +203,6 @@ Quero entender quanto tempo um desvio de obra leva hoje para chegar à diretoria
 Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para as obras [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
-  ('RE', 'owner_tecnologia', 1, 'TEC-TI-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Em empresas como a [A_EMPRESA], o TI costuma ter mais pedidos da operação do que gente, e bons projetos ficam parados na fila.
-
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida, documentados e fáceis de manter, junto com o time interno. Na Ambev, reconstruímos o assistente de IA interno.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos quais demandas da operação estão paradas na fila, antes do orçamento de 2027?$msg$),
-  ('RE', 'owner_tecnologia', 2, 'TEC-TI-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as demandas da operação [DA_EMPRESA].
-
-Quero entender quais projetos da operação estão parados hoje por falta de braço no time. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
-  ('RE', 'owner_tecnologia', 3, 'TEC-TI-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Se 3 projetos da operação esperam 6 meses na fila, cada um economizando 100 horas por mês, são 1.800 horas perdidas na espera. Entramos como braço extra, com entregas documentadas e fáceis de manter, como fizemos na Ambev e na Riachuelo.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com a fila [DA_EMPRESA]?$msg$),
   ('IND', '', 1, 'IND-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
 Em fábricas como a [DA_EMPRESA], apontamentos, paradas e inspeções de qualidade ainda vão do papel para a planilha a cada turno.
@@ -284,21 +254,6 @@ Quero entender se as perdas e paradas de cada turno chegam até você em número
 Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
-  ('IND', 'owner_tecnologia', 1, 'TEC-TI-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Em empresas como a [A_EMPRESA], o TI costuma ter mais pedidos da operação do que gente, e bons projetos ficam parados na fila.
-
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida, documentados e fáceis de manter, junto com o time interno. Na Ambev, reconstruímos o assistente de IA interno.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos quais demandas da operação estão paradas na fila, antes do orçamento de 2027?$msg$),
-  ('IND', 'owner_tecnologia', 2, 'TEC-TI-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as demandas da operação [DA_EMPRESA].
-
-Quero entender quais projetos da operação estão parados hoje por falta de braço no time. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
-  ('IND', 'owner_tecnologia', 3, 'TEC-TI-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Se 3 projetos da operação esperam 6 meses na fila, cada um economizando 100 horas por mês, são 1.800 horas perdidas na espera. Entramos como braço extra, com entregas documentadas e fáceis de manter, como fizemos na Ambev e na Riachuelo.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com a fila [DA_EMPRESA]?$msg$),
   ('ALI', '', 1, 'ALI-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
 Em fábricas como a [DA_EMPRESA], controle de lote e checklists de qualidade ainda vão do papel para a planilha a cada turno.
@@ -350,21 +305,6 @@ Quero entender quanto tempo a empresa levaria hoje para responder a um recolhime
 Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
-  ('ALI', 'owner_tecnologia', 1, 'TEC-TI-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Em empresas como a [A_EMPRESA], o TI costuma ter mais pedidos da operação do que gente, e bons projetos ficam parados na fila.
-
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida, documentados e fáceis de manter, junto com o time interno. Na Ambev, reconstruímos o assistente de IA interno.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos quais demandas da operação estão paradas na fila, antes do orçamento de 2027?$msg$),
-  ('ALI', 'owner_tecnologia', 2, 'TEC-TI-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as demandas da operação [DA_EMPRESA].
-
-Quero entender quais projetos da operação estão parados hoje por falta de braço no time. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
-  ('ALI', 'owner_tecnologia', 3, 'TEC-TI-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Se 3 projetos da operação esperam 6 meses na fila, cada um economizando 100 horas por mês, são 1.800 horas perdidas na espera. Entramos como braço extra, com entregas documentadas e fáceis de manter, como fizemos na Ambev e na Riachuelo.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com a fila [DA_EMPRESA]?$msg$),
   ('AUT', '', 1, 'AUT-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
 Em fábricas como a [DA_EMPRESA], inspeção por peça, apontamento de produção e controle de refugo ainda costumam passar por papel e planilha.
@@ -416,21 +356,6 @@ Quero entender se refugo e retrabalho de cada turno chegam até você em número
 Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
-  ('AUT', 'owner_tecnologia', 1, 'TEC-TI-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Em empresas como a [A_EMPRESA], o TI costuma ter mais pedidos da operação do que gente, e bons projetos ficam parados na fila.
-
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida, documentados e fáceis de manter, junto com o time interno. Na Ambev, reconstruímos o assistente de IA interno.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos quais demandas da operação estão paradas na fila, antes do orçamento de 2027?$msg$),
-  ('AUT', 'owner_tecnologia', 2, 'TEC-TI-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as demandas da operação [DA_EMPRESA].
-
-Quero entender quais projetos da operação estão parados hoje por falta de braço no time. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
-  ('AUT', 'owner_tecnologia', 3, 'TEC-TI-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Se 3 projetos da operação esperam 6 meses na fila, cada um economizando 100 horas por mês, são 1.800 horas perdidas na espera. Entramos como braço extra, com entregas documentadas e fáceis de manter, como fizemos na Ambev e na Riachuelo.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com a fila [DA_EMPRESA]?$msg$),
   ('FAR', '', 1, 'FAR-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
 Em fábricas como a [DA_EMPRESA], registros de lote e documentação de auditoria ainda rodam em planilha.
@@ -482,21 +407,6 @@ Quero entender quanto tempo a empresa levaria hoje para rastrear um lote numa au
 Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
-  ('FAR', 'owner_tecnologia', 1, 'TEC-TI-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Em empresas como a [A_EMPRESA], o TI costuma ter mais pedidos da operação do que gente, e bons projetos ficam parados na fila.
-
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida, documentados e fáceis de manter, junto com o time interno. Na Ambev, reconstruímos o assistente de IA interno.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos quais demandas da operação estão paradas na fila, antes do orçamento de 2027?$msg$),
-  ('FAR', 'owner_tecnologia', 2, 'TEC-TI-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as demandas da operação [DA_EMPRESA].
-
-Quero entender quais projetos da operação estão parados hoje por falta de braço no time. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
-  ('FAR', 'owner_tecnologia', 3, 'TEC-TI-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Se 3 projetos da operação esperam 6 meses na fila, cada um economizando 100 horas por mês, são 1.800 horas perdidas na espera. Entramos como braço extra, com entregas documentadas e fáceis de manter, como fizemos na Ambev e na Riachuelo.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com a fila [DA_EMPRESA]?$msg$),
   ('ENE', '', 1, 'ENE-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
 Em operações como a [DA_EMPRESA], ordens de serviço e inspeções ainda voltam em papel ou foto no WhatsApp.
@@ -548,21 +458,6 @@ Quero entender quanto a operação perde hoje entre um alarme e a ação da equi
 Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
-  ('ENE', 'owner_tecnologia', 1, 'TEC-TI-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Em empresas como a [A_EMPRESA], o TI costuma ter mais pedidos da operação do que gente, e bons projetos ficam parados na fila.
-
-Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida, documentados e fáceis de manter, junto com o time interno. Na Ambev, reconstruímos o assistente de IA interno.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos quais demandas da operação estão paradas na fila, antes do orçamento de 2027?$msg$),
-  ('ENE', 'owner_tecnologia', 2, 'TEC-TI-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as demandas da operação [DA_EMPRESA].
-
-Quero entender quais projetos da operação estão parados hoje por falta de braço no time. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
-  ('ENE', 'owner_tecnologia', 3, 'TEC-TI-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
-
-Se 3 projetos da operação esperam 6 meses na fila, cada um economizando 100 horas por mês, são 1.800 horas perdidas na espera. Entramos como braço extra, com entregas documentadas e fáceis de manter, como fizemos na Ambev e na Riachuelo.
-
-Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com a fila [DA_EMPRESA]?$msg$),
   ('SAU', '', 1, 'SAU-OP-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
 Em instituições como a [A_EMPRESA], conferências e controles do dia a dia ainda rodam em planilha, refeitos a cada atendimento.
@@ -614,23 +509,24 @@ Quero entender quanto do faturamento fica parado hoje por glosa ou conta devolvi
 Antes de falar de solução, mapeamos onde está o retorno. No Paraná Banco, mapeamos mais de 10 processos críticos, priorizamos por retorno e estimamos mais de 2.000 horas por ano recuperáveis com automação. Você sai da conversa com o primeiro esboço desse mapa para a operação [DA_EMPRESA].
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para começarmos?$msg$),
-  ('SAU', 'owner_tecnologia', 1, 'TEC-TI-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
+  ('*', 'owner_tecnologia', 1, 'TEC-TI-IN01', $msg$Olá, [FIRST NAME]! Tudo bem?
 
 Em empresas como a [A_EMPRESA], o TI costuma ter mais pedidos da operação do que gente, e bons projetos ficam parados na fila.
 
 Sou [NOME], [CONSULTOR] da Poli Júnior (Escola Politécnica da USP). No Núcleo de Tecnologia, desenvolvemos sistemas sob medida, documentados e fáceis de manter, junto com o time interno. Na Ambev, reconstruímos o assistente de IA interno.
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para mapearmos quais demandas da operação estão paradas na fila, antes do orçamento de 2027?$msg$),
-  ('SAU', 'owner_tecnologia', 2, 'TEC-TI-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as demandas da operação [DA_EMPRESA].
+  ('*', 'owner_tecnologia', 2, 'TEC-TI-WT01', $msg$[SAUDACAO], [FIRST NAME]! Aqui é [NOME], da Poli Júnior (Escola Politécnica da USP). Te escrevi no LinkedIn sobre as demandas da operação [DA_EMPRESA].
 
 Quero entender quais projetos da operação estão parados hoje por falta de braço no time. Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima?$msg$),
-  ('SAU', 'owner_tecnologia', 3, 'TEC-TI-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
+  ('*', 'owner_tecnologia', 3, 'TEC-TI-IN02', $msg$Olá, [FIRST NAME]! Tudo bem?
 
 Se 3 projetos da operação esperam 6 meses na fila, cada um economizando 100 horas por mês, são 1.800 horas perdidas na espera. Entramos como braço extra, com entregas documentadas e fáceis de manter, como fizemos na Ambev e na Riachuelo.
 
 Vamos marcar uma conversa de 30 a 45 minutos nesta semana ou na próxima para fazermos essa conta com a fila [DA_EMPRESA]?$msg$)
 ) AS v (chave, persona, step, code, body)
-JOIN alvo a ON a.chave = v.chave;
+-- '*' = vale para todos os 8 setores (Owner da Tecnologia).
+JOIN alvo a ON a.chave = v.chave OR v.chave = '*';
 
 -- Conferência: 8 setores x 14 mensagens, sem texto vazio.
 DO $$
