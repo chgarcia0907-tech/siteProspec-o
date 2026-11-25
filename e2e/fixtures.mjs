@@ -158,6 +158,7 @@ export function makeContacts() {
       company: "Teta",
       sector: "Indústria",
       job_title: "CFO",
+      persona: "owner_processo", // já confirmada (a sugerida pelo cargo seria outra)
       phone: "21999998888",
       step1_date: "2026-10-01",
       sent1_at: "2026-10-01",

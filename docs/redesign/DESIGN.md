@@ -152,7 +152,7 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
   3. "Quem precisa de ajuda" e "Metas da semana" em largura total, um abaixo do outro (a tabela de Metas não rola na horizontal em 1280 px). Alertas: 5 mais urgentes, "Ver todos" abre o resto, selo de severidade de largura fixa, nome do hunter é link para a Execução dele; a regra das metas vai em nota no rodapé de Metas.
   4. "Detalhamento" em abas internas: Execução por hunter, Envios por dia, Ritmo, Funil, Origem, Conversão, Tendência, Abastecimento.
 - **Contatos**: 9 colunas.
-  - Colunas: ☐, Contato (nome + cargo), Empresa (+ "texto livre" ou setor), Área, Telefone, Cadência, Próximo envio, Situação, menu de ações.
+  - Colunas: ☐, Contato (nome + cargo), Empresa (+ "texto livre" ou setor), Área e persona (a área em texto e, embaixo, o `PersonaSelect` compacto; sem selo, rótulo curto sem "Owner do/da"; a sugestão aparece com borda `border-dashed` e texto discreto até o hunter confirmar), Telefone, Cadência, Próximo envio, Situação, menu de ações.
   - Cadência: 5 marcadores, um por etapa de `STEPS`. Enviada = preenchida na cor do canal; próxima = contorno; atrasada = contorno `destructive`.
   - Edição detalhada no menu da linha, não em inputs na tabela inteira.
 - **ATs** (`/ats`): faixa de 5 números do filtro (ATs, Realizadas, No-show em alerta quando houver,

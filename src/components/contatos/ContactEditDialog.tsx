@@ -3,6 +3,7 @@ import { CompanyGenderToggle } from "@/components/CompanyGender";
 import { CompanySelect } from "@/components/CompanySelect";
 import { FunnelBadge, FunnelControl } from "@/components/Funnel";
 import { InlineInput } from "@/components/InlineInput";
+import { PersonaSelect } from "@/components/PersonaSelect";
 import { ResponseKindSelect } from "@/components/RespostaOrigem";
 import { SectorSelect } from "@/components/SectorSelect";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -39,6 +40,7 @@ import {
 } from "@/lib/cadencia";
 import { statusOptions } from "@/lib/contatos";
 import type { Company } from "@/lib/empresas";
+import { contactPersona } from "@/lib/personas";
 import { cn } from "@/lib/utils";
 
 /**
@@ -66,6 +68,7 @@ export function ContactEditDialog({
   const planned = plannedDates(c, offsets, holidays);
   const status = computedStatus(c);
   const [step1] = STEPS;
+  const { persona, suggested } = contactPersona(c);
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -99,6 +102,15 @@ export function ContactEditDialog({
               value={c.sector}
               onChange={(v) => onPatch({ sector: v })}
               className="w-full"
+            />
+          </Field>
+          <Field label="Persona">
+            <PersonaSelect
+              value={suggested ? null : persona}
+              suggested={persona}
+              onChange={(p) => onPatch({ persona: p })}
+              className="w-full"
+              wrapperClassName="flex w-full"
             />
           </Field>
           <Field label="Telefone/WhatsApp" htmlFor="ed-tel">
