@@ -15,7 +15,8 @@ test.describe("Empresas", () => {
     ).toBeVisible();
     await expect(page.getByText("· 2 empresas", { exact: true })).toBeVisible();
     await expect(page.getByPlaceholder("Empresa").first()).toHaveValue("Delta");
-    await expect(page.getByText("1 contato", { exact: true })).toBeVisible();
+    // Delta (Diego) e Ômicron (Carla) têm um contato cada.
+    await expect(page.getByText("1 contato", { exact: true })).toHaveCount(2);
     // Só a Delta (Varejo) está incompleta; a Ômicron (Metalurgia) tem as 5 etapas.
     await expect(page.getByText("cadência do setor incompleta")).toHaveCount(1);
   });
@@ -99,11 +100,12 @@ test.describe("Empresas", () => {
       .filter({ has: page.getByRole("button", { name: "Copiar mensagem" }) })
       .last();
     await expect(card.getByText("Varejo", { exact: true })).toBeVisible();
-    await expect(card.getByText("VAR4")).toBeVisible();
+    // Diego é CEO (Patrocinador Executivo): a mensagem da persona vence a de "qualquer persona" (VAR4).
+    await expect(card.getByText("VAR4PE")).toBeVisible();
     await card.getByRole("button", { name: "Copiar mensagem" }).click();
     await expect(page.getByText("Mensagem copiada")).toBeVisible();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-      "Oi, Diego! Cadência do varejo na Delta.",
+      "Oi, Diego! Conversa de patrocinador na Delta.",
     );
   });
 
@@ -122,7 +124,15 @@ test.describe("Empresas", () => {
 
     const m = (await mutations()).find((x) => x.table === "sector_templates");
     expect(m).toMatchObject({ method: "POST" });
-    const rows = JSON.parse(m!.body) as { step: number; code: string; body: string }[];
+    const todas = JSON.parse(m!.body) as {
+      persona: string;
+      step: number;
+      code: string;
+      body: string;
+    }[];
+    // A persona Patrocinador Executivo, que já tinha texto, também segue junto (5 etapas).
+    expect(todas.filter((r) => r.persona === "patrocinador_executivo")).toHaveLength(5);
+    const rows = todas.filter((r) => r.persona === "");
     expect(rows).toHaveLength(5);
     expect(rows[0]).toMatchObject({
       sector_id: SETOR_VAREJO,
@@ -216,7 +226,9 @@ test.describe("Empresas", () => {
     expect(qualquer).toHaveLength(STEPS.length);
     expect(qualquer.find((r) => r.step === 4)).toMatchObject({ code: "VAR4" });
     // Personas sem texto nem linhas salvas não são enviadas.
-    expect(new Set(rows.map((r) => r.persona))).toEqual(new Set(["", "owner_operacao"]));
+    expect(new Set(rows.map((r) => r.persona))).toEqual(
+      new Set(["", "owner_operacao", "patrocinador_executivo"]),
+    );
   });
 
   test("preencher vazias com o padrão numa persona não altera as outras abas", async ({ page }) => {

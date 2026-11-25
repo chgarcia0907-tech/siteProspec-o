@@ -99,6 +99,7 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
     - Descartado: `destructive-soft`.
   - Funil (`FunnelBadge`): `rounded-sm`, azul que se intensifica por etapa de `FUNNEL`; a última etapa ("Projeto vendido") é `bg-success text-black`.
   - Pendência: `rounded-sm bg-warning-soft text-warning-text`, "sem empresa" / "sem área" / "sem cargo".
+  - Persona (`PersonaSelect`): `NativeSelect` (`h-8` no modo compacto); persona ainda não gravada mostra "Sugerida: <rótulo>" e o selo `text-caption bg-warning-soft` "sugerida".
 - **Tabela de dados**
   - Visual: `bg-card rounded-xl border overflow-x-auto` + `table-dense`.
   - Cabeçalho `bg-surface-inset`, hover de linha, seleção por checkbox com barra de lote acima (`bg-primary-soft border-primary/35`).
@@ -140,9 +141,9 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
 - **Envios de hoje (prioridade)**
   - Topo: barra de progresso do dia (feitos / total, atrasados, com dados faltando) e abas por etapa de `STEPS` com contagem.
   - Cartão:
-    - Linha principal: nome (`text-card-title`) + selos (Atrasado · previsto DD/MM, pendências), cargo · empresa, e a meta-linha (selo de canal, código do modelo em mono + "modelo padrão"/"cadência do setor", previsto, setor).
+    - Linha principal: nome (`text-card-title`) + selos (Atrasado · previsto DD/MM, pendências), cargo · empresa, e a meta-linha (selo de canal, código do modelo em mono + "modelo padrão"/"cadência do setor" com o `title` do código dizendo a origem, previsto, setor › subsetor e a persona usada).
     - Ações à direita, nesta ordem: Avançar no funil (ghost) · Copiar mensagem / Abrir WhatsApp (secundário) · **Marcar como enviado** (primário).
-    - Os campos do lead (nome, empresa, concordância, área, cargo) ficam **recolhidos** numa faixa `bg-surface-inset` que só aparece quando falta dado que a mensagem usa ("A mensagem usa empresa, área e cargo. Complete antes de copiar." + "Completar dados").
+    - Os campos do lead (nome, empresa, concordância, persona, área, cargo) ficam **recolhidos** numa faixa `bg-surface-inset` que só aparece quando falta dado que a mensagem usa ("A mensagem usa empresa, área e cargo. Complete antes de copiar." + "Completar dados").
     - Cartão atrasado: `border-destructive-border`.
   - Rodapé: "Mostrando X de Y" + "Mostrar mais 50".
 - **Indicadores**
