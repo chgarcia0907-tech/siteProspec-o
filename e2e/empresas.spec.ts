@@ -4,6 +4,7 @@ import { expect, mutations, test } from "./helpers";
 const U1 = "11111111-1111-4111-8111-111111111111";
 const SETOR_VAREJO = "12121212-0000-4000-8000-000000000001";
 const SETOR_INDUSTRIA = "12121212-0000-4000-8000-000000000003";
+const SUBSETOR_METALURGIA = "12121212-0000-4000-8000-000000000004";
 
 test.describe("Empresas", () => {
   test("lista as empresas por semana, com setor e contatos vinculados", async ({ page }) => {
@@ -12,10 +13,11 @@ test.describe("Empresas", () => {
     await expect(
       page.getByRole("heading", { name: /^Semana de 09\/11\/2026 a 15\/11\/2026/ }),
     ).toBeVisible();
-    await expect(page.getByText("· 1 empresa", { exact: true })).toBeVisible();
-    await expect(page.getByPlaceholder("Empresa")).toHaveValue("Delta");
+    await expect(page.getByText("· 2 empresas", { exact: true })).toBeVisible();
+    await expect(page.getByPlaceholder("Empresa").first()).toHaveValue("Delta");
     await expect(page.getByText("1 contato", { exact: true })).toBeVisible();
-    await expect(page.getByText("cadência do setor incompleta")).toBeVisible();
+    // Só a Delta (Varejo) está incompleta; a Ômicron (Metalurgia) tem as 5 etapas.
+    await expect(page.getByText("cadência do setor incompleta")).toHaveCount(1);
   });
 
   test("cadastra várias empresas com o setor e a semana, sem repetir as já cadastradas", async ({
@@ -39,6 +41,54 @@ test.describe("Empresas", () => {
       { name: "Zeta", gender: "feminino", sector_id: SETOR_VAREJO, week_start: week, user_id: U1 },
       { name: "Ômega", gender: "feminino", sector_id: SETOR_VAREJO, week_start: week, user_id: U1 },
     ]);
+  });
+
+  test("cadastra a empresa com setor e subsetor e esconde subsetor inativo", async ({ page }) => {
+    await page.goto("/empresas");
+    await page.getByLabel("Empresas (uma por linha)").fill("Zeta");
+    const form = page.getByRole("form", { name: "Cadastrar empresas" });
+    const setor = form.getByRole("combobox", { name: "Setor da empresa" });
+    await expect(setor.locator("option", { hasText: "Metalurgia" })).toHaveCount(1);
+    await expect(setor.locator("option", { hasText: "Química" })).toHaveCount(0);
+    await setor.selectOption({ label: "Metalurgia" });
+    await form.getByRole("button", { name: "Cadastrar" }).click();
+    await expect(page.getByText("Empresa cadastrada")).toBeVisible();
+
+    const [m] = await mutations();
+    expect(m).toMatchObject({ method: "POST", table: "companies" });
+    expect(JSON.parse(m!.body)).toEqual([
+      {
+        name: "Zeta",
+        gender: "feminino",
+        sector_id: SETOR_INDUSTRIA,
+        subsector_id: SUBSETOR_METALURGIA,
+        week_start: "2026-11-09",
+        user_id: U1,
+      },
+    ]);
+  });
+
+  test("na lista, trocar o subsetor para o setor sozinho zera o subsetor e acusa a cadência incompleta", async ({
+    page,
+  }) => {
+    await page.goto("/empresas");
+    const linha = page
+      .getByRole("row")
+      .filter({ has: page.getByPlaceholder("Empresa") })
+      .filter({
+        has: page.locator('input[value="Ômicron"]'),
+      });
+    const setor = linha.getByRole("combobox", { name: "Setor da empresa" });
+    await expect(setor.locator("option:checked")).toHaveText("Metalurgia");
+    await expect(linha.getByText("cadência do setor incompleta")).toHaveCount(0);
+    await setor.selectOption({ label: "Indústria" });
+    await expect(page.getByText("Setor atualizado")).toBeVisible();
+
+    const m = (await mutations()).find((x) => x.table === "companies");
+    expect(m).toMatchObject({ method: "PATCH" });
+    expect(JSON.parse(m!.body)).toEqual({ sector_id: SETOR_INDUSTRIA, subsector_id: null });
+    // Sem o subsetor, a Indústria não tem mensagem nenhuma.
+    await expect(linha.getByText("cadência do setor incompleta")).toBeVisible();
   });
 
   test("contato vinculado a uma empresa recebe a cadência do setor", async ({ page }) => {

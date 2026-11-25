@@ -5,7 +5,7 @@ import { CompanyList } from "@/components/empresas/CompanyList";
 import { useConfirm } from "@/components/useConfirm";
 import { formatBR, todayISO } from "@/lib/cadencia";
 import { weekEndISO, weekStartISO } from "@/lib/empresas";
-import { useCompanies, useContacts, useSectorTemplates, useSectors } from "@/hooks/useCadencia";
+import { useCompanies, useContacts, useSectorCadences, useSectorTree } from "@/hooks/useCadencia";
 
 export const Route = createFileRoute("/_authenticated/empresas")({
   head: () => ({
@@ -27,8 +27,8 @@ export const Route = createFileRoute("/_authenticated/empresas")({
 
 function Empresas() {
   const { data: companies } = useCompanies();
-  const { data: sectors } = useSectors();
-  const { data: sectorTemplates } = useSectorTemplates();
+  const { data: sectors } = useSectorTree();
+  const { data: cadences } = useSectorCadences();
   const { data: contacts } = useContacts();
   const { ask, dialog } = useConfirm();
   const semana = weekStartISO(todayISO());
@@ -57,7 +57,7 @@ function Empresas() {
         <CompanyList
           companies={companies ?? []}
           sectors={sectors ?? []}
-          sectorTemplates={sectorTemplates ?? {}}
+          cadences={cadences ?? {}}
           contactCount={contactCount}
           ask={ask}
         />

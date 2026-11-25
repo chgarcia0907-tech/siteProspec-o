@@ -14,14 +14,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useDeleteCompany, useUpdateCompany } from "@/hooks/useCadencia";
-import { STEPS, formatBR } from "@/lib/cadencia";
+import { formatBR } from "@/lib/cadencia";
 import {
   groupByWeek,
-  missingSteps,
+  cadenceGaps,
   weekEndISO,
   type Company,
-  type Sector,
-  type SectorTemplates,
+  type SectorCadences,
+  type SectorNode,
 } from "@/lib/empresas";
 import { errorMessage } from "@/lib/utils";
 
@@ -29,13 +29,13 @@ import { errorMessage } from "@/lib/utils";
 export function CompanyList({
   companies,
   sectors,
-  sectorTemplates,
+  cadences,
   contactCount,
   ask,
 }: {
   companies: readonly Company[];
-  sectors: readonly Sector[];
-  sectorTemplates: SectorTemplates;
+  sectors: readonly SectorNode[];
+  cadences: SectorCadences;
   contactCount: ReadonlyMap<string, number>;
   ask: Ask;
 }) {
@@ -87,7 +87,7 @@ export function CompanyList({
               <TableBody>
                 {list.map((c) => {
                   const n = contactCount.get(c.id) ?? 0;
-                  const incompleta = missingSteps(sectorTemplates[c.sector_id], STEPS).length > 0;
+                  const incompleta = cadenceGaps(cadences, c.sector_id, c.subsector_id).length > 0;
                   return (
                     <TableRow key={c.id}>
                       <TableCell>
@@ -109,8 +109,9 @@ export function CompanyList({
                       <TableCell>
                         <IndustrySelect
                           sectors={sectors}
-                          value={c.sector_id}
-                          onChange={(id) => patch(c, { sector_id: id }, "Setor atualizado")}
+                          sectorId={c.sector_id}
+                          subsectorId={c.subsector_id}
+                          onChange={(v) => patch(c, v, "Setor atualizado")}
                           className="h-8 w-36"
                         />
                       </TableCell>
@@ -118,7 +119,7 @@ export function CompanyList({
                         {incompleta ? (
                           <span
                             className="inline-block rounded-sm bg-warning-soft px-2 py-0.5 text-caption font-semibold text-warning-text"
-                            title="Etapas sem mensagem própria do setor usam o modelo padrão"
+                            title="Etapas sem mensagem própria do subsetor ou do setor usam o modelo padrão"
                           >
                             cadência do setor incompleta
                           </span>
