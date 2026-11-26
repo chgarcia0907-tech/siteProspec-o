@@ -150,3 +150,13 @@ export function computeConciliacao(input: ConciliacaoInput): Conciliacao {
     totais: { ats: ats.length, cards: cards.length },
   };
 }
+
+/** Total de pendências na fila (o contador da aba). */
+export const pendencias = (
+  c: Pick<Conciliacao, "atsSemCard" | "atsSemContato" | "cardsSemAt" | "semAlocacao" | "semCargo">,
+) =>
+  c.atsSemCard.length +
+  c.atsSemContato.length +
+  c.cardsSemAt.length +
+  c.semAlocacao.length +
+  c.semCargo.length;
