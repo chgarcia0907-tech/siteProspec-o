@@ -5,6 +5,7 @@ import { ConciliacaoTab } from "@/components/dashboard/conciliacao/ConciliacaoTa
 import { ContadorConciliacao } from "@/components/dashboard/conciliacao/ContadorConciliacao";
 import { HuntersTab } from "@/components/dashboard/hunters/HuntersTab";
 import { RealizacaoTab } from "@/components/dashboard/realizacao/RealizacaoTab";
+import { ResultadoTab } from "@/components/dashboard/resultado/ResultadoTab";
 import { SegmentosTab } from "@/components/dashboard/segmentos/SegmentosTab";
 import { VisaoTab } from "@/components/dashboard/visao/VisaoTab";
 import { SemanasTab } from "@/components/dashboard/semanas/SemanasTab";
@@ -23,6 +24,7 @@ const ABAS = [
   "hunters",
   "segmentos",
   "realizacao",
+  "resultado",
   "semanas",
   "conciliacao",
   "indicadores",
@@ -33,6 +35,7 @@ const ABA_LABEL: Record<Aba, string> = {
   hunters: "Hunters",
   segmentos: "Segmentos",
   realizacao: "Realização e avanço",
+  resultado: "Resultado e ciclos",
   semanas: "Semanas",
   conciliacao: "Conciliação",
   indicadores: "Indicadores",
@@ -202,6 +205,9 @@ function Dashboard() {
           </TabsContent>
           <TabsContent value="realizacao" className="pt-4">
             <RealizacaoTab />
+          </TabsContent>
+          <TabsContent value="resultado" className="pt-4">
+            <ResultadoTab />
           </TabsContent>
           <TabsContent value="conciliacao" className="pt-4">
             <ConciliacaoTab />

@@ -1018,3 +1018,18 @@ export function segmentosSeed(db) {
     },
   );
 }
+
+/** Preparo da aba Resultado: o dos segmentos e o card da Ômega (94307) ganho por R$ 45.000. */
+export function resultadoSeed(db) {
+  segmentosSeed(db);
+  Object.assign(
+    db.pd_cards.find((c) => c.deal_id === 94307),
+    {
+      status: "won",
+      stage_id: 36,
+      valor: 45000,
+      porte: "51-200",
+      won_time: "2026-11-12T15:00:00Z",
+    },
+  );
+}

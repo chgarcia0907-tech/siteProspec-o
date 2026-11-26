@@ -304,6 +304,22 @@ nome, dimensão, safras, versões e situação; "Novo teste" abre um diálogo co
 e uma caixa por versão com os valores da dimensão em caixas de seleção (valor já usado em outra
 versão fica desabilitado). Encerrar pede a decisão em texto; excluir passa pelo `useConfirm`.
 
+**Aba Resultado e ciclos** (`src/components/dashboard/resultado/`, depois de Realização e avanço):
+a pergunta "Quanto a prospecção vira de negócio?" como H2. O destaque é a faixa de conversão
+(realizadas, vendas, ticket médio, dias até fechar, valor por AT realizada), com "Vendas" em
+`bg-primary-soft`; valores em reais no formato brasileiro (`reais` em `format.ts`). Abaixo, o
+pipeline em barras horizontais por etapa (ganhos em `text-success`) ao lado da higiene dos dados
+(taxas abaixo de 80% em `warning-text` com ícone), as tabelas de valor por AT por porte e por setor
+na largura toda (barra `chart-1` do valor por AT; amostra pequena em `muted-foreground`, sem barra) e
+os ciclos da plataforma, com o ciclo escolhido em `bg-primary-soft/40`.
+
+**Curvas na aba Semanas** (`semanas/Curvas.tsx`, entre o calendário e a alocação): curvas de safra
+em cores cronológicas, com a semana de hoje tracejada; ao lado, dias do cadastro à primeira AT em
+barras, P50 e P90 e a maturação sugerida, com "Usar N semanas" (confirmação pelo `useConfirm`,
+porque muda todas as abas); embaixo, o mapa safra × semana (mesmo mapa de calor da aba Hunters). O
+cartão "Abastecimento e qualidade dos dados" dos Indicadores aparece no fim da aba, com o mesmo
+cálculo da semana atual. A aba Indicadores continua no fim, com o aviso "Visão antiga".
+
 **Filtros globais** num cartão no topo, como hoje (ciclo, safra, hunter, dupla, setor alocado),
 na URL; com filtro fora do padrão, chips e "Limpar filtros".
 

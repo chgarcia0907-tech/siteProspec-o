@@ -37,6 +37,11 @@ export async function seedSegmentos() {
   await fetch(`${MOCK}/__seed?segmentos=1`, { method: "POST" });
 }
 
+/** O preparo dos segmentos e uma venda (aba Resultado e ciclos). */
+export async function seedResultado() {
+  await fetch(`${MOCK}/__seed?resultado=1`, { method: "POST" });
+}
+
 /** O hunter logado deixa de ser admin (até o próximo teste). */
 export async function semAdmin() {
   await fetch(`${MOCK}/__rpc?has_role=false`, { method: "POST" });

@@ -257,6 +257,11 @@ Historico.csv --time Time.csv` mostra o plano e os avisos; com `--gravar` (e `SU
   dimensão (`ab_versoes.valores`); resultado conclusivo só com `amostra_minima_ab` contatos por
   versão e as safras maduras. O nível de senioridade é `nivelDoCargo` (`enriquecimento.ts`),
   calculado na hora e nunca gravado.
+- Resultado e curvas de safra (Dashboard, aba Resultado e ciclos e aba Semanas): regras em
+  `src/lib/dashResultado.ts` (`computeResultado`, `computeCiclos`, `computeCurvas`). Venda = card
+  ganho; ticket = valor do card ganho; dias até fechar = da data da AT ao ganho. A maturação sugerida
+  (`maturacaoParaP90`) cobre o P90 de dias até a primeira AT para o contato cadastrado na sexta. A aba
+  Indicadores (visão antiga) continua no fim até o LO decidir tirá-la.
 - Tela Tasks (`/tasks`, menu Prospecção): tasks do Pipedrive dos cards do NTec (funil 6, etiqueta 34)
   em AT Diag. Agendada (108) e AT Diag. Realizada (31), lidas na hora por `tasksPipedrive`
   (`src/lib/tasksHunter.functions.ts`, com `PIPEDRIVE_API_TOKEN`; nada é gravado no banco). O hunter de

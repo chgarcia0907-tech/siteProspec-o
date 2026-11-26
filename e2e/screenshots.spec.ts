@@ -2,7 +2,7 @@
 // comparar o antes e o depois. Só roda com `bun run screenshots`; os arquivos vão para
 // docs/redesign/screenshots/desktop/.
 import { test as visitor } from "@playwright/test";
-import { seed, seedSegmentos, test, TODAY } from "./helpers";
+import { seed, seedResultado, seedSegmentos, test, TODAY } from "./helpers";
 
 /** Altura máxima da foto (px CSS): listas longas não precisam aparecer inteiras. */
 const MAX_HEIGHT = 2400;
@@ -14,6 +14,8 @@ type Shot = {
   seed?: number;
   /** Safras maduras e um teste A/B (aba Segmentos). */
   segmentos?: boolean;
+  /** Preparo dos segmentos e uma venda (aba Resultado e ciclos). */
+  resultado?: boolean;
   /** Texto colado no primeiro campo antes da foto (ex.: a pré-visualização da importação). */
   paste?: string;
   /** Botão clicado antes da foto (ex.: abrir o editor de um setor). */
@@ -49,6 +51,7 @@ const SHOTS: Shot[] = [
   { name: "09-dashboard", path: "/dashboard" },
   { name: "09-dashboard-indicadores", path: "/dashboard?aba=indicadores" },
   { name: "09-dashboard-semanas", path: "/dashboard?aba=semanas" },
+  { name: "09-dashboard-semanas-curvas", path: "/dashboard?aba=semanas", resultado: true },
   {
     name: "09-dashboard-semanas-teste-ab",
     path: "/dashboard?aba=semanas",
@@ -58,6 +61,7 @@ const SHOTS: Shot[] = [
   { name: "09-dashboard-hunters", path: "/dashboard?aba=hunters" },
   { name: "09-dashboard-segmentos", path: "/dashboard?aba=segmentos", segmentos: true },
   { name: "09-dashboard-realizacao", path: "/dashboard?aba=realizacao" },
+  { name: "09-dashboard-resultado", path: "/dashboard?aba=resultado", resultado: true },
   { name: "09-dashboard-conciliacao", path: "/dashboard?aba=conciliacao" },
   {
     name: "09-dashboard-hunters-ficha",
@@ -128,6 +132,7 @@ for (const [dir, device] of Object.entries(VIEWPORTS)) {
       test(shot.name, async ({ page }) => {
         if (shot.seed) await seed(shot.seed);
         if (shot.segmentos) await seedSegmentos();
+        if (shot.resultado) await seedResultado();
         await page.goto(shot.path);
         if (shot.paste) await page.getByRole("textbox").first().fill(shot.paste);
         if (shot.tab) {

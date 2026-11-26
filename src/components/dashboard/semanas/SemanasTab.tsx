@@ -23,6 +23,7 @@ import { CalendarioSafras } from "./CalendarioSafras";
 import { GerarSemanasDialog } from "./GerarSemanasDialog";
 import { MetasCicloCard, MetasCicloDialog } from "./MetasCiclo";
 import { ParametrosDialog } from "./ParametrosDialog";
+import { AbastecimentoSemana, CurvasDoCiclo } from "./Curvas";
 import { SafraDialog } from "./SafraDialog";
 import { TestesAbCard } from "./TestesAb";
 
@@ -182,6 +183,22 @@ export function SemanasTab({ ask }: { ask: Ask }) {
         )}
       </Section>
 
+      <CurvasDoCiclo
+        periodId={ciclo.id}
+        onUsarMaturacao={(semanas) =>
+          ask({
+            title: `Usar maturação de ${semanas} ${semanas === 1 ? "semana" : "semanas"}?`,
+            desc: "Muda quais safras contam como maduras em toda a Dashboard (comparações, segmentos, alertas e testes A/B).",
+            action: "Usar sugestão",
+            reversible: true,
+            run: async () => {
+              await acoes.salvarParametros({ ...data.parametros, maturacao_semanas: semanas });
+              toast.success("Maturação atualizada");
+            },
+          })
+        }
+      />
+
       <AlocacaoSemana periodId={ciclo.id} ask={ask} />
 
       <MetasCicloCard
@@ -191,6 +208,8 @@ export function SemanasTab({ ask }: { ask: Ask }) {
       />
 
       <TestesAbCard periodId={ciclo.id} ask={ask} />
+
+      <AbastecimentoSemana periodId={ciclo.id} />
 
       {aberto?.tipo === "nova" && (
         <SafraDialog

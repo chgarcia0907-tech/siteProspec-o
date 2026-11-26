@@ -126,6 +126,18 @@ export function IndicadoresTab({
 
   return (
     <div className="space-y-6">
+      <p
+        role="note"
+        className="flex items-start gap-2 rounded-xl border bg-surface-inset px-4 py-3 text-dense text-muted-foreground"
+      >
+        <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+        <span>
+          <span className="font-semibold text-heading">Visão antiga.</span> Os números desta aba
+          seguem o filtro de datas e o cálculo de antes da reestruturação. As abas novas (Visão
+          geral, Hunters, Segmentos, Realização e avanço, Resultado e ciclos, Semanas) trabalham por
+          ciclo e safra.
+        </span>
+      </p>
       <Filters
         value={shown}
         onChange={onFilters}
