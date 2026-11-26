@@ -1,4 +1,5 @@
 // Regras da tela de contatos: busca, filtro, edição com situação coerente e exportação.
+import { retomadaPendente } from "./retomada";
 import {
   STATUS_LABEL,
   STEPS,
@@ -53,8 +54,16 @@ export const RESPOSTA_FILTER_LABEL: Record<RespostaFilter, string> = {
   negativa: `${RESPOSTA_TIPO_LABEL.negativa}s`,
 };
 
+/** Contatos marcados para retomar depois (`retomada.ts`), ainda não retomados. */
+export type RetomadaFilter = "todos" | "para_retomar";
+
+export const RETOMADA_FILTER_LABEL: Record<RetomadaFilter, string> = {
+  todos: "Com ou sem retomada",
+  para_retomar: "Para retomar",
+};
+
 /**
- * Filtra por situação, pendência, tipo de resposta e por nome/empresa, sem diferenciar acentos e
+ * Filtra por situação, pendência, tipo de resposta, retomada e por nome/empresa, sem diferenciar acentos e
  * maiúsculas. A situação é a calculada (`computedStatus`), a mesma que o selo da tabela mostra.
  */
 export function filterContacts(
@@ -63,6 +72,7 @@ export function filterContacts(
   status: StatusFilter,
   missing: MissingFilter = "todos",
   resposta: RespostaFilter = "todos",
+  retomada: RetomadaFilter = "todos",
 ): Contact[] {
   const term = fold(search).trim();
   return contacts.filter((c) => {
@@ -72,6 +82,7 @@ export function filterContacts(
     // O tipo fica gravado se o contato volta à cadência; só vale enquanto ele está "respondeu".
     if (resposta !== "todos" && (c.resposta_tipo !== resposta || computedStatus(c) !== "respondeu"))
       return false;
+    if (retomada === "para_retomar" && !retomadaPendente(c)) return false;
     return !term || fold(`${c.name} ${c.company}`).includes(term);
   });
 }

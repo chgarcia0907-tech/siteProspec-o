@@ -358,3 +358,17 @@ export function cicloPadrao<T extends { id: string; status: string; started_at: 
     null
   );
 }
+
+/**
+ * Semana aberta por padrão nas abas por semana: a de hoje, se houver safra nela; senão a última
+ * safra que já começou; senão a primeira do ciclo. Devolve a segunda-feira, ou null sem safras.
+ */
+export function semanaPadrao(
+  safras: readonly Pick<Safra, "inicio">[],
+  hoje: string,
+): string | null {
+  const atual = safraDaData(hoje, safras);
+  if (atual) return atual.inicio;
+  const ordem = [...safras].sort((a, b) => a.inicio.localeCompare(b.inicio));
+  return ordem.filter((s) => s.inicio <= hoje).at(-1)?.inicio ?? ordem.at(0)?.inicio ?? null;
+}

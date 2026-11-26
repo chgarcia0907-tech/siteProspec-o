@@ -15,6 +15,12 @@
 export const ETAPA_AT_AGENDADA = 108;
 /** Etapas do funil 6 em que a AT diagnóstica já aconteceu. */
 export const ETAPAS_DEPOIS_DA_AT: ReadonlySet<number> = new Set([31, 33, 34, 35, 36]);
+/**
+ * Etapas em que a AT Diagnóstica avançou (AT de Aprofundamento marcada ou além). Card perdido
+ * depois de chegar a uma delas continua nela, então a etapa atual basta para quase todos os
+ * casos; o histórico completo de etapas entra com o espelho dos cards (fase 5 da dashboard).
+ */
+export const ETAPAS_AVANCO: ReadonlySet<number> = new Set([33, 34, 35, 36]);
 
 /** Nomes das etapas do funil 6, para o motivo dos eventos. */
 export const NOME_ETAPA: Readonly<Record<number, string>> = {

@@ -278,7 +278,9 @@ export const painelDashboard = createServerFn({ method: "POST" })
       ).then((data) => ({ data, error: null })),
       db
         .from("goals")
-        .select("id, user_id, group_id, envios_dia, l1_semana, ats_semana, no_prazo_pct"),
+        .select(
+          "id, user_id, group_id, envios_dia, l1_semana, ats_semana, no_prazo_pct, passos_semana",
+        ),
       db.from("message_templates").select("step, code, body"),
     ]);
 
@@ -433,6 +435,8 @@ export const painelSaveGoal = createServerFn({ method: "POST" })
         l1_semana: goalValue,
         ats_semana: goalValue,
         no_prazo_pct: z.number().int().min(0).max(100).nullable(),
+        /** Passos de cadência por semana (esforço da Dashboard); ausente = não muda. */
+        passos_semana: z.number().int().min(0).max(100000).nullable().optional(),
       })
       .refine((v) => !(v.userId && v.groupId), "Meta é do hunter ou do grupo, não dos dois")
       .parse(d),
@@ -440,9 +444,10 @@ export const painelSaveGoal = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-    const { userId, groupId, ...values } = data;
+    const { userId, groupId, passos_semana, ...values } = data;
     const row = {
       ...values,
+      ...(passos_semana === undefined ? {} : { passos_semana }),
       envios_dia: values.envios_dia === null ? null : Math.round(values.envios_dia),
       l1_semana: values.l1_semana === null ? null : Math.round(values.l1_semana),
       ats_semana: values.ats_semana === null ? null : Math.round(values.ats_semana * 10) / 10,
