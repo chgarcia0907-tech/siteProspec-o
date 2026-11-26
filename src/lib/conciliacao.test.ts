@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cardDaAt,
+  atsSemCard,
   computeConciliacao,
   pendencias,
   type CAt,
@@ -91,6 +92,10 @@ describe("conciliação", () => {
   it("contatos sem alocação só em safra que usa alocação", () => {
     // Bruno tem 1 contato na S03 sem alocação; o da S01 não conta (a S01 não usa alocação).
     expect(r.semAlocacao).toEqual([{ userId: "bruno", safraId: "s3", numero: 3, contatos: 1 }]);
+  });
+
+  it("conta as ATs sem card do ciclo (sem as de antes e as canceladas)", () => {
+    expect(atsSemCard(INPUT.ats, INPUT.desde)).toBe(1);
   });
 
   it("conta as pendências da fila", () => {

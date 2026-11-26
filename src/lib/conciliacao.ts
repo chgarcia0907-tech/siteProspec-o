@@ -89,9 +89,21 @@ export function cardDaAt(
   return candidatos.length === 1 ? candidatos[0]! : null;
 }
 
+/** ATs do ciclo que entram na conciliação: registradas desde `desde`, sem as canceladas. */
+export const atsDoCiclo = <T extends Pick<CAt, "registrada_em" | "status">>(
+  ats: readonly T[],
+  desde: string,
+): T[] => ats.filter((a) => diaSP(a.registrada_em) >= desde && a.status !== "cancelada");
+
+/** Quantas ATs do ciclo estão sem card (o alerta "AT sem card"). */
+export const atsSemCard = (
+  ats: readonly Pick<CAt, "registrada_em" | "status" | "pipedrive_deal_id">[],
+  desde: string,
+) => atsDoCiclo(ats, desde).filter((a) => a.pipedrive_deal_id === null).length;
+
 export function computeConciliacao(input: ConciliacaoInput): Conciliacao {
   const { desde } = input;
-  const ats = input.ats.filter((a) => diaSP(a.registrada_em) >= desde && a.status !== "cancelada");
+  const ats = atsDoCiclo(input.ats, desde);
   const cards = input.cards.filter(
     (c) => c.status !== "deleted" && (!c.add_time || diaSP(c.add_time) >= desde),
   );

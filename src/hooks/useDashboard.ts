@@ -7,6 +7,7 @@ import {
   dashboardLigarAtCard,
   dashboardLigarAtContato,
   dashboardSincronizarCards,
+  dashboardVisao,
   dashboardCopiarAlocacoes,
   dashboardCriarSafra,
   dashboardExcluirAlocacao,
@@ -169,3 +170,15 @@ export function useConciliacaoAcoes() {
     },
   };
 }
+
+/** Visão geral (Módulo 1) do ciclo. */
+export function useVisao(periodId: string | null) {
+  const fn = useServerFn(dashboardVisao);
+  const hoje = spParts().iso;
+  return useQuery({
+    queryKey: ["dashboard_visao", periodId, hoje],
+    queryFn: () => fn({ data: { periodId: periodId!, hoje } }),
+    enabled: !!periodId,
+  });
+}
+export type VisaoDados = NonNullable<ReturnType<typeof useVisao>["data"]>;
