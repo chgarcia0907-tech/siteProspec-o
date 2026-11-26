@@ -190,7 +190,7 @@ export function Alertas({
                       (to ? (
                         <>
                           <Link
-                            to="/indicadores"
+                            to="/dashboard"
                             search={to}
                             hash="execucao"
                             className="font-semibold text-heading underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"

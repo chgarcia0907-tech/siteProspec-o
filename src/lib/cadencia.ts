@@ -162,6 +162,31 @@ export function plannedDates(
 }
 
 /**
+ * Cronograma original: as datas previstas só a partir de `step1_date`, sem os envios reais.
+ * Serve para o atraso: uma etapa enviada tarde empurra as seguintes (`plannedDates`), mas elas
+ * continuam atrasadas em relação a este cronograma. Quem usa compara com a data encadeada e fica
+ * com a mais cedo (etapa adiantada não empurra o prazo das seguintes para depois).
+ */
+export function originalDates(
+  c: Pick<PlanInput, "step1_date">,
+  offsets: Offsets,
+  holidays: Holidays = NO_HOLIDAYS,
+): Record<number, string | null> {
+  return plannedDates(
+    {
+      step1_date: c.step1_date,
+      sent1_at: null,
+      sent2_at: null,
+      sent3_at: null,
+      sent4_at: null,
+      sent5_at: null,
+    },
+    offsets,
+    holidays,
+  );
+}
+
+/**
  * A etapa faz parte da cadência do contato? Quem não tem WhatsApp (`sem_whatsapp`) não recebe as
  * etapas de WhatsApp: elas saem das filas, dos atrasados e da conclusão. As datas previstas das
  * etapas seguintes não mudam (seguem encadeadas como antes).

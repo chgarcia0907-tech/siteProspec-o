@@ -1,7 +1,9 @@
 # Cadência Outbound — guia para agentes
 
 Objetivo do produto: hunters conseguem reuniões com as empresas que prospectam.
-Métrica-guia: reuniões (ATs) marcadas a cada semana.
+Métrica-guia: reuniões (ATs) marcadas a cada semana. Na Dashboard, a métrica central é ATs que
+avançaram (AT Diagnóstica realizada que chegou à AT de Aprofundamento); plano em
+`.claude/plans/dashboard-outbound.md`.
 
 ## Fluxo de trabalho
 
@@ -65,7 +67,7 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 ## Organização do código
 
 - Rotas em `src/routes/` são finas: estado da tela e composição. Componentes de uma tela ficam
-  em `src/components/<tela>/` (`ats`, `auth`, `configuracoes`, `tasks`, `contatos`, `empresas`, `hoje`, `importar`, `inicio`, `modelos`, `semana`,
+  em `src/components/<tela>/` (`ats`, `auth`, `configuracoes`, `dashboard`, `tasks`, `contatos`, `empresas`, `hoje`, `importar`, `inicio`, `modelos`, `semana`,
   `ranking`, `painel`); componentes usados em
   mais de uma tela ficam na raiz de `src/components/` (ex.: `SectorSelect`, `InlineInput`,
   `Funnel`); `src/components/ui/` é o shadcn/ui.
@@ -91,6 +93,11 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
 - Regras de cadência, parser do LinkedIn e utilitários de data ficam em `src/lib/cadencia.ts` — uma única fonte de verdade reutilizada por todas as telas.
 - Acesso a dados via cliente Supabase do navegador em hooks React Query (`src/hooks/useCadencia.ts`), protegido por RLS por hunter; não usar server functions para CRUD simples.
 - Datas previstas são calculadas (nunca gravadas) por `plannedDates` em `cadencia.ts`, em dias úteis (sem fins de semana nem feriados da tabela `holidays`, carregada uma vez por tela/export e passada como Set) e encadeadas a partir do envio real (ou previsão) da etapa anterior; todas as telas, CSVs e o export usam essa função única.
+- Atraso na cadência: as filas (`buildQueues`) mostram só a primeira etapa pendente do contato, na data encadeada,
+  então a etapa seguinte espera o intervalo normal depois do envio atrasado. O atraso é medido contra o
+  cronograma original (`originalDates`, só a partir de `step1_date`; vale a mais cedo das duas datas), então
+  as etapas depois de um atraso continuam marcadas como atrasadas. `lateStep` (`dashboard.ts`) e `lateRows`
+  (`inicio.ts`) usam a mesma regra.
 - Ranking é só do administrador: fica na aba "Competição" do /painel (`/ranking` redireciona para `/painel?aba=competicao`); `getCompetition` exige has_role e a função SQL `public.ranking(date)` (SECURITY DEFINER, porque agrega dados de outros hunters que o RLS esconde) devolve vazio para quem não é admin.
 - Exclusão de contatos e feriados só via server functions em `src/lib/admin.functions.ts`, após validar ADMIN_PASSWORD (bloqueio em `admin_attempts`); hunters não têm DELETE em `contacts`. O período da competição geral (`competition_settings`) só se edita no painel, aba "Competição" (`painelSetPeriod`, has_role).
 - Pontuação da competição: cálculo puro em `src/lib/competition.ts`, carregado com service role em `competition.server.ts`; o cliente recebe só totais.
@@ -118,13 +125,13 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   para `contacts.company`) e no botão "Preencher empresa e área" de Contatos. Só preenchem campos
   vazios e, na dúvida, deixam em branco; CEO, sócio e financeiro ficam sem área de propósito. Ao
   ajustar uma regra, acrescente o caso real em `enriquecimento.test.ts`.
-- Indicadores (menu próprio "Indicadores" em Administração, rota `/indicadores`, só admin; antes era a
-  aba do /painel, e `/painel?aba=indicadores` redireciona): cálculo puro em
+- Dashboard (antes "Indicadores"; menu "Dashboard" em Administração, rota `/dashboard`, só admin;
+  `/indicadores` (com os filtros) e `/painel?aba=indicadores` redirecionam): cálculo puro em
   `src/lib/dashboard.ts` (`computeDashboard`), carregado com service role em `painelDashboard`
   (`painel.functions.ts`, has_role antes). Reaproveita `plannedDates`/`isActive`/`computedStatus` e
   `atScoreDate`/`stageScoreDate`, então envios, atrasados e funil batem com Envios de hoje e com o
   placar. O "hoje" vem do navegador (fuso SP) para servidor e tela concordarem. Componentes em
-  `src/components/painel/dashboard/`. Limite conhecido: `sentN_at` é o dia em que a etapa foi
+  `src/components/dashboard/`. Limite conhecido: `sentN_at` é o dia em que a etapa foi
   marcada (sem histórico).
 - Respostas: `contacts.respondeu_em` é carimbado por trigger quando a situação vira "respondeu"
   (descartar depois mantém a data; voltar para uma situação de cadência apaga). O painel usa
@@ -149,12 +156,12 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   (`resolveGoal`). Metas diárias/semanais viram metas do intervalo pelos dias úteis já passados;
   semáforo: na meta ≥ 100%, perto ≥ 70% (no prazo: até 10 pontos abaixo). Escrita por
   `painelSaveGoal`/`painelDeleteGoal` (`painel.functions.ts`, has_role antes).
-- Início do hunter (`/inicio`, primeira tela depois do login; o admin continua indo para os
-  Indicadores): regras puras em `src/lib/inicio.ts` (`weekAts`, `teamWeekGoal`, `atSlots`, `lateRows`,
+- Início do hunter (`/inicio`, primeira tela depois do login; o admin continua indo para a
+  Dashboard): regras puras em `src/lib/inicio.ts` (`weekAts`, `teamWeekGoal`, `atSlots`, `lateRows`,
   `conversion`), componentes em `src/components/semana/`. As ATs da equipe vêm de `inicioResumo`
   (`inicio.functions.ts`, service role para qualquer hunter logado): o cliente recebe só o dia de
   cada AT dos outros e a meta somada (`ats_semana` de cada hunter, com a herança de `resolveGoal`).
-  A equipe é a dos Indicadores (ciclo ativo: só os membros). Envios, atrasados e conversão usam os
+  A equipe é a da Dashboard (ciclo ativo: só os membros). Envios, atrasados e conversão usam os
   contatos do próprio hunter, com `buildQueues`/`dayProgress` (mesma conta de Envios de hoje).
 - Subsetor e persona na cadência (detalhes em `docs/empresas-e-setores.md`): subsetor é uma linha de
   `sectors` com `parent_id` (um nível; `companies.sector_id` continua sempre o setor de primeiro nível e
@@ -172,18 +179,18 @@ Métrica-guia: reuniões (ATs) marcadas a cada semana.
   é "Avançar no funil" no contato existente.
 - Contato sem WhatsApp (`contacts.sem_whatsapp`, caixa "Sem WhatsApp" na edição do contato, em Contatos e
   em Envios de hoje): `stepApplies` (`cadencia.ts`) dispensa as etapas de WhatsApp dele. Elas saem das
-  filas (`buildQueues`), dos atrasados e da pendência de telefone dos Indicadores, da próxima etapa e
+  filas (`buildQueues`), dos atrasados e da pendência de telefone da Dashboard, da próxima etapa e
   da conclusão (`computedStatus`). As datas previstas das demais etapas não mudam. Ao criar um uso
   novo de `STEPS`, respeite `stepApplies`.
 - Cards do Hackathon fora das métricas atuais: `isHackathonContact` (`fila.ts`) = contato carimbado num
   período `competicao` **encerrado** e criado até o `closed_at` dele (quem entrou depois, mesmo carimbado
   com o último período, é contato novo). Ficam fora de Envios de hoje (com botão para exibi-los), do
   contador da navegação, de envios/atrasados/conversão do Início, das ATs da semana (`inicioResumo`), dos
-  Indicadores (salvo quando o filtro é a própria competição) e do placar do ciclo e da competição geral
+  Dashboard (salvo quando o filtro é a própria competição) e do placar do ciclo e da competição geral
   (`loadCompetition`; só o período `competicao` os mantém). Na tabela Atividade, `public.ranking()` ignora só
   os eventos posteriores ao encerramento, o histórico do Hackathon continua. Regra do TS e do SQL
   andam juntas: ao mudar uma, revise a outra.
-- Recorte do ciclo: quando o período escolhido nos Indicadores é um ciclo, `painelDashboard` usa só
+- Recorte do ciclo: quando o período escolhido na Dashboard é um ciclo, `painelDashboard` usa só
   os membros dele e corta o intervalo nas datas do ciclo (`clampToCycle` em `dashboard.ts`); outros
   períodos no filtro mostram o histórico. Atrasados também respeitam o ciclo: etapa pendente prevista
   antes do início não conta (`lateSince` em `computeDashboard`). Com um ciclo ativo, a tabela "Atividade" da Competição

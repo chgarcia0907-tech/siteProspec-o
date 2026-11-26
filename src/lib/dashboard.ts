@@ -14,6 +14,7 @@ import {
   isActive,
   isBusinessDay,
   onlyDigits,
+  originalDates,
   plannedDates,
   type Channel,
   type Contact,
@@ -375,12 +376,14 @@ export function previousRange(from: string, to: string): { from: string; to: str
 }
 
 /**
- * Primeira etapa pendente com data prevista antes de hoje (contato ativo), ou null.
+ * Primeira etapa pendente, se já está na fila de envio (data encadeada até hoje) e atrasada em
+ * relação ao cronograma original (`original`), como em Envios de hoje; senão null.
  * Com `since`, a pendência prevista antes dessa data fica de fora (anterior ao ciclo).
  */
 function lateStep(
   c: DashContact,
   planned: Record<number, string | null>,
+  original: Record<number, string | null>,
   steps: readonly StepDef[],
   today: string,
   since?: string | null,
@@ -390,9 +393,12 @@ function lateStep(
     if (c[s.sentField] || !stepApplies(c, s)) continue;
     const p = planned[s.n];
     if (s.n === 1 && !c.step1_date) return null; // aguardando início, não atrasado
-    if (!p || p >= today) return null;
-    if (since && p < since) return null;
-    return steps.includes(s) ? { step: s, planned: p } : null;
+    if (!p || p > today) return null;
+    const orig = original[s.n];
+    const due = orig && orig < p ? orig : p; // mesma regra de `buildQueues`
+    if (due >= today) return null;
+    if (since && due < since) return null;
+    return steps.includes(s) ? { step: s, planned: due } : null;
   }
   return null;
 }
@@ -568,7 +574,14 @@ export function computeDashboard(input: DashInput): Dashboard {
     }
 
     // Atrasados agora.
-    const late = lateStep(c, planned, steps, today, input.lateSince);
+    const late = lateStep(
+      c,
+      planned,
+      originalDates(c, off, holidays),
+      steps,
+      today,
+      input.lateSince,
+    );
     if (late) {
       const days = Math.max(1, businessDaysBetween(late.planned, today, holidays));
       r.late++;

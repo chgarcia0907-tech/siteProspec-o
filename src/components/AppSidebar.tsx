@@ -58,7 +58,7 @@ export function AppSidebar({
           {
             title: "Administração",
             items: [
-              { to: "/indicadores", label: "Indicadores", icon: ChartColumn },
+              { to: "/dashboard", label: "Dashboard", icon: ChartColumn },
               { to: "/painel", label: "Painel Admin", icon: LayoutDashboard },
             ],
           },

@@ -14,9 +14,9 @@ test.describe("Navegação lateral", () => {
       "data-status",
       "active",
     );
-    await nav.getByRole("link", { name: "Indicadores" }).click();
-    await expect(page).toHaveURL(/\/indicadores/);
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Indicadores");
+    await nav.getByRole("link", { name: "Dashboard" }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Dashboard");
     await nav.getByRole("link", { name: "Painel Admin" }).click();
     await expect(page).toHaveURL(/\/painel/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Hunters");

@@ -44,14 +44,42 @@ describe("filas do dia", () => {
     expect(q[1][0]!.planned).toBeNull();
   });
 
-  it("atrasados vêm primeiro; um atrasado aparece em toda etapa pendente já vencida", () => {
+  it("atrasados vêm primeiro; um atrasado só aparece na etapa pendente mais antiga", () => {
     const hoje = c({ name: "hoje", step1_date: "2026-11-11", sent1_at: "2026-11-11" });
     const atrasado = c({ name: "atrasado", step1_date: "2026-11-05", sent1_at: "2026-11-05" });
     const q = buildQueues([hoje, atrasado], DEFAULT_OFFSETS, new Set(), REF);
     expect(names(q[2])).toEqual(["atrasado", "hoje"]);
     expect(q[2].map((x) => x.late)).toEqual([true, false]);
     expect(q[1]).toEqual([]);
-    expect(names(q[3])).toEqual(["atrasado"]);
+    expect(q[3]).toEqual([]);
+    expect(q[4]).toEqual([]);
+  });
+
+  it("WhatsApp 1 enviado com atraso: LinkedIn 2 espera o intervalo normal e segue atrasado", () => {
+    // WhatsApp 1 previsto para 06/11, enviado só hoje (12/11): LinkedIn 2 entra em 13/11,
+    // atrasado em relação ao previsto original (09/11).
+    const x = c({ step1_date: "2026-11-05", sent1_at: "2026-11-05", sent2_at: REF });
+    expect(Object.values(buildQueues([x], DEFAULT_OFFSETS, new Set(), REF)).flat()).toEqual([]);
+    const amanha = buildQueues([x], DEFAULT_OFFSETS, new Set(), "2026-11-13");
+    expect(amanha[3].map((i) => [i.planned, i.due, i.late])).toEqual([
+      ["2026-11-13", "2026-11-09", true],
+    ]);
+  });
+
+  it("etapa adiantada não deixa a seguinte com prazo mais tarde", () => {
+    // LinkedIn 1 previsto para 06/11 e enviado em 04/11: WhatsApp 1 vence em 05/11.
+    const x = c({ step1_date: "2026-11-06", sent1_at: "2026-11-04" });
+    const q = buildQueues([x], DEFAULT_OFFSETS, new Set(), "2026-11-06");
+    expect(q[2].map((i) => [i.planned, i.due, i.late])).toEqual([
+      ["2026-11-05", "2026-11-05", true],
+    ]);
+  });
+
+  it("sem WhatsApp, a etapa seguinte ao LinkedIn atrasado espera o envio dele", () => {
+    const x = c({ step1_date: "2026-11-05", sent1_at: "2026-11-05", sem_whatsapp: true });
+    const q = buildQueues([x], DEFAULT_OFFSETS, new Set(), REF);
+    expect(q[3].map((i) => i.late)).toEqual([true]);
+    expect(q[5]).toEqual([]);
   });
 
   it("ignora quem respondeu, foi descartado ou já tem AT", () => {
@@ -83,10 +111,11 @@ describe("contato sem WhatsApp", () => {
     const sem = c({ ...base, name: "sem", sem_whatsapp: true });
     const com = c({ ...base, name: "com" });
     const q = buildQueues([sem, com], DEFAULT_OFFSETS, new Set(), REF);
+    // Cada um só na primeira etapa pendente: "com" no WhatsApp 1, "sem" pula para o LinkedIn 2.
     expect(names(q[2])).toEqual(["com"]);
-    expect(names(q[4])).toEqual(["com"]);
-    expect(names(q[3])).toEqual(["sem", "com"]);
-    expect(names(q[5])).toEqual(["sem", "com"]);
+    expect(names(q[3])).toEqual(["sem"]);
+    expect(q[4]).toEqual([]);
+    expect(q[5]).toEqual([]);
   });
 
   it("conclui sem as etapas de WhatsApp", () => {
@@ -133,7 +162,7 @@ describe("progresso do dia", () => {
     c({ id: "b", step1_date: "2026-11-11", sent1_at: "2026-11-11", status: "em_cadencia" }),
     // nunca começou: entra na fila do LinkedIn 1 sem data
     c({ id: "d" }),
-    // WhatsApp 1 previsto para 10/11 e não enviado: atrasado, e as etapas seguintes vencem em cadeia
+    // WhatsApp 1 previsto para 10/11 e não enviado: atrasado; as etapas seguintes esperam o envio
     c({ id: "e", step1_date: "2026-11-09", sent1_at: "2026-11-09", status: "em_cadencia" }),
   ];
 
@@ -141,9 +170,9 @@ describe("progresso do dia", () => {
     const queues = buildQueues(base, DEFAULT_OFFSETS, new Set(), ref);
     const itensDoE = Object.values(queues)
       .flat()
-      .filter((i) => i.contact.id === "e").length;
-    expect(itensDoE).toBeGreaterThan(1); // "e" está em mais de uma fila...
-    // ...mas conta uma vez: pendentes "b", "d" e "e", com "e" atrasado.
+      .filter((i) => i.contact.id === "e");
+    expect(itensDoE.map((i) => [i.planned, i.late])).toEqual([["2026-11-10", true]]);
+    // Pendentes "b", "d" e "e", com "e" atrasado.
     expect(dayProgress(base, queues, ref)).toEqual({ done: 2, pending: 3, late: 1, total: 5 });
   });
 
