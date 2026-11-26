@@ -10,6 +10,10 @@ import {
   dashboardVisao,
   dashboardRealizacao,
   dashboardSalvarTempoEtapas,
+  dashboardSegmentos,
+  dashboardSalvarTesteAb,
+  dashboardEncerrarTesteAb,
+  dashboardExcluirTesteAb,
   dashboardCopiarAlocacoes,
   dashboardCriarSafra,
   dashboardExcluirAlocacao,
@@ -22,6 +26,7 @@ import {
   dashboardSalvarParametros,
   dashboardSemanas,
 } from "@/lib/dashboard.functions";
+import type { AbForm } from "@/lib/abTestes";
 import type { AlocacaoForm } from "@/lib/alocacao";
 import { spParts } from "@/lib/cadencia";
 import { cicloPadrao, type MetasCiclo, type Parametros, type SafraForm } from "@/lib/safras";
@@ -227,3 +232,43 @@ export function useSalvarTempoEtapas() {
     await qc.invalidateQueries({ queryKey: [REALIZACAO] });
   };
 }
+
+const SEGMENTOS = "dashboard_segmentos";
+
+/** Segmentos do ciclo (quebras nas safras maduras) e o resultado dos testes A/B. */
+export function useSegmentos(periodId: string | null) {
+  const fn = useServerFn(dashboardSegmentos);
+  const hoje = spParts().iso;
+  return useQuery({
+    queryKey: [SEGMENTOS, periodId, hoje],
+    queryFn: () => fn({ data: { periodId: periodId!, hoje } }),
+    enabled: !!periodId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+export type SegmentosDados = NonNullable<ReturnType<typeof useSegmentos>["data"]>;
+
+/** Cadastro dos testes A/B; recarrega os segmentos. */
+export function useTestesAbAcoes() {
+  const qc = useQueryClient();
+  const salvar = useServerFn(dashboardSalvarTesteAb);
+  const encerrar = useServerFn(dashboardEncerrarTesteAb);
+  const excluir = useServerFn(dashboardExcluirTesteAb);
+  const recarregar = () => qc.invalidateQueries({ queryKey: [SEGMENTOS] });
+  return {
+    salvar: async (periodId: string, id: string | null, teste: AbForm) => {
+      const r = await salvar({ data: { periodId, id, teste } });
+      await recarregar();
+      return r.id;
+    },
+    encerrar: async (id: string, encerrarTeste: boolean, conclusao = "") => {
+      await encerrar({ data: { id, encerrar: encerrarTeste, conclusao } });
+      await recarregar();
+    },
+    excluir: async (id: string) => {
+      await excluir({ data: { id } });
+      await recarregar();
+    },
+  };
+}
+export type TestesAbAcoes = ReturnType<typeof useTestesAbAcoes>;

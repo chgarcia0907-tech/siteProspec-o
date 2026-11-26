@@ -503,6 +503,8 @@ export function initialDb() {
       updated_at: "2026-11-01T12:00:00Z",
     })),
     ciclo_metas: [],
+    ab_testes: [],
+    ab_versoes: [],
     groups: [{ id: G1, period_id: P1, name: "Squad Azul", created_at: "2026-10-27T03:00:00Z" }],
     subgroups: [{ id: S1, group_id: G1, name: "Dupla 1", created_at: "2026-10-27T03:00:00Z" }],
     period_members: [

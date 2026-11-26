@@ -209,7 +209,11 @@ export const dashboardExcluirSafra = createServerFn({ method: "POST" })
     const admin = await db();
     const { error } = await admin.from("safras").delete().eq("id", data.id);
     if (error?.code === "23503")
-      throw new Error("A safra tem alocações: exclua as alocações antes de excluir a safra.");
+      throw new Error(
+        error.message.includes("ab_testes")
+          ? "A safra é início ou fim de um teste A/B: ajuste ou exclua o teste antes."
+          : "A safra tem alocações: exclua as alocações antes de excluir a safra.",
+      );
     if (error) throw new Error("Falha ao excluir a safra");
     return { ok: true as const };
   });
@@ -558,7 +562,7 @@ async function carregarBaseHunters(periodId: string, semana: string, hoje: strin
           admin
             .from("ats")
             .select(
-              "id, user_id, contact_id, registrada_em, agendada_original, agendada_atual, status, pipedrive_stage_id, pipedrive_deal_id",
+              "id, user_id, contact_id, registrada_em, agendada_original, agendada_atual, status, canal, resposta_etapa, pipedrive_stage_id, pipedrive_deal_id",
             )
             .eq("tipo", "diagnostico")
             .in("user_id", ids)
@@ -1058,5 +1062,262 @@ export const dashboardSalvarTempoEtapas = createServerFn({ method: "POST" })
     const admin = await db();
     const { error } = await admin.from("dashboard_tempo_etapas").upsert(data.metas);
     if (error) throw new Error("Falha ao salvar as metas de tempo");
+    return { ok: true as const };
+  });
+
+const DIMENSAO = z.enum(["setor", "subsetor", "porte", "nivel", "area", "persona"]);
+
+/**
+ * Aba Segmentos: quebras por setor, porte, persona, nível e área nas safras maduras, empresas,
+ * canais, mensagens, safra × setor alocado e o resultado dos testes A/B do ciclo (cálculo em
+ * `computeSegmentos`/`resultadoAb`). Mesmos membros e contatos da aba Hunters.
+ */
+export const dashboardSegmentos = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ periodId: z.string().uuid(), hoje: isoDay }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { fetchAll } = await import("./fetch-all");
+    const { computeSegmentos } = await import("./dashSegmentos");
+    const { resultadoAb } = await import("./abTestes");
+    const { semanaPadrao } = await import("./safras");
+    const { weekStartISO } = await import("./empresas");
+    const { isPersona } = await import("./personas");
+
+    const { data: safrasCiclo, error } = await admin
+      .from("safras")
+      .select("inicio")
+      .eq("period_id", data.periodId);
+    if (error) throw new Error("Falha ao carregar as safras");
+    const semana = semanaPadrao(safrasCiclo ?? [], data.hoje) ?? weekStartISO(data.hoje);
+    const base = await carregarBaseHunters(data.periodId, semana, data.hoje);
+    const { entrada, parametros: p } = base;
+    const ids = entrada.hunters.map((h) => h.id);
+
+    const [extras, empresas, setores, testes] = await Promise.all([
+      ids.length
+        ? fetchAll((a, b) =>
+            admin
+              .from("contacts")
+              .select("id, job_title, headline, sector, persona")
+              .in("user_id", ids)
+              .order("id")
+              .range(a, b),
+          )
+        : Promise.resolve([]),
+      ids.length
+        ? fetchAll((a, b) =>
+            admin
+              .from("companies")
+              .select("id, sector_id, subsector_id, porte")
+              .in("user_id", ids)
+              .order("id")
+              .range(a, b),
+          )
+        : Promise.resolve([]),
+      admin.from("sectors").select("id, name, parent_id, active").order("name"),
+      admin
+        .from("ab_testes")
+        .select(
+          "id, nome, dimensao, descricao, safra_inicial_id, safra_final_id, status, conclusao, created_at",
+        )
+        .eq("period_id", data.periodId)
+        .order("created_at"),
+    ]);
+    if (setores.error ?? testes.error) throw new Error("Falha ao carregar os segmentos");
+    const testeIds = (testes.data ?? []).map((t) => t.id);
+    const versoesAb = testeIds.length
+      ? await admin
+          .from("ab_versoes")
+          .select("teste_id, rotulo, valores, ordem")
+          .in("teste_id", testeIds)
+      : { data: [], error: null };
+    if (versoesAb.error) throw new Error("Falha ao carregar os testes A/B");
+
+    const extraDe = new Map(extras.map((x) => [x.id, x]));
+    const contatos = entrada.contatos.map((c) => {
+      const x = extraDe.get(c.id);
+      return {
+        id: c.id,
+        user_id: c.user_id,
+        created_at: c.created_at,
+        company_id: c.company_id,
+        job_title: x?.job_title ?? "",
+        headline: x?.headline ?? "",
+        sector: x?.sector ?? null,
+        persona: x && isPersona(x.persona) ? x.persona : null,
+      };
+    });
+    const mapaEmpresas = Object.fromEntries(
+      empresas.map((e) => [
+        e.id,
+        { sector_id: e.sector_id, subsector_id: e.subsector_id, porte: e.porte },
+      ]),
+    );
+    const nomes = Object.fromEntries((setores.data ?? []).map((s) => [s.id, s.name]));
+    const ctx = {
+      hoje: data.hoje,
+      safras: base.safras,
+      maturacaoSemanas: p.maturacao_semanas,
+      contatos,
+      empresas: mapaEmpresas,
+      ats: base.ats,
+      cards: base.cardsComDatas,
+    };
+    const segmentos = computeSegmentos({
+      ...ctx,
+      minAtsSegmento: p.min_ats_segmento,
+      avancoFicaPct: p.avanco_fica_pct,
+      avancoTrocaPct: p.avanco_troca_pct,
+      setores: nomes,
+      alocacoes: entrada.alocacoes,
+    });
+    const listaTestes = (testes.data ?? []).map((t) => ({
+      id: t.id,
+      nome: t.nome,
+      dimensao: DIMENSAO.parse(t.dimensao),
+      descricao: t.descricao,
+      safra_inicial_id: t.safra_inicial_id,
+      safra_final_id: t.safra_final_id,
+      status: t.status === "encerrado" ? ("encerrado" as const) : ("ativo" as const),
+      conclusao: t.conclusao,
+      versoes: (versoesAb.data ?? [])
+        .filter((v) => v.teste_id === t.id)
+        .sort((a, b) => a.ordem - b.ordem)
+        .map((v) => ({ rotulo: v.rotulo, valores: v.valores })),
+    }));
+    return {
+      segmentos,
+      testes: listaTestes.map((t) => ({
+        teste: t,
+        resultado: resultadoAb(t, { ...ctx, amostraMinima: p.amostra_minima_ab }),
+      })),
+      safras: base.safras,
+      setores: (setores.data ?? []).map((s) => ({
+        id: s.id,
+        name: s.name,
+        parent_id: s.parent_id,
+      })),
+      parametros: {
+        maturacaoSemanas: p.maturacao_semanas,
+        minAtsSegmento: p.min_ats_segmento,
+        avancoFicaPct: p.avanco_fica_pct,
+        avancoTrocaPct: p.avanco_troca_pct,
+        amostraMinimaAb: p.amostra_minima_ab,
+      },
+    };
+  });
+
+const AB_FORM = z.object({
+  nome: z.string().max(120),
+  dimensao: DIMENSAO,
+  descricao: z.string().max(2000),
+  safra_inicial_id: z.string().uuid(),
+  safra_final_id: z.string().uuid(),
+  versoes: z
+    .array(
+      z.object({
+        rotulo: z.string().max(40),
+        valores: z.array(z.string().min(1).max(120)).max(100),
+      }),
+    )
+    .max(6),
+});
+
+/** Cria ou edita um teste A/B do ciclo; as versões são regravadas inteiras. */
+export const dashboardSalvarTesteAb = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({ periodId: z.string().uuid(), id: z.string().uuid().nullable(), teste: AB_FORM })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { erroTesteAb } = await import("./abTestes");
+    const { data: safras, error } = await admin
+      .from("safras")
+      .select("id, numero")
+      .eq("period_id", data.periodId);
+    if (error) throw new Error("Falha ao carregar as safras");
+    const erro = erroTesteAb(data.teste, safras ?? []);
+    if (erro) throw new Error(erro);
+    const { versoes, ...campos } = data.teste;
+    const linha = {
+      ...campos,
+      nome: campos.nome.trim(),
+      descricao: campos.descricao.trim() || null,
+      period_id: data.periodId,
+    };
+    let id = data.id;
+    if (id) {
+      const { data: alterado, error: e } = await admin
+        .from("ab_testes")
+        .update(linha)
+        .eq("id", id)
+        .eq("period_id", data.periodId)
+        .select("id");
+      if (e || !alterado?.length) throw new Error("Falha ao salvar o teste");
+      const { error: eDel } = await admin.from("ab_versoes").delete().eq("teste_id", id);
+      if (eDel) throw new Error("Falha ao salvar as versões");
+    } else {
+      const { data: novo, error: e } = await admin
+        .from("ab_testes")
+        .insert(linha)
+        .select("id")
+        .single();
+      if (e || !novo) throw new Error("Falha ao criar o teste");
+      id = novo.id;
+    }
+    const { error: eVer } = await admin.from("ab_versoes").insert(
+      versoes.map((v, ordem) => ({
+        teste_id: id!,
+        rotulo: v.rotulo.trim(),
+        valores: [...new Set(v.valores)],
+        ordem,
+      })),
+    );
+    if (eVer) throw new Error("Falha ao salvar as versões");
+    return { id: id! };
+  });
+
+/** Encerra (com a decisão registrada) ou reabre um teste A/B. */
+export const dashboardEncerrarTesteAb = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        encerrar: z.boolean(),
+        conclusao: z.string().max(2000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { error } = await admin
+      .from("ab_testes")
+      .update(
+        data.encerrar
+          ? { status: "encerrado", conclusao: data.conclusao.trim() || null }
+          : { status: "ativo", conclusao: null },
+      )
+      .eq("id", data.id);
+    if (error) throw new Error("Falha ao atualizar o teste");
+    return { ok: true as const };
+  });
+
+/** Exclui um teste A/B (as versões vão junto). */
+export const dashboardExcluirTesteAb = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { error } = await admin.from("ab_testes").delete().eq("id", data.id);
+    if (error) throw new Error("Falha ao excluir o teste");
     return { ok: true as const };
   });
