@@ -3,6 +3,7 @@ import {
   STEPS,
   computedStatus,
   isActive,
+  originalDates,
   plannedDates,
   stepApplies,
   type Contact,
@@ -60,13 +61,23 @@ export function splitHackathon<T extends { period_id: string | null; created_at:
   return { current, hackathon: archived };
 }
 
-export type QueueItem = { contact: Contact; planned: string | null; late: boolean };
+export type QueueItem = {
+  contact: Contact;
+  /** Quando a etapa entra na fila (encadeada pelo envio real da anterior). */
+  planned: string | null;
+  /** Data do cronograma original (`originalDates`); `late` compara com ela. */
+  due: string | null;
+  late: boolean;
+};
 export type Queues = Record<StepDef["n"], QueueItem[]>;
 
 /**
  * Para cada etapa, os contatos ativos com a etapa pendente e prevista até `ref`.
- * LinkedIn 1 sem data definida entra na fila sem previsão. Atrasados primeiro,
- * depois pela data prevista.
+ * Só a primeira etapa pendente do contato entra: a seguinte espera a anterior ser enviada e,
+ * como `plannedDates` encadeia pelo envio real, ela vence o intervalo normal depois desse envio.
+ * O atraso é contra o cronograma original: depois de uma etapa atrasada, as seguintes também
+ * entram marcadas como atrasadas. LinkedIn 1 sem data definida entra na fila sem previsão.
+ * Atrasados primeiro, depois pela data prevista.
  */
 export function buildQueues(
   contacts: Contact[],
@@ -77,22 +88,23 @@ export function buildQueues(
   const result: Queues = { 1: [], 2: [], 3: [], 4: [], 5: [] };
   for (const c of contacts) {
     if (!isActive(c)) continue;
-    const planned = plannedDates(c, offsets, holidays);
-    for (const step of STEPS) {
-      if (c[step.sentField] || !stepApplies(c, step)) continue;
-      if (step.n === 1 && !c.step1_date) {
-        result[1].push({ contact: c, planned: null, late: false });
-        continue;
-      }
-      const p = planned[step.n];
-      if (!p || p > ref) continue;
-      result[step.n].push({ contact: c, planned: p, late: p < ref });
+    const step = STEPS.find((s) => stepApplies(c, s) && !c[s.sentField]);
+    if (!step) continue;
+    if (step.n === 1 && !c.step1_date) {
+      result[1].push({ contact: c, planned: null, due: null, late: false });
+      continue;
     }
+    const p = plannedDates(c, offsets, holidays)[step.n];
+    if (!p || p > ref) continue;
+    const orig = originalDates(c, offsets, holidays)[step.n];
+    // Etapa adiantada não fica "devendo" depois: vale a data mais cedo das duas.
+    const due = orig && orig < p ? orig : p;
+    result[step.n].push({ contact: c, planned: p, due, late: due < ref });
   }
   for (const list of Object.values(result)) {
     list.sort((a, b) => {
       if (a.late !== b.late) return a.late ? -1 : 1;
-      return (a.planned ?? "") < (b.planned ?? "") ? -1 : 1;
+      return (a.due ?? "") < (b.due ?? "") ? -1 : 1;
     });
   }
   return result;
@@ -110,8 +122,7 @@ export type DayProgress = {
 
 /**
  * Progresso do dia `ref`: o que já foi enviado nesse dia e quantos leads ainda esperam envio.
- * Um lead atrasado pode estar em mais de uma fila (as etapas seguintes vencem em cadeia), mas
- * conta uma vez: ao enviar a etapa mais cedo, as outras saem da fila e o total não encolhe.
+ * Cada lead conta uma vez (as filas só mostram a primeira etapa pendente dele).
  */
 export function dayProgress(contacts: Contact[], queues: Queues, ref: string): DayProgress {
   let done = 0;

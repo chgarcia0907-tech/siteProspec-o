@@ -27,7 +27,7 @@ const ddmm = (iso: string | null) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 
  */
 export function QueueCard({
   step,
-  item: { contact, planned, late },
+  item: { contact, planned, due, late },
   actions,
   onEdit,
   hackathon = false,
@@ -86,7 +86,7 @@ export function QueueCard({
                 <h3 className="text-card-title font-semibold">{contact.name}</h3>
                 {late && (
                   <span className="rounded-sm bg-destructive-soft px-2 py-0.5 text-caption font-semibold text-destructive-text">
-                    Atrasado · previsto {ddmm(planned)}
+                    Atrasado · previsto {ddmm(due)}
                   </span>
                 )}
                 {hackathon && (

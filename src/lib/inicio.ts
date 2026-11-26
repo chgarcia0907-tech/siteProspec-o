@@ -103,15 +103,16 @@ export function lateRows(queues: Queues, holidays: Holidays, today: string): Lat
   const byContact = new Map<string, LateRow>();
   for (const step of STEPS)
     for (const item of queues[step.n]) {
-      if (!item.late || !item.planned) continue;
+      // Atraso contado do cronograma original (`due`), como na fila.
+      if (!item.late || !item.due) continue;
       const prev = byContact.get(item.contact.id);
-      if (prev && prev.planned <= item.planned) continue;
+      if (prev && prev.planned <= item.due) continue;
       byContact.set(item.contact.id, {
         contactId: item.contact.id,
         name: item.contact.name,
         step,
-        planned: item.planned,
-        days: businessDaysBetween(item.planned, today, holidays),
+        planned: item.due,
+        days: businessDaysBetween(item.due, today, holidays),
       });
     }
   return [...byContact.values()].sort(
