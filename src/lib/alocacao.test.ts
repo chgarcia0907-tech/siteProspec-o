@@ -8,6 +8,9 @@ import {
   copiarAlocacoes,
   diasParaTroca,
   duplasDaSafra,
+  duplasSugeridas,
+  linhasDaAlocacao,
+  safraPadraoDaAlocacao,
   erroAlocacao,
   mesmaAlocacao,
   metasDaSafra,
@@ -228,5 +231,32 @@ describe("porte", () => {
     expect(porteDoPipedrive("Não possui - Pessoa Física")).toBeNull();
     expect(isPorte("51-200")).toBe(true);
     expect(isPorte("51 a 200")).toBe(false);
+  });
+});
+
+describe("tabela de alocação", () => {
+  it("uma linha por membro, com a vigência atual e as anteriores", () => {
+    const linhas = linhasDaAlocacao(TODAS, S3.id, ["dani", "ana", "bruno"]);
+    expect(linhas.map((l) => l.userId)).toEqual(["dani", "ana", "bruno", "caio"]);
+    expect(linhas[0]).toEqual({ userId: "dani", atual: null, anteriores: [] });
+    expect(linhas[1]!.atual).toBe(ANA_QUA);
+    expect(linhas[1]!.anteriores).toEqual([ANA_SEG]);
+  });
+
+  it("abre a safra da semana; senão a próxima; senão a última que usa alocação", () => {
+    const s1 = { numero: 1, inicio: "2026-11-09", usa_alocacao: false };
+    const s2 = { numero: 2, inicio: "2026-11-16", usa_alocacao: false };
+    const s3 = { numero: 3, inicio: "2026-11-23", usa_alocacao: true };
+    const s4 = { numero: 4, inicio: "2026-11-30", usa_alocacao: true };
+    const todas = [s4, s1, s3, s2];
+    expect(safraPadraoDaAlocacao(todas, "2026-11-25")).toBe(s3);
+    expect(safraPadraoDaAlocacao(todas, "2026-11-12")).toBe(s3); // S01 não usa: a próxima
+    expect(safraPadraoDaAlocacao(todas, "2026-12-20")).toBe(s4);
+    expect(safraPadraoDaAlocacao([s1, s2], "2026-11-12")).toBe(s1);
+    expect(safraPadraoDaAlocacao([], "2026-11-12")).toBeNull();
+  });
+
+  it("sugere as duplas já usadas na safra", () => {
+    expect(duplasSugeridas(TODAS, S3.id)).toEqual(["D1"]);
   });
 });

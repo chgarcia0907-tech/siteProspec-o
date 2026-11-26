@@ -276,3 +276,56 @@ export function mesmaAlocacao(a: AlocacaoForm, b: AlocacaoForm): boolean {
   const y = alocacaoLimpa(b);
   return CAMPOS_FORM.every((k) => x[k] === y[k]);
 }
+
+/* ------------------------------- Tabela ------------------------------- */
+
+export type LinhaAlocacao = {
+  userId: string;
+  /** Vigência mais recente (null = hunter não alocado). */
+  atual: Alocacao | null;
+  /** Vigências anteriores da semana, da mais antiga para a mais recente. */
+  anteriores: Alocacao[];
+};
+
+/**
+ * Linhas da tabela de alocação: uma por membro do ciclo (na ordem recebida) e, no fim, quem tem
+ * alocação na safra sem ser membro.
+ */
+export function linhasDaAlocacao(
+  alocacoes: readonly Alocacao[],
+  safraId: string,
+  membros: readonly string[],
+): LinhaAlocacao[] {
+  const alocados = [
+    ...new Set(alocacoes.filter((a) => a.safra_id === safraId).map((a) => a.user_id)),
+  ];
+  const ordem = [...membros, ...alocados.filter((u) => !membros.includes(u))];
+  return ordem.map((userId) => {
+    const linhas = linhasDoHunter(alocacoes, safraId, userId);
+    return { userId, atual: linhas.at(-1) ?? null, anteriores: linhas.slice(0, -1) };
+  });
+}
+
+/**
+ * Safra aberta por padrão na alocação: a da semana de hoje se usar alocação; senão a próxima que
+ * usa e ainda não começou; senão a última que usa; senão a primeira do ciclo.
+ */
+export function safraPadraoDaAlocacao<T extends Pick<Safra, "inicio" | "numero" | "usa_alocacao">>(
+  safras: readonly T[],
+  hoje: string,
+): T | null {
+  const ordem = [...safras].sort((a, b) => a.numero - b.numero);
+  const usam = ordem.filter((s) => s.usa_alocacao);
+  return (
+    usam.find((s) => s.inicio <= hoje && hoje <= fimDaSemana(s)) ??
+    usam.find((s) => s.inicio > hoje) ??
+    usam.at(-1) ??
+    ordem.at(0) ??
+    null
+  );
+}
+
+/** Rótulos de dupla já usados na safra, para sugerir no formulário. */
+export function duplasSugeridas(alocacoes: readonly Alocacao[], safraId: string): string[] {
+  return [...duplasDaSafra(alocacoes, safraId).keys()].sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
