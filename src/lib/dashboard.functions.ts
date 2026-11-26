@@ -17,7 +17,6 @@ import {
 } from "./alocacao";
 import {
   METAS_CICLO_VAZIAS,
-  diaSP,
   safraAnterior,
   PARAMETROS_PADRAO,
   erroMetasCiclo,
@@ -300,17 +299,17 @@ export type AlocacaoDados = {
   /** Membros do ciclo, em ordem alfabética. */
   hunters: HunterDoCiclo[];
   setores: SetorOpcao[];
-  /** Hoje em São Paulo, pelo relógio do servidor (o mesmo que decide o que pode ser editado). */
+  /** O "hoje" recebido (São Paulo), devolvido para a tela usar o mesmo dia das regras. */
   hoje: string;
 };
 
-/** Hoje em São Paulo pelo relógio do servidor: as regras de edição não dependem do navegador. */
-const hojeSP = () => diaSP(new Date().toISOString());
+// O "hoje" vem do navegador (fuso de São Paulo), como no resto da Dashboard, para servidor e tela
+// concordarem sobre o que pode ser editado; só o admin chega a estas funções.
 
 /** Dados da tabela de alocação de um ciclo. */
 export const dashboardAlocacao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ periodId: z.string().uuid() }).parse(d))
+  .inputValidator((d) => z.object({ periodId: z.string().uuid(), hoje: isoDay }).parse(d))
   .handler(async ({ data, context }): Promise<AlocacaoDados> => {
     await assertAdmin(context);
     const admin = await db();
@@ -342,7 +341,7 @@ export const dashboardAlocacao = createServerFn({ method: "POST" })
         .map((p) => ({ id: p.id, name: p.display_name?.trim() || p.email || "Hunter" }))
         .sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
       setores: setores.data ?? [],
-      hoje: hojeSP(),
+      hoje: data.hoje,
     };
   });
 
@@ -394,6 +393,7 @@ export const dashboardSalvarAlocacao = createServerFn({ method: "POST" })
     z
       .object({
         safraId: z.string().uuid(),
+        hoje: isoDay,
         /** Linha editada; sem id, cria. */
         id: z.string().uuid().nullable(),
         alocacao: alocacaoForm,
@@ -404,7 +404,7 @@ export const dashboardSalvarAlocacao = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const admin = await db();
     const { safra, alocacoes } = await safraEAlocacoes(admin, data.safraId);
-    const hoje = hojeSP();
+    const hoje = data.hoje;
     const modo = modoEdicao(safra, hoje);
     if (modo === "encerrada") throw new Error("Safra encerrada: a alocação não muda mais.");
     const f: AlocacaoForm = alocacaoLimpa(data.alocacao);
@@ -438,7 +438,7 @@ export const dashboardSalvarAlocacao = createServerFn({ method: "POST" })
 /** Exclui uma linha de alocação (só antes do início da safra). */
 export const dashboardExcluirAlocacao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d) => z.object({ id: z.string().uuid(), hoje: isoDay }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const admin = await db();
@@ -450,7 +450,7 @@ export const dashboardExcluirAlocacao = createServerFn({ method: "POST" })
     if (e1) throw new Error("Falha ao carregar a alocação");
     if (!linha) throw new Error("Alocação não encontrada");
     const { safra } = await safraEAlocacoes(admin, linha.safra_id);
-    if (modoEdicao(safra, hojeSP()) !== "livre")
+    if (modoEdicao(safra, data.hoje) !== "livre")
       throw new Error("A safra já começou: a alocação não pode ser excluída.");
     const { error } = await admin.from("alocacoes").delete().eq("id", data.id);
     if (error) throw new Error("Falha ao excluir a alocação");
@@ -460,13 +460,13 @@ export const dashboardExcluirAlocacao = createServerFn({ method: "POST" })
 /** Copia para a safra a alocação atual de cada hunter da safra anterior do ciclo. */
 export const dashboardCopiarAlocacoes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ safraId: z.string().uuid() }).parse(d))
+  .inputValidator((d) => z.object({ safraId: z.string().uuid(), hoje: isoDay }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const admin = await db();
     const { safra } = await safraEAlocacoes(admin, data.safraId);
     if (!safra.usa_alocacao) throw new Error("Esta safra não usa alocação.");
-    if (modoEdicao(safra, hojeSP()) !== "livre")
+    if (modoEdicao(safra, data.hoje) !== "livre")
       throw new Error("A safra já começou: copie antes do início dela.");
     const { data: doCiclo, error } = await admin
       .from("safras")
