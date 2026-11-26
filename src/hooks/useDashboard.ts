@@ -11,6 +11,8 @@ import {
   dashboardRealizacao,
   dashboardSalvarTempoEtapas,
   dashboardSegmentos,
+  dashboardResultado,
+  dashboardCurvas,
   dashboardSalvarTesteAb,
   dashboardEncerrarTesteAb,
   dashboardExcluirTesteAb,
@@ -272,3 +274,29 @@ export function useTestesAbAcoes() {
   };
 }
 export type TestesAbAcoes = ReturnType<typeof useTestesAbAcoes>;
+
+/** Resultado do ciclo (pipeline, conversão, valor por AT, higiene) e os indicadores por ciclo. */
+export function useResultado(periodId: string | null) {
+  const fn = useServerFn(dashboardResultado);
+  const hoje = spParts().iso;
+  return useQuery({
+    queryKey: ["dashboard_resultado", periodId, hoje],
+    queryFn: () => fn({ data: { periodId: periodId!, hoje } }),
+    enabled: !!periodId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+export type ResultadoDados = NonNullable<ReturnType<typeof useResultado>["data"]>;
+
+/** Curvas de safra, mapa safra × semana e dias até a primeira AT (aba Semanas). */
+export function useCurvas(periodId: string | null) {
+  const fn = useServerFn(dashboardCurvas);
+  const hoje = spParts().iso;
+  return useQuery({
+    queryKey: ["dashboard_curvas", periodId, hoje],
+    queryFn: () => fn({ data: { periodId: periodId!, hoje } }),
+    enabled: !!periodId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+export type CurvasDados = NonNullable<ReturnType<typeof useCurvas>["data"]>;

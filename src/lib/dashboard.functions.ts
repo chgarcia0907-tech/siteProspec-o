@@ -1068,6 +1068,76 @@ export const dashboardSalvarTempoEtapas = createServerFn({ method: "POST" })
 const DIMENSAO = z.enum(["setor", "subsetor", "porte", "nivel", "area", "persona"]);
 
 /**
+ * Base dos segmentos e do resultado: a base da aba Hunters (ciclo padrão da semana de hoje) e, dos
+ * contatos dos membros, cargo, headline, área e persona; as empresas deles e os setores.
+ */
+async function carregarBaseSegmentos(periodId: string, hoje: string) {
+  const admin = await db();
+  const { fetchAll } = await import("./fetch-all");
+  const { semanaPadrao } = await import("./safras");
+  const { weekStartISO } = await import("./empresas");
+  const { isPersona } = await import("./personas");
+  const { data: safrasCiclo, error } = await admin
+    .from("safras")
+    .select("inicio")
+    .eq("period_id", periodId);
+  if (error) throw new Error("Falha ao carregar as safras");
+  const semana = semanaPadrao(safrasCiclo ?? [], hoje) ?? weekStartISO(hoje);
+  const base = await carregarBaseHunters(periodId, semana, hoje);
+  const ids = base.entrada.hunters.map((h) => h.id);
+  const [extras, empresas, setores] = await Promise.all([
+    ids.length
+      ? fetchAll((a, b) =>
+          admin
+            .from("contacts")
+            .select("id, job_title, headline, sector, persona")
+            .in("user_id", ids)
+            .order("id")
+            .range(a, b),
+        )
+      : Promise.resolve([]),
+    ids.length
+      ? fetchAll((a, b) =>
+          admin
+            .from("companies")
+            .select("id, sector_id, subsector_id, porte")
+            .in("user_id", ids)
+            .order("id")
+            .range(a, b),
+        )
+      : Promise.resolve([]),
+    admin.from("sectors").select("id, name, parent_id, active").order("name"),
+  ]);
+  if (setores.error) throw new Error("Falha ao carregar os setores");
+  const extraDe = new Map(extras.map((x) => [x.id, x]));
+  const contatos: import("./dashSegmentos").SContato[] = base.entrada.contatos.map((c) => {
+    const x = extraDe.get(c.id);
+    return {
+      id: c.id,
+      user_id: c.user_id,
+      created_at: c.created_at,
+      company_id: c.company_id,
+      job_title: x?.job_title ?? "",
+      headline: x?.headline ?? "",
+      sector: x?.sector ?? null,
+      persona: x && isPersona(x.persona) ? x.persona : null,
+    };
+  });
+  return {
+    base,
+    contatos,
+    empresas: Object.fromEntries(
+      empresas.map((e) => [
+        e.id,
+        { sector_id: e.sector_id, subsector_id: e.subsector_id, porte: e.porte },
+      ]),
+    ),
+    setores: (setores.data ?? []).map((s) => ({ id: s.id, name: s.name, parent_id: s.parent_id })),
+    nomes: Object.fromEntries((setores.data ?? []).map((s) => [s.id, s.name])),
+  };
+}
+
+/**
  * Aba Segmentos: quebras por setor, porte, persona, nível e área nas safras maduras, empresas,
  * canais, mensagens, safra × setor alocado e o resultado dos testes A/B do ciclo (cálculo em
  * `computeSegmentos`/`resultadoAb`). Mesmos membros e contatos da aba Hunters.
@@ -1078,45 +1148,10 @@ export const dashboardSegmentos = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const admin = await db();
-    const { fetchAll } = await import("./fetch-all");
     const { computeSegmentos } = await import("./dashSegmentos");
     const { resultadoAb } = await import("./abTestes");
-    const { semanaPadrao } = await import("./safras");
-    const { weekStartISO } = await import("./empresas");
-    const { isPersona } = await import("./personas");
-
-    const { data: safrasCiclo, error } = await admin
-      .from("safras")
-      .select("inicio")
-      .eq("period_id", data.periodId);
-    if (error) throw new Error("Falha ao carregar as safras");
-    const semana = semanaPadrao(safrasCiclo ?? [], data.hoje) ?? weekStartISO(data.hoje);
-    const base = await carregarBaseHunters(data.periodId, semana, data.hoje);
-    const { entrada, parametros: p } = base;
-    const ids = entrada.hunters.map((h) => h.id);
-
-    const [extras, empresas, setores, testes] = await Promise.all([
-      ids.length
-        ? fetchAll((a, b) =>
-            admin
-              .from("contacts")
-              .select("id, job_title, headline, sector, persona")
-              .in("user_id", ids)
-              .order("id")
-              .range(a, b),
-          )
-        : Promise.resolve([]),
-      ids.length
-        ? fetchAll((a, b) =>
-            admin
-              .from("companies")
-              .select("id, sector_id, subsector_id, porte")
-              .in("user_id", ids)
-              .order("id")
-              .range(a, b),
-          )
-        : Promise.resolve([]),
-      admin.from("sectors").select("id, name, parent_id, active").order("name"),
+    const [carga, testes] = await Promise.all([
+      carregarBaseSegmentos(data.periodId, data.hoje),
       admin
         .from("ab_testes")
         .select(
@@ -1125,7 +1160,9 @@ export const dashboardSegmentos = createServerFn({ method: "POST" })
         .eq("period_id", data.periodId)
         .order("created_at"),
     ]);
-    if (setores.error ?? testes.error) throw new Error("Falha ao carregar os segmentos");
+    if (testes.error) throw new Error("Falha ao carregar os testes A/B");
+    const { base, contatos, empresas: mapaEmpresas, nomes } = carga;
+    const { entrada, parametros: p } = base;
     const testeIds = (testes.data ?? []).map((t) => t.id);
     const versoesAb = testeIds.length
       ? await admin
@@ -1135,27 +1172,6 @@ export const dashboardSegmentos = createServerFn({ method: "POST" })
       : { data: [], error: null };
     if (versoesAb.error) throw new Error("Falha ao carregar os testes A/B");
 
-    const extraDe = new Map(extras.map((x) => [x.id, x]));
-    const contatos = entrada.contatos.map((c) => {
-      const x = extraDe.get(c.id);
-      return {
-        id: c.id,
-        user_id: c.user_id,
-        created_at: c.created_at,
-        company_id: c.company_id,
-        job_title: x?.job_title ?? "",
-        headline: x?.headline ?? "",
-        sector: x?.sector ?? null,
-        persona: x && isPersona(x.persona) ? x.persona : null,
-      };
-    });
-    const mapaEmpresas = Object.fromEntries(
-      empresas.map((e) => [
-        e.id,
-        { sector_id: e.sector_id, subsector_id: e.subsector_id, porte: e.porte },
-      ]),
-    );
-    const nomes = Object.fromEntries((setores.data ?? []).map((s) => [s.id, s.name]));
     const ctx = {
       hoje: data.hoje,
       safras: base.safras,
@@ -1194,11 +1210,7 @@ export const dashboardSegmentos = createServerFn({ method: "POST" })
         resultado: resultadoAb(t, { ...ctx, amostraMinima: p.amostra_minima_ab }),
       })),
       safras: base.safras,
-      setores: (setores.data ?? []).map((s) => ({
-        id: s.id,
-        name: s.name,
-        parent_id: s.parent_id,
-      })),
+      setores: carga.setores,
       parametros: {
         maturacaoSemanas: p.maturacao_semanas,
         minAtsSegmento: p.min_ats_segmento,
@@ -1319,4 +1331,173 @@ export const dashboardExcluirTesteAb = createServerFn({ method: "POST" })
     const { error } = await admin.from("ab_testes").delete().eq("id", data.id);
     if (error) throw new Error("Falha ao excluir o teste");
     return { ok: true as const };
+  });
+
+/**
+ * Aba Resultado e ciclos: pipeline, conversão até a venda, valor por AT por porte e setor, higiene
+ * dos dados (ciclo escolhido) e os indicadores de cada ciclo da plataforma (`computeResultado` e
+ * `computeCiclos`, dashResultado.ts).
+ */
+export const dashboardResultado = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ periodId: z.string().uuid(), hoje: isoDay }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { fetchAll } = await import("./fetch-all");
+    const { adminIds } = await import("./competition.server");
+    const { computeResultado, computeCiclos } = await import("./dashResultado");
+    type Card = import("./dashResultado").ZCard;
+
+    const [carga, periodos, membros, admins] = await Promise.all([
+      carregarBaseSegmentos(data.periodId, data.hoje),
+      admin
+        .from("periods")
+        .select("id, name, kind, status, started_at, closed_at")
+        .eq("kind", "ciclo"),
+      admin.from("period_members").select("period_id, user_id"),
+      adminIds(admin),
+    ]);
+    if (periodos.error ?? membros.error) throw new Error("Falha ao carregar os ciclos");
+    const { base, contatos, empresas, nomes } = carga;
+    const ciclos = (periodos.data ?? []).map((c) => ({
+      id: c.id,
+      nome: c.name,
+      inicio: c.started_at.slice(0, 10),
+      fim: c.closed_at ? c.closed_at.slice(0, 10) : null,
+      ativo: c.status === "active",
+      membros: (membros.data ?? [])
+        .filter((m) => m.period_id === c.id && !admins.has(m.user_id))
+        .map((m) => m.user_id),
+    }));
+    const todosMembros = [...new Set(ciclos.flatMap((c) => c.membros))];
+
+    // ATs e contatos de todos os ciclos (só os membros), para a comparação entre ciclos.
+    const [atsTodos, contatosTodos] = await Promise.all([
+      todosMembros.length
+        ? fetchAll((a, b) =>
+            admin
+              .from("ats")
+              .select(
+                "id, user_id, contact_id, registrada_em, agendada_atual, status, resposta_etapa, pipedrive_stage_id, pipedrive_deal_id",
+              )
+              .eq("tipo", "diagnostico")
+              .in("user_id", todosMembros)
+              .order("id")
+              .range(a, b),
+          )
+        : Promise.resolve([]),
+      todosMembros.length
+        ? fetchAll((a, b) =>
+            admin
+              .from("contacts")
+              .select("id, user_id, created_at")
+              .in("user_id", todosMembros)
+              .order("id")
+              .range(a, b),
+          )
+        : Promise.resolve([]),
+    ]);
+
+    // Cópia do Pipedrive dos cards das ATs (ciclo escolhido e todos os ciclos).
+    const deals = [
+      ...new Set(
+        [...base.ats, ...atsTodos]
+          .map((a) => a.pipedrive_deal_id)
+          .filter((d): d is number => d !== null),
+      ),
+    ];
+    const [cardsPd, etapasPd] = deals.length
+      ? await Promise.all([
+          fetchAll((a, b) =>
+            admin
+              .from("pd_cards")
+              .select("deal_id, status, stage_id, valor, porte, won_time")
+              .in("deal_id", deals)
+              .order("deal_id")
+              .range(a, b),
+          ),
+          fetchAll((a, b) =>
+            admin
+              .from("pd_card_etapas")
+              .select("deal_id, stage_id, entrou_em")
+              .in("deal_id", deals)
+              .order("deal_id")
+              .order("entrou_em")
+              .range(a, b),
+          ),
+        ])
+      : [[], []];
+    const etapasDe = new Map<number, { stage_id: number; entrou_em: string }[]>();
+    for (const e of etapasPd)
+      etapasDe.set(e.deal_id, [
+        ...(etapasDe.get(e.deal_id) ?? []),
+        { stage_id: e.stage_id, entrou_em: e.entrou_em },
+      ]);
+    const cards: Record<number, Card> = Object.fromEntries(
+      cardsPd.map((c) => [
+        c.deal_id,
+        {
+          status: c.status,
+          stage_id: c.stage_id,
+          valor: c.valor === null ? null : Number(c.valor),
+          porte: c.porte,
+          won_time: c.won_time,
+          etapas: etapasDe.get(c.deal_id) ?? [],
+        },
+      ]),
+    );
+
+    return {
+      resultado: computeResultado({
+        hoje: data.hoje,
+        safras: base.safras,
+        minAtsSegmento: base.parametros.min_ats_segmento,
+        contatos,
+        empresas,
+        setores: nomes,
+        ats: base.ats,
+        cards,
+      }),
+      ciclos: computeCiclos({
+        hoje: data.hoje,
+        ciclos,
+        contatos: contatosTodos,
+        ats: atsTodos,
+        cards,
+      }),
+      safras: base.safras,
+      minAtsSegmento: base.parametros.min_ats_segmento,
+    };
+  });
+
+/**
+ * Aba Semanas: curvas de safra, mapa safra × semana e dias do cadastro à primeira AT, com a
+ * maturação sugerida pelo P90 (`computeCurvas`, dashResultado.ts).
+ */
+export const dashboardCurvas = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ periodId: z.string().uuid(), hoje: isoDay }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { computeCurvas } = await import("./dashResultado");
+    const { semanaPadrao } = await import("./safras");
+    const { weekStartISO } = await import("./empresas");
+    const { data: safrasCiclo, error } = await admin
+      .from("safras")
+      .select("inicio")
+      .eq("period_id", data.periodId);
+    if (error) throw new Error("Falha ao carregar as safras");
+    const semana = semanaPadrao(safrasCiclo ?? [], data.hoje) ?? weekStartISO(data.hoje);
+    const base = await carregarBaseHunters(data.periodId, semana, data.hoje);
+    return {
+      curvas: computeCurvas({
+        hoje: data.hoje,
+        safras: base.safras,
+        contatos: base.entrada.contatos,
+        ats: base.ats,
+      }),
+      maturacaoAtual: base.parametros.maturacao_semanas,
+    };
   });
