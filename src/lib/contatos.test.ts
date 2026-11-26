@@ -52,6 +52,18 @@ describe("contatos", () => {
     expect(filterContacts(list, "", "descartado").map((x) => x.id)).toEqual(["2"]);
   });
 
+  it("filtra os contatos para retomar (pendentes, não os já retomados)", () => {
+    const list = [
+      c({ id: "1", retomar_em: "2026-12-10" }),
+      c({ id: "2", retomar_em: "2026-11-20", retomado_em: "2026-11-20T12:00:00Z" }),
+      c({ id: "3" }),
+    ];
+    expect(
+      filterContacts(list, "", "todos", "todos", "todos", "para_retomar").map((x) => x.id),
+    ).toEqual(["1"]);
+    expect(filterContacts(list, "", "todos").map((x) => x.id)).toEqual(["1", "2", "3"]);
+  });
+
   it("filtra pela situação calculada, a mesma do selo, e não pela gravada", () => {
     // Gravado como "aguardando", mas com o LinkedIn 1 enviado: o selo mostra "em cadência".
     const desatualizado = c({ id: "1", sent1_at: "2026-11-03", step1_date: "2026-11-03" });
