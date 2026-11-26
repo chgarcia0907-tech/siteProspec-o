@@ -9,34 +9,34 @@ Base: `dashboard-outbound-ntec-implementacao.md` (spec) + respostas do usuário 
 
 ## 0. Decisões fechadas
 
-| #   | Tema                    | Decisão                                                                                                                                                                                                                     |
-| --- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Lugar                   | Os **Indicadores viram a Dashboard**: rota `/dashboard`, menu "Dashboard". `/indicadores` e `/painel?aba=indicadores` redirecionam. O conteúdo atual é redistribuído nas abas dos módulos (seção 3).                        |
-| 2   | Métrica central         | **ATs que avançaram**. ATs marcadas seguem como meta semanal. Metas do ciclo são escolhidas na plataforma (nada fixo no código).                                                                                            |
-| 3   | Safras                  | O LO cria e altera as safras do ciclo na plataforma. 26.2: S01 = 09/11/2026; o esquema novo (alocação) começou na S03 (23/11).                                                                                             |
-| 4   | Safra do contato        | Semana do **`contacts.created_at`** (fuso de São Paulo). Vale para trás: S01 e S02 já ganham safra com os dados existentes.                                                                                               |
-| 5   | Ciclo anterior          | Não existe esse grupo. Contato fora de qualquer safra do ciclo simplesmente não entra nas métricas por safra.                                                                                                              |
-| 6   | Retomada                | Recurso novo para o hunter: marcar prospect que pediu para retomar depois, com data, e deixar salvo. O contato mantém a safra original e fica marcado como retomada.                                                        |
-| 7   | AT sem contato          | Conta como "fora de cadência" e entra na fila de conciliação; ao ligar ao contato, vai para a safra dele.                                                                                                                  |
-| 8   | Dupla                   | Dois hunters podem dividir uma alocação, mas **todas as métricas são individuais**; a dupla serve para comparar os dois lado a lado.                                                                                       |
-| 9   | Setor e segmento        | Setor alocado = setor de primeiro nível; segmento = subsetor (opcional). Por safra vale o setor da alocação; na matriz de segmentos, o setor real da empresa.                                                               |
-| 10  | Teste A/B               | Definido na plataforma. As versões são propriedades da prospecção (porte, subsetor, setor, persona, nível, área) **e cadência**. Ver 5.8 e o ponto aberto P1.                                                              |
-| 11  | Convites                | Sem convites por enquanto. Métricas de conexão = **conexões aceitas** (contatos importados, pela data de conexão).                                                                                                         |
-| 12  | Cadência                | Não muda (5 passos, 1 dia útil). "No prazo" = `plannedDates`.                                                                                                                                                              |
-| 13  | Mensagens conferidas    | Fase futura.                                                                                                                                                                                                               |
-| 14  | Esforço                 | **Conta combinada**: `(contatos adicionados na safra + passos executados na semana) ÷ (meta de contatos da alocação + meta semanal de passos)`. Mesma soma do mapa de calor hunter × dia.                                 |
-| 15  | Metas                   | Nenhum número no código. O LO preenche na tela; herança equipe → grupo → hunter (`resolveGoal`).                                                                                                                           |
-| 16  | Não realizada           | Ao fim da maturação: ainda agendada (para fazer/remarcar) + no-show + **cancelada**.                                                                                                                                        |
-| 17  | Cards do outbound       | Funil 6 + etiqueta NTec (34) + Canal de Entrada "Outbound" (opção 28), sincronizados por cron diário e pelo webhook existente.                                                                                             |
-| 18  | Indicado a outros núcleos | Fora do escopo.                                                                                                                                                                                                           |
-| 19  | Porte                   | Campo opcional `companies.porte`, com as faixas do campo "Número de Funcionários" do Pipedrive, escolhido pelo hunter em Empresas.                                                                                         |
-| 20  | Nível, área, cargo      | Área = `contacts.sector`; cargo = persona; nível = senioridade tirada do cargo (regra nova em `enriquecimento.ts`).                                                                                                         |
-| 21  | Histórico 25.0–26.1     | Fase futura. "Resultado e ciclos" compara só os ciclos que existem na plataforma.                                                                                                                                         |
-| 22  | Visual                  | Tema escuro do `DESIGN.md`. **Sem exportação de imagem.** Telas desenhadas com as skills `frontend-design` e `ui-ux-pro-max` (seção 6).                                                                                    |
-| 23  | Alertas                 | Calculados na hora, faixa na Visão geral + contador no menu. Sem WhatsApp/e-mail e sem "marcar como lido".                                                                                                                 |
-| —   | Acesso                  | Só admin (`has_role`). Perfis Hunter/CN/Gerência entram com o plano de cargos (`docs/planos/acessos-perfis-agenda.md`). A retomada (6) e o porte (19) são as únicas mudanças em telas do hunter.                         |
-| —   | Avanço                  | Card na etapa 33 "AT Aprof. Marcada" ou além (34, 35, 36) ou ganho, em qualquer momento (usa o histórico de etapas, não só a etapa atual).                                                                                |
-| —   | Fonte das ATs           | Tabela `ats` (`tipo = 'diagnostico'`). "Marcada na semana" = `registrada_em`. Venda = card ganho; proposta = etapa 34+; ticket = `value` do card ganho.                                                                    |
+| #   | Tema                      | Decisão                                                                                                                                                                                              |
+| --- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Lugar                     | Os **Indicadores viram a Dashboard**: rota `/dashboard`, menu "Dashboard". `/indicadores` e `/painel?aba=indicadores` redirecionam. O conteúdo atual é redistribuído nas abas dos módulos (seção 3). |
+| 2   | Métrica central           | **ATs que avançaram**. ATs marcadas seguem como meta semanal. Metas do ciclo são escolhidas na plataforma (nada fixo no código).                                                                     |
+| 3   | Safras                    | O LO cria e altera as safras do ciclo na plataforma. 26.2: S01 = 09/11/2026; o esquema novo (alocação) começou na S03 (23/11).                                                                       |
+| 4   | Safra do contato          | Semana do **`contacts.created_at`** (fuso de São Paulo). Vale para trás: S01 e S02 já ganham safra com os dados existentes.                                                                          |
+| 5   | Ciclo anterior            | Não existe esse grupo. Contato fora de qualquer safra do ciclo simplesmente não entra nas métricas por safra.                                                                                        |
+| 6   | Retomada                  | Recurso novo para o hunter: marcar prospect que pediu para retomar depois, com data, e deixar salvo. O contato mantém a safra original e fica marcado como retomada.                                 |
+| 7   | AT sem contato            | Conta como "fora de cadência" e entra na fila de conciliação; ao ligar ao contato, vai para a safra dele.                                                                                            |
+| 8   | Dupla                     | Dois hunters podem dividir uma alocação, mas **todas as métricas são individuais**; a dupla serve para comparar os dois lado a lado.                                                                 |
+| 9   | Setor e segmento          | Setor alocado = setor de primeiro nível; segmento = subsetor (opcional). Por safra vale o setor da alocação; na matriz de segmentos, o setor real da empresa.                                        |
+| 10  | Teste A/B                 | Definido na plataforma. As versões são propriedades da prospecção (porte, subsetor, setor, persona, nível, área) **e cadência**. Ver 5.8 e o ponto aberto P1.                                        |
+| 11  | Convites                  | Sem convites por enquanto. Métricas de conexão = **conexões aceitas** (contatos importados, pela data de conexão).                                                                                   |
+| 12  | Cadência                  | Não muda (5 passos, 1 dia útil). "No prazo" = `plannedDates`.                                                                                                                                        |
+| 13  | Mensagens conferidas      | Fase futura.                                                                                                                                                                                         |
+| 14  | Esforço                   | **Conta combinada**: `(contatos adicionados na safra + passos executados na semana) ÷ (meta de contatos da alocação + meta semanal de passos)`. Mesma soma do mapa de calor hunter × dia.            |
+| 15  | Metas                     | Nenhum número no código. O LO preenche na tela; herança equipe → grupo → hunter (`resolveGoal`).                                                                                                     |
+| 16  | Não realizada             | Ao fim da maturação: ainda agendada (para fazer/remarcar) + no-show + **cancelada**.                                                                                                                 |
+| 17  | Cards do outbound         | Funil 6 + etiqueta NTec (34) + Canal de Entrada "Outbound" (opção 28), sincronizados por cron diário e pelo webhook existente.                                                                       |
+| 18  | Indicado a outros núcleos | Fora do escopo.                                                                                                                                                                                      |
+| 19  | Porte                     | Campo opcional `companies.porte`, com as faixas do campo "Número de Funcionários" do Pipedrive, escolhido pelo hunter em Empresas.                                                                   |
+| 20  | Nível, área, cargo        | Área = `contacts.sector`; cargo = persona; nível = senioridade tirada do cargo (regra nova em `enriquecimento.ts`).                                                                                  |
+| 21  | Histórico 25.0–26.1       | Fase futura. "Resultado e ciclos" compara só os ciclos que existem na plataforma.                                                                                                                    |
+| 22  | Visual                    | Tema escuro do `DESIGN.md`. **Sem exportação de imagem.** Telas desenhadas com as skills `frontend-design` e `ui-ux-pro-max` (seção 6).                                                              |
+| 23  | Alertas                   | Calculados na hora, faixa na Visão geral + contador no menu. Sem WhatsApp/e-mail e sem "marcar como lido".                                                                                           |
+| —   | Acesso                    | Só admin (`has_role`). Perfis Hunter/CN/Gerência entram com o plano de cargos (`docs/planos/acessos-perfis-agenda.md`). A retomada (6) e o porte (19) são as únicas mudanças em telas do hunter.     |
+| —   | Avanço                    | Card na etapa 33 "AT Aprof. Marcada" ou além (34, 35, 36) ou ganho, em qualquer momento (usa o histórico de etapas, não só a etapa atual).                                                           |
+| —   | Fonte das ATs             | Tabela `ats` (`tipo = 'diagnostico'`). "Marcada na semana" = `registrada_em`. Venda = card ganho; proposta = etapa 34+; ticket = `value` do card ganho.                                              |
 
 ### Decisões que tomei no plano (mude na revisão se discordar)
 
@@ -272,15 +272,15 @@ hunter, histórico 25.0–26.1, valor indicado a outros núcleos.
 
 ## 3. De onde vai cada parte dos Indicadores atuais
 
-| Hoje (Indicadores)                         | Vai para                               |
-| ------------------------------------------ | -------------------------------------- |
-| KPIs "a equipe está no ritmo?", Tendência  | Visão geral (fase 6)                   |
-| Quem precisa de ajuda (alertas)            | Visão geral, com os alertas novos      |
-| Metas da semana, Execução por hunter       | Hunters (fase 3)                       |
-| Envios por dia, Ritmo entre etapas         | Hunters (mapa de calor e ficha)        |
-| Funil                                      | Visão geral (funil do ciclo)           |
-| Origem, Mensagens, Conversão (coortes)     | Segmentos (fase 8)                     |
-| Abastecimento                              | Semanas (fase 9)                       |
+| Hoje (Indicadores)                        | Vai para                          |
+| ----------------------------------------- | --------------------------------- |
+| KPIs "a equipe está no ritmo?", Tendência | Visão geral (fase 6)              |
+| Quem precisa de ajuda (alertas)           | Visão geral, com os alertas novos |
+| Metas da semana, Execução por hunter      | Hunters (fase 3)                  |
+| Envios por dia, Ritmo entre etapas        | Hunters (mapa de calor e ficha)   |
+| Funil                                     | Visão geral (funil do ciclo)      |
+| Origem, Mensagens, Conversão (coortes)    | Segmentos (fase 8)                |
+| Abastecimento                             | Semanas (fase 9)                  |
 
 Até cada aba nova sair, a parte antiga continua visível numa aba "Detalhamento" (o conteúdo de
 hoje), que some no PR da última aba. `computeDashboard` continua existindo enquanto alguma parte o
@@ -313,7 +313,7 @@ hoje. O intervalo de datas fica só onde a base é o calendário (seletor de dia
 ## 5. Detalhes de regra
 
 1. **Safra do contato:** `safraDoContato(created_at)` = safra do ciclo cujo `[inicio, domingo
-   seguinte ao fim]` contém a data em SP. Sem safra → fora das métricas por safra.
+seguinte ao fim]` contém a data em SP. Sem safra → fora das métricas por safra.
 2. **Herança:** atividades, ATs e cards herdam a safra do contato (via `ats.contact_id`); AT sem
    contato = "fora de cadência", aparece separada nos totais.
 3. **Contatos prospectados** = contatos com `created_at` na safra; **empresas prospectadas** =
