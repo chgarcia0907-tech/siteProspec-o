@@ -72,6 +72,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-muted: var(--chart-muted);
+  --color-chart-goal: var(--chart-goal);
+  --color-chart-grid: var(--chart-grid);
 
   /* Tipografia (tamanho / altura de linha). text-card-title e não text-card, que é cor. */
   --font-display: "Host Grotesk", ui-sans-serif, system-ui, sans-serif;
@@ -161,11 +164,17 @@
   --warning-soft: color-mix(in oklab, #ffb74d 14%, transparent);
   --warning-border: color-mix(in oklab, #ffb74d 45%, transparent);
 
-  --chart-1: #8ab8f2;
-  --chart-2: #03dac6;
-  --chart-3: #ffb74d;
-  --chart-4: #a5d6a7;
-  --chart-5: #cf6679;
+  /* Paleta NTec adaptada ao fundo escuro (contraste ≥ 3:1 sobre --card), em ordem fixa. */
+  --chart-1: #8ab8f2; /* azul NTec (= primary) */
+  --chart-2: #3a8dde; /* azul claro NTec */
+  --chart-3: #db8b2c; /* laranja NTec; também o rótulo de destaque */
+  --chart-4: #139e86; /* verde-água NTec */
+  --chart-5: #9b75c9; /* roxo NTec clareado (#6B3FA0 some no escuro) */
+  /* Safra ou segmento imaturo / amostra pequena: fora de rankings e regras. */
+  --chart-muted: #6b6b6b;
+  /* Linha de meta (tracejada) e grade horizontal. */
+  --chart-goal: #a8a8a8;
+  --chart-grid: #333333;
 }
 
 @layer base {

@@ -174,6 +174,65 @@ depois "o que eu faço hoje?". Números de destaque com tokens próprios desta t
 AT da equipe em `bg-primary-soft`, vaga livre em `bg-surface-inset`, atrasados em
 `bg-destructive-soft`.
 
+## 6c. Dashboard (`/dashboard`)
+
+Regras de produto e métricas: `.claude/plans/dashboard-outbound.md`. Cada aba responde a uma
+pergunta e leva a uma decisão; gráfico que não muda decisão não entra. As telas são desenhadas com
+as skills `frontend-design` e `ui-ux-pro-max`, mas cores, fontes e componentes vêm deste documento.
+
+**Hierarquia.** Um destaque por aba e o resto quieto: na Visão geral é o cartão de ATs que
+avançaram (o único com `bg-primary-soft` e `text-big`); nas outras, a pergunta da aba como H2 e o
+gráfico que a responde primeiro. Detalhe e tabelas ficam abaixo.
+
+**Cores dos gráficos** (`--chart-*` em `src/styles.css`, paleta NTec ajustada ao fundo escuro;
+contraste ≥ 3:1 sobre `bg-card`). Ordem fixa: `chart-1` azul, `chart-2` azul claro, `chart-3`
+laranja, `chart-4` verde-água, `chart-5` roxo. A mesma entidade tem a mesma cor em todas as abas:
+
+| Entidade                     | Cor                                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| Série única                  | `chart-1`                                                                                         |
+| Ciclos                       | em ordem cronológica: o mais antigo exibido em `chart-1`, o seguinte em `chart-2`…                |
+| Versões do teste A/B         | A = `chart-1`, B = `chart-3` (azul × laranja, distinguíveis por daltônicos)                       |
+| Os dois hunters de uma dupla | o primeiro em ordem alfabética `chart-1`, o outro `chart-3`                                       |
+| Canal                        | tokens de canal (`linkedin`, `whatsapp`); outros canais `chart-3`, `chart-5`                      |
+| Situação da AT               | realizada `success`, no-show `destructive`, agendada/remarcada `warning`, cancelada `chart-muted` |
+| Meta                         | linha tracejada `chart-goal`                                                                      |
+| Imaturo / amostra pequena    | `chart-muted` + selo "imatura" ou "n < 10" (cor nunca é o único sinal)                            |
+| Rótulo de destaque           | `chart-3` (o valor que sustenta a leitura)                                                        |
+
+Hunters não ganham cor própria (são muitos): em gráficos por hunter, o nome vai no eixo ou no
+rótulo direto, e o hunter em foco usa `chart-1` com os demais em `chart-muted`.
+
+**Cartão de gráfico** (componente compartilhado em `src/components/dashboard/shared/`):
+
+- `bg-card border rounded-xl p-6`; título `text-card-title` no formato "Métrica por Dimensão
+  (período)", ex.: "ATs que avançaram por semana (26.2)"; abaixo, uma frase de leitura em
+  `text-dense text-muted-foreground` quando ajuda.
+- Legenda só com 2 séries ou mais, abaixo do título, marcador quadrado de 8 px.
+- Linha de fonte no rodapé em `text-caption text-subtle-foreground`: de onde vem o número e o
+  recorte (ex.: "Fonte: ATs da plataforma e Pipedrive · safras maduras").
+- Estado vazio com a frase do que falta ("Nenhuma safra madura ainda. A primeira amadurece em
+  14/12."), carregando em skeleton, erro com "Tentar de novo" (seção 5).
+
+**Regras de gráfico.**
+
+- Uma métrica por gráfico; nunca dois eixos Y; nada de pizza, rosca, radar ou 3D.
+- Só grade horizontal (`chart-grid`); texto dos eixos `subtle-foreground` em `text-caption`; eixo
+  Y começando em 0 nas barras.
+- Toda taxa com o volume: "52,4% (11 de 21)", no rótulo ou no tooltip e na tabela ao lado.
+- Rótulos de dados só nos valores que sustentam a leitura, na cor da série (ou `chart-3`).
+- Dispersões: pontos com opacidade 0,7, rótulo direto nos pontos que importam, quadrantes pela
+  média em linha tracejada `chart-goal` com o nome de cada quadrante em texto.
+- Mapas de calor: o valor escrito na célula (`text-caption tabular-nums`) e a escala de
+  `surface-inset` → `chart-1` (como o mapa de envios atual), com legenda numérica.
+- Safras ou segmentos imaturos em `chart-muted`, fora de ordenações e rankings.
+- Números no formato brasileiro (`R$ 400.000`, `42,5%`, `1.250`) e `tabular-nums` em tabelas.
+- Cada gráfico tem alternativa em texto: `aria-label` com a leitura principal e a tabela de dados
+  acessível (botão "Ver dados" ou a tabela da própria aba).
+
+**Filtros globais** num cartão no topo, como hoje (ciclo, safra, hunter, dupla, setor alocado),
+na URL; com filtro fora do padrão, chips e "Limpar filtros".
+
 ## 6a. Nome da plataforma
 
 O nome é **Outbound NTec**, com "NTec" em `text-primary`, precedido do macaquinho do NTec
