@@ -717,12 +717,22 @@ export const PIPEDRIVE = {
   lista: [
     "94307",
     {
+      // Card do outbound NTec (funil 6 + NTec + Canal de Entrada Outbound) sem AT na plataforma.
       id: 94500,
       title: "Sigma Fretes - Rita Lopes",
+      pipeline_id: 6,
       stage_id: 31,
       status: "open",
+      value: 30000,
+      currency: "BRL",
+      person_id: 501,
+      add_time: "2026-11-03T12:00:00Z",
+      update_time: "2026-11-06T13:00:00Z",
       label_ids: [34],
-      custom_fields: { "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 901 },
+      custom_fields: {
+        "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 901,
+        "97d0502cc2b489986844a93b374656e5acf179e1": 28,
+      },
     },
     {
       id: 94600,
@@ -755,6 +765,8 @@ export const PIPEDRIVE = {
     94307: {
       id: 94307,
       title: "Ômega Log - Paulo Reis",
+      pipeline_id: 6,
+      add_time: "2026-11-04T12:00:00Z",
       label_ids: [34],
       custom_fields: { "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 900 },
       stage_id: 108,
@@ -764,6 +776,26 @@ export const PIPEDRIVE = {
       stage_change_time: "2026-11-12T13:00:00Z",
       lost_time: null,
     },
+  },
+  persons: [
+    {
+      id: 501,
+      custom_fields: { "54dfa4cb1118103bebc367d6e0ae574df374d478": "Diretora de Logística" },
+    },
+  ],
+  // Histórico (API v1): o 94500 passou de AT Diag. Agendada para Realizada em 06/11.
+  flows: {
+    94500: [
+      {
+        object: "dealChange",
+        data: {
+          field_key: "stage_id",
+          old_value: "108",
+          new_value: "31",
+          log_time: "2026-11-06 13:00:00",
+        },
+      },
+    ],
   },
   activities: {
     94500: [

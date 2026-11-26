@@ -160,7 +160,14 @@ http
         return deal ? send(res, 200, { success: true, data: deal }) : send(res, 404, {});
       }
       if (url.pathname === "/pipedrive/deals") {
-        const lista = PIPEDRIVE.lista.map((d) => (typeof d === "string" ? PIPEDRIVE.deals[d] : d));
+        const ids = url.searchParams.get("ids")?.split(",") ?? null;
+        const todos = PIPEDRIVE.lista.map((d) => (typeof d === "string" ? PIPEDRIVE.deals[d] : d));
+        // Com `ids`, a API v2 devolve esses cards (inclusive os que não estão na lista do funil).
+        const lista = ids
+          ? ids
+              .map((id) => todos.find((d) => String(d.id) === id) ?? PIPEDRIVE.deals[id])
+              .filter(Boolean)
+          : todos;
         return send(res, 200, {
           success: true,
           data: lista,
@@ -169,6 +176,22 @@ http
       }
       if (url.pathname === "/pipedrive/dealFields") {
         return send(res, 200, { success: true, data: PIPEDRIVE.dealFields });
+      }
+      if (url.pathname === "/pipedrive/persons") {
+        const ids = url.searchParams.get("ids")?.split(",") ?? [];
+        return send(res, 200, {
+          success: true,
+          data: (PIPEDRIVE.persons ?? []).filter((p) => ids.includes(String(p.id))),
+        });
+      }
+      // API v1: histórico do card (mudanças de etapa).
+      const pdFlow = /^\/pipedrive\/v1\/deals\/(\d+)\/flow$/.exec(url.pathname);
+      if (pdFlow) {
+        return send(res, 200, {
+          success: true,
+          data: (PIPEDRIVE.flows ?? {})[pdFlow[1]] ?? [],
+          additional_data: { pagination: { more_items_in_collection: false } },
+        });
       }
       if (url.pathname === "/pipedrive/activities") {
         const acts = PIPEDRIVE.activities[url.searchParams.get("deal_id") ?? ""] ?? [];

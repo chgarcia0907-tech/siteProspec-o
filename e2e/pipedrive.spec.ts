@@ -81,10 +81,60 @@ base.describe("Integração com o Pipedrive", () => {
     const r = await request.get("/api/public/pipedrive/sincronizar", {
       headers: { authorization: "Bearer e2e-cron" },
     });
-    expect(await r.json()).toEqual({ ats: 1, eventos: 2, erros: [] });
+    // Cópia dos cards: o 94307 (ligado a uma AT) e o 94500 (outbound NTec, sem AT).
+    expect(await r.json()).toEqual({
+      ats: 1,
+      eventos: 2,
+      erros: [],
+      cards: { sincronizados: 2, restantes: 0, erros: [] },
+    });
     const origens = (await mutations())
       .filter((x) => x.table === "at_eventos")
       .map((x) => JSON.parse(x.body).origem);
     expect(origens).toEqual(["pipedrive_reconciliacao", "pipedrive_reconciliacao"]);
+  });
+
+  base("a cópia do card guarda valor, cargo, histórico de etapas e tasks", async ({ request }) => {
+    await request.get("/api/public/pipedrive/sincronizar", {
+      headers: { authorization: "Bearer e2e-cron" },
+    });
+    const m = await mutations();
+    const card = m
+      .filter((x) => x.table === "pd_cards")
+      .map((x) => JSON.parse(x.body))
+      .find((b) => b.deal_id === 94500);
+    expect(card).toMatchObject({
+      outbound: true,
+      stage_id: 31,
+      valor: 30000,
+      hunter_login: "hunter2",
+      cargo: "Diretora de Logística",
+      etiquetas: [34],
+    });
+    const ligado = m
+      .filter((x) => x.table === "pd_cards")
+      .map((x) => JSON.parse(x.body))
+      .find((b) => b.deal_id === 94307);
+    expect(ligado).toMatchObject({ outbound: false, hunter_login: "hunter1" });
+    const etapas = m
+      .filter((x) => x.table === "pd_card_etapas" && x.method === "POST")
+      .flatMap((x) => JSON.parse(x.body))
+      .filter((e: { deal_id: number }) => e.deal_id === 94500);
+    expect(etapas).toEqual([
+      {
+        deal_id: 94500,
+        stage_id: 108,
+        entrou_em: "2026-11-03T12:00:00.000Z",
+        saiu_em: "2026-11-06T13:00:00.000Z",
+      },
+      { deal_id: 94500, stage_id: 31, entrou_em: "2026-11-06T13:00:00.000Z", saiu_em: null },
+    ]);
+    const tasks = m
+      .filter((x) => x.table === "pd_tasks" && x.method === "POST")
+      .flatMap((x) => JSON.parse(x.body))
+      .filter((t: { deal_id: number }) => t.deal_id === 94500);
+    expect(tasks.map((t: { activity_id: number }) => t.activity_id).sort()).toEqual(
+      expect.arrayContaining([500010, 500011]),
+    );
   });
 });
