@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { addDaysISO } from "./cadencia";
 import type { Alocacao } from "./alocacao";
 import {
   computeRealizacao,
@@ -22,6 +23,7 @@ const safra = (numero: number, inicio: string): Safra => ({
   inicio,
   fim: inicio,
   usa_alocacao: true,
+  cadencia_em: addDaysISO(inicio, 7),
 });
 const SAFRAS = [
   safra(1, "2026-11-09"),

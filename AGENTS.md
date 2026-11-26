@@ -250,6 +250,13 @@ Historico.csv --time Time.csv` mostra o plano e os avisos; com `--gravar` (e `SU
   `docs/skills/criar-card/SKILL.md` (com o token como `COLE_AQUI_O_ATS_INGEST_TOKEN`): ao mudar o
   contrato, atualize a skill e reenvie ao claude.ai. A planilha continua como fonte da aba Time e
   como reserva quando a plataforma não responde.
+- Fases da safra (`src/lib/safras.ts`): `safras.cadencia_em` é a segunda-feira da semana da cadência
+  (igual a `inicio` = prospecção e cadência na mesma semana, como a S01 e a S02 do 26.2; depois de uma
+  semana sem trabalho, como provas, a próxima semana de trabalho). Semana sem trabalho não tem safra.
+  `statusSafra`/`inicioDaMaturidade`: a maturação conta em semanas de calendário (a pausa conta), a
+  partir da prospecção (N + 1 + maturação) ou da cadência quando é na mesma semana (N + maturação), e
+  nunca antes do fim da semana da cadência. A fila de cadência da aba Hunters é a safra de
+  `safraEmCadencia`, não a safra anterior.
 - Segmentos e testes A/B (Dashboard, aba Segmentos; cadastro dos testes na aba Semanas): regras em
   `src/lib/dashSegmentos.ts` (`computeSegmentos`, `valorDaDimensao`) e `src/lib/abTestes.ts`
   (`erroTesteAb`, `resultadoAb`). Só safras maduras; segmento com menos ATs realizadas que

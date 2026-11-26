@@ -51,6 +51,9 @@ test.describe("Dashboard › Semanas", () => {
     expect(await mutations()).toEqual([]);
 
     await dialog.getByLabel("Início (segunda)").fill("2026-11-23");
+    // Padrão: cadência na semana seguinte; aqui, prospecção e cadência na mesma semana.
+    await expect(dialog.getByLabel("Cadência")).toHaveValue("1");
+    await dialog.getByLabel("Cadência").selectOption({ label: "Na mesma semana da prospecção" });
     await dialog.getByRole("button", { name: "Criar safra" }).click();
     await expect(page.getByText("S04 criada")).toBeVisible();
     const [m] = await mutations();
@@ -60,6 +63,7 @@ test.describe("Dashboard › Semanas", () => {
       inicio: "2026-11-23",
       fim: "2026-11-27",
       usa_alocacao: true,
+      cadencia_em: "2026-11-23",
       period_id: P1,
     });
   });
@@ -78,6 +82,33 @@ test.describe("Dashboard › Semanas", () => {
     expect(JSON.parse(m!.body).map((s: { numero: number; inicio: string }) => s.inicio)).toEqual([
       "2026-11-23",
       "2026-11-30",
+    ]);
+  });
+
+  test("gera semanas com uma pausa (provas) e a cadência na próxima semana gerada", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard?aba=semanas");
+    await page.getByRole("button", { name: "Gerar semanas" }).click();
+    const dialog = page.getByRole("dialog", { name: "Gerar semanas do Ciclo Nov" });
+    await dialog.getByLabel("Até").fill("2026-12-07");
+    await dialog.getByRole("checkbox", { name: "Gerar a semana de 30/11" }).uncheck();
+    await dialog
+      .getByRole("checkbox", { name: "Prospecção e cadência na mesma semana em 23/11" })
+      .check();
+    await expect(dialog.getByRole("row", { name: /^30\/11/ })).toContainText("Pausa (sem safra)");
+    await expect(dialog.getByRole("row", { name: /^23\/11/ })).toContainText(
+      "S04 · cadência na mesma semana",
+    );
+    await expect(dialog.getByRole("row", { name: /^07\/12/ })).toContainText(
+      "S05 · cadência em 14/12",
+    );
+    await dialog.getByRole("button", { name: "Gerar semanas" }).click();
+    await expect(page.getByText("2 safras criadas")).toBeVisible();
+    const [m] = await mutations();
+    expect(JSON.parse(m!.body)).toEqual([
+      expect.objectContaining({ numero: 4, inicio: "2026-11-23", cadencia_em: "2026-11-23" }),
+      expect.objectContaining({ numero: 5, inicio: "2026-12-07", cadencia_em: "2026-12-14" }),
     ]);
   });
 

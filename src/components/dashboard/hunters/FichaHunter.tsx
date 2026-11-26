@@ -130,16 +130,18 @@ export function FichaHunter({
           <section aria-label="Fila de cadência" className="rounded-lg border p-4">
             <h3 className="text-dense font-semibold text-heading">
               Fila de cadência
-              {d.safraAnterior && (
+              {d.safraCadencia && (
                 <span className="font-normal text-muted-foreground">
                   {" "}
-                  · {rotuloSafra(d.safraAnterior.numero)} ({ddmm(d.safraAnterior.inicio)} a{" "}
-                  {ddmm(d.safraAnterior.fim)})
+                  · {rotuloSafra(d.safraCadencia.numero)} ({ddmm(d.safraCadencia.inicio)} a{" "}
+                  {ddmm(d.safraCadencia.fim)})
                 </span>
               )}
             </h3>
-            {!d.safraAnterior && (
-              <p className="mt-1 text-dense text-muted-foreground">Primeira safra do ciclo.</p>
+            {!d.safraCadencia && (
+              <p className="mt-1 text-dense text-muted-foreground">
+                Nenhuma safra em cadência nesta semana.
+              </p>
             )}
             <dl className="mt-3 grid grid-cols-2 gap-3">
               <Numero rotulo="Em cadência" valor={num(c.emCadencia)} />

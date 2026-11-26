@@ -237,7 +237,11 @@ Maturação `bg-surface-inset` com borda tracejada, Madura `bg-success-soft text
 de hoje tem o cabeçalho em `text-primary` com "hoje" e fundo `bg-primary/5`; semanas depois de
 hoje ficam com `opacity-80` (fase prevista; mais apagado que isso derruba o contraste do texto
 abaixo de 4,5:1). Abaixo, o cartão de metas do ciclo; parâmetros num diálogo "Configurar
-dashboard".
+dashboard". Safra com prospecção e cadência na mesma semana mostra "Prosp. + cadência" (cor da
+prospecção, com contorno `primary-soft`); a semana sem trabalho entre a prospecção e a cadência
+(ex.: provas) mostra "Pausa" com borda tracejada. O diálogo da safra escolhe a semana da cadência, e
+a prévia de "Gerar semanas" tem, por semana, "Gerar" (desmarcado = pausa, sem safra) e "Cadência na
+mesma semana".
 
 **Alocação da semana** (mesma aba, entre o calendário e as metas): seletor de safra no cabeçalho,
 faixa `bg-surface-inset` dizendo o que pode ser feito (livre antes da safra, só troca de setor

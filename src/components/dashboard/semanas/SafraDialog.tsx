@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { addDaysISO, formatBR } from "@/lib/cadencia";
 import { erroSafra, rotuloSafra, type Safra, type SafraForm } from "@/lib/safras";
 import { errorMessage } from "@/lib/utils";
@@ -57,6 +58,14 @@ export function SafraDialog({
     }
   }
 
+  const semanasAteACadencia = f.inicio
+    ? Math.max(
+        0,
+        Math.round(
+          (Date.parse(f.cadencia_em || f.inicio) - Date.parse(f.inicio)) / (7 * 86_400_000),
+        ),
+      )
+    : 1;
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
@@ -89,8 +98,15 @@ export function SafraDialog({
                 value={f.inicio}
                 onChange={(e) => {
                   const inicio = e.target.value;
-                  // Ao trocar o início, o fim acompanha (sexta da mesma semana).
-                  setF({ ...f, inicio, fim: inicio ? addDaysISO(inicio, 4) : f.fim });
+                  // Ao trocar o início, o fim (sexta) e a cadência acompanham.
+                  setF({
+                    ...f,
+                    inicio,
+                    fim: inicio ? addDaysISO(inicio, 4) : f.fim,
+                    cadencia_em: inicio
+                      ? addDaysISO(inicio, semanasAteACadencia * 7)
+                      : f.cadencia_em,
+                  });
                 }}
               />
             </div>
@@ -103,6 +119,33 @@ export function SafraDialog({
                 onChange={(e) => setF({ ...f, fim: e.target.value })}
               />
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="safra-cadencia" className="block">
+              Cadência
+            </Label>
+            <NativeSelect
+              id="safra-cadencia"
+              className="w-full"
+              value={String(semanasAteACadencia)}
+              onChange={(e) =>
+                setF({ ...f, cadencia_em: addDaysISO(f.inicio, Number(e.target.value) * 7) })
+              }
+              aria-describedby="safra-cadencia-ajuda"
+            >
+              {[0, 1, 2, 3, 4].map((k) => (
+                <option key={k} value={k}>
+                  {k === 0
+                    ? "Na mesma semana da prospecção"
+                    : `${k === 1 ? "Semana seguinte" : `${k} semanas depois`}${f.inicio ? ` (${formatBR(addDaysISO(f.inicio, k * 7)).slice(0, 5)})` : ""}`}
+                </option>
+              ))}
+            </NativeSelect>
+            <p id="safra-cadencia-ajuda" className="text-caption text-muted-foreground">
+              Depois de uma semana sem trabalho (ex.: provas), a cadência vai para a próxima semana
+              de trabalho. A maturação conta da semana da prospecção (ou da cadência, se for na
+              mesma semana).
+            </p>
           </div>
           <div className="flex items-start gap-2">
             <Checkbox

@@ -445,6 +445,7 @@ export function initialDb() {
         period_id: P1,
         numero: 1,
         inicio: "2026-11-02",
+        cadencia_em: "2026-11-09",
         fim: "2026-11-06",
         usa_alocacao: false,
       },
@@ -453,6 +454,7 @@ export function initialDb() {
         period_id: P1,
         numero: 2,
         inicio: "2026-11-09",
+        cadencia_em: "2026-11-16",
         fim: "2026-11-13",
         usa_alocacao: true,
       },
@@ -461,6 +463,7 @@ export function initialDb() {
         period_id: P1,
         numero: 3,
         inicio: "2026-11-16",
+        cadencia_em: "2026-11-23",
         fim: "2026-11-20",
         usa_alocacao: true,
       },
@@ -978,6 +981,8 @@ export const PIPEDRIVE = {
  */
 export function segmentosSeed(db) {
   Object.assign(db.dashboard_parametros[0], { maturacao_semanas: 0, min_ats_segmento: 1 });
+  // S01 com prospecção e cadência na mesma semana: com maturação zero, madura a partir de 09/11.
+  db.safras.find((x) => x.id === SAFRA_S01).cadencia_em = "2026-11-02";
   // Dois contatos da S01 (02 a 08/11), um em cada empresa, com as ATs Ômega (realizada) e Sigma
   // (no-show) ligadas a eles.
   const [c1, c2] = db.contacts.filter(

@@ -54,7 +54,7 @@ function falha(msg: string, erro?: unknown): never {
       : "";
   throw new Error(motivo ? `${msg} (${motivo})` : msg);
 }
-const SAFRA_COLS = "id, period_id, numero, inicio, fim, usa_alocacao";
+const SAFRA_COLS = "id, period_id, numero, inicio, fim, usa_alocacao, cadencia_em";
 
 export type CicloResumo = {
   id: string;
@@ -128,6 +128,7 @@ const safraForm = z.object({
   inicio: isoDay,
   fim: isoDay,
   usa_alocacao: z.boolean(),
+  cadencia_em: isoDay,
 });
 
 async function cicloExiste(admin: Awaited<ReturnType<typeof db>>, periodId: string) {
@@ -171,7 +172,14 @@ export const dashboardGerarSafras = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
     z
-      .object({ periodId: z.string().uuid(), inicio: isoDay, ate: isoDay })
+      .object({
+        periodId: z.string().uuid(),
+        inicio: isoDay,
+        ate: isoDay,
+        // Semanas sem trabalho (ex.: provas) e as de prospecção e cadência na mesma semana.
+        pausas: z.array(isoDay).max(60).default([]),
+        mesmaSemana: z.array(isoDay).max(60).default([]),
+      })
       .refine((v) => v.inicio <= v.ate, "O início deve vir antes do fim")
       .parse(d),
   )
@@ -179,7 +187,16 @@ export const dashboardGerarSafras = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const admin = await db();
     await cicloExiste(admin, data.periodId);
-    const novas = semanasSugeridas(data.inicio, data.ate, await outrasSafras(admin), data.periodId);
+    const novas = semanasSugeridas(
+      data.inicio,
+      data.ate,
+      await outrasSafras(admin),
+      data.periodId,
+      {
+        pausas: data.pausas,
+        mesmaSemana: data.mesmaSemana,
+      },
+    );
     if (novas.length > 60) throw new Error("Intervalo grande demais (mais de 60 semanas)");
     if (novas.length === 0) return { criadas: 0 };
     const { error } = await admin

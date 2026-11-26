@@ -8,14 +8,23 @@ import { weekStartISO } from "./empresas";
 
 export type Safra = Pick<
   Tables<"safras">,
-  "id" | "period_id" | "numero" | "inicio" | "fim" | "usa_alocacao"
+  "id" | "period_id" | "numero" | "inicio" | "fim" | "usa_alocacao" | "cadencia_em"
 >;
 
-export type StatusSafra = "planejada" | "em_prospeccao" | "em_cadencia" | "em_maturacao" | "madura";
+export type StatusSafra =
+  | "planejada"
+  | "em_prospeccao"
+  | "em_prospeccao_cadencia"
+  | "aguardando_cadencia"
+  | "em_cadencia"
+  | "em_maturacao"
+  | "madura";
 
 export const STATUS_SAFRA_LABEL: Record<StatusSafra, string> = {
   planejada: "Planejada",
   em_prospeccao: "Em prospecção",
+  em_prospeccao_cadencia: "Em prospecção e cadência",
+  aguardando_cadencia: "Aguardando a cadência",
   em_cadencia: "Em cadência",
   em_maturacao: "Em maturação",
   madura: "Madura",
@@ -59,33 +68,53 @@ export function safraDoContato<T extends Pick<Safra, "inicio">>(
   return safraDaData(diaSP(createdAt), safras);
 }
 
+type Fases = Pick<Safra, "inicio" | "cadencia_em">;
+
+/** Prospecção e cadência na mesma semana (o começo do 26.2). */
+export const cadenciaNaMesmaSemana = (s: Fases) => s.cadencia_em === s.inicio;
+
 /**
- * Status da safra no dia `hoje`, com a janela de maturação em semanas depois do fim da safra
- * (padrão 3: madura a partir de N+4).
- *   planejada     antes da semana da safra
- *   em_prospeccao semana N
- *   em_cadencia   semana N+1
- *   em_maturacao  de N+2 até o fim da janela
- *   madura        depois da janela
+ * Status da safra no dia `hoje`, com a janela de maturação em semanas (padrão 3).
+ *   planejada              antes da semana da safra
+ *   em_prospeccao          semana N (cadência noutra semana)
+ *   em_prospeccao_cadencia semana N, com a cadência na mesma semana
+ *   aguardando_cadencia    entre a prospecção e a cadência (semana sem trabalho, ex.: provas)
+ *   em_cadencia            semana da cadência (`cadencia_em`)
+ *   em_maturacao           depois da cadência, até amadurecer
+ *   madura                 a partir de `inicioDaMaturidade`
  */
-export function statusSafra(
-  s: Pick<Safra, "inicio">,
-  hoje: string,
-  maturacaoSemanas: number,
-): StatusSafra {
+export function statusSafra(s: Fases, hoje: string, maturacaoSemanas: number): StatusSafra {
   if (hoje < s.inicio) return "planejada";
-  if (hoje <= fimDaSemana(s)) return "em_prospeccao";
+  const mesma = cadenciaNaMesmaSemana(s);
+  if (hoje <= fimDaSemana(s)) return mesma ? "em_prospeccao_cadencia" : "em_prospeccao";
   if (hoje >= inicioDaMaturidade(s, maturacaoSemanas)) return "madura";
-  if (hoje <= addDaysISO(s.inicio, 13)) return "em_cadencia";
+  if (hoje < s.cadencia_em) return "aguardando_cadencia";
+  if (hoje <= addDaysISO(s.cadencia_em, 6)) return "em_cadencia";
   return "em_maturacao";
 }
 
-/** Primeiro dia em que a safra está madura. */
-export function inicioDaMaturidade(s: Pick<Safra, "inicio">, maturacaoSemanas: number): string {
-  return addDaysISO(s.inicio, 7 * (1 + Math.max(0, maturacaoSemanas)));
+/**
+ * Primeiro dia em que a safra está madura. A maturação conta em semanas de calendário (uma pausa
+ * no meio conta): N + 1 + maturação, ou N + maturação quando a cadência foi na mesma semana; nunca
+ * antes do fim da semana da cadência.
+ */
+export function inicioDaMaturidade(s: Fases, maturacaoSemanas: number): string {
+  const m = Math.max(0, maturacaoSemanas);
+  const pelaJanela = addDaysISO(s.inicio, 7 * (m + (cadenciaNaMesmaSemana(s) ? 0 : 1)));
+  const depoisDaCadencia = addDaysISO(s.cadencia_em, 7);
+  return pelaJanela > depoisDaCadencia ? pelaJanela : depoisDaCadencia;
 }
 
-export const safraMadura = (s: Pick<Safra, "inicio">, hoje: string, maturacaoSemanas: number) =>
+/** Safra em cadência na semana (segunda-feira): a que tem `cadencia_em` nela, ou null. */
+export function safraEmCadencia<T extends Pick<Safra, "cadencia_em">>(
+  semana: string,
+  safras: readonly T[],
+): T | null {
+  const seg = weekStartISO(semana);
+  return safras.find((s) => s.cadencia_em === seg) ?? null;
+}
+
+export const safraMadura = (s: Fases, hoje: string, maturacaoSemanas: number) =>
   statusSafra(s, hoje, maturacaoSemanas) === "madura";
 
 /** Safra anterior (N−1) na ordem do ciclo, ou null. */
@@ -103,7 +132,14 @@ export function safraAnterior<T extends Pick<Safra, "numero">>(
 
 /* ------------------------------- Edição -------------------------------- */
 
-export type SafraForm = { numero: number; inicio: string; fim: string; usa_alocacao: boolean };
+export type SafraForm = {
+  numero: number;
+  inicio: string;
+  fim: string;
+  usa_alocacao: boolean;
+  /** Segunda-feira da semana da cadência (igual a `inicio` = mesma semana). */
+  cadencia_em: string;
+};
 
 /**
  * Erro de uma safra nova ou editada, ou null. `outras` são as safras de todos os ciclos, sem a
@@ -120,6 +156,13 @@ export function erroSafra(
   if (weekdayISO(f.inicio) !== 1) return "A safra começa numa segunda-feira.";
   if (f.fim < f.inicio || f.fim > fimDaSemana(f))
     return "O fim fica na mesma semana do início (até o domingo).";
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(f.cadencia_em) ||
+    weekdayISO(f.cadencia_em) !== 1 ||
+    f.cadencia_em < f.inicio ||
+    f.cadencia_em > addDaysISO(f.inicio, 28)
+  )
+    return "A cadência começa numa segunda-feira, da semana da safra até 4 semanas depois.";
   if (outras.some((s) => s.period_id === periodId && s.numero === f.numero))
     return `Já existe a ${rotuloSafra(f.numero)} neste ciclo.`;
   const mesmaSemana = outras.find((s) => s.inicio === f.inicio);
@@ -129,27 +172,37 @@ export function erroSafra(
 
 /**
  * Semanas sugeridas para um ciclo: de `inicioCiclo` (a segunda dessa semana) até `ate`, de segunda
- * a sexta, continuando a numeração e pulando as semanas que já têm safra (deste ou de outro ciclo).
+ * a sexta, continuando a numeração e pulando as semanas que já têm safra (deste ou de outro ciclo)
+ * e as de `pausas` (semanas sem trabalho, ex.: provas). A cadência de cada safra é a próxima semana
+ * gerada (a semana seguinte, depois da última); nas de `mesmaSemana`, a própria semana.
  */
 export function semanasSugeridas(
   inicioCiclo: string,
   ate: string,
   existentes: readonly Pick<Safra, "period_id" | "numero" | "inicio">[],
   periodId: string,
+  opcoes: { pausas?: readonly string[]; mesmaSemana?: readonly string[] } = {},
 ): SafraForm[] {
   const ocupadas = new Set(existentes.map((s) => s.inicio));
+  const pausas = new Set(opcoes.pausas ?? []);
+  const mesma = new Set(opcoes.mesmaSemana ?? []);
   const doCiclo = existentes.filter((s) => s.period_id === periodId);
   let numero = doCiclo.reduce((m, s) => Math.max(m, s.numero), 0);
-  const out: SafraForm[] = [];
+  const semanas: string[] = [];
   const primeira = weekStartISO(inicioCiclo);
   // Continua depois da última safra do ciclo, para não intercalar números.
   const ultima = doCiclo.reduce<string | null>((m, s) => (!m || s.inicio > m ? s.inicio : m), null);
   for (let seg = primeira; seg <= ate; seg = addDaysISO(seg, 7)) {
-    if (ocupadas.has(seg) || (ultima && seg < ultima)) continue;
-    numero += 1;
-    out.push({ numero, inicio: seg, fim: addDaysISO(seg, 4), usa_alocacao: true });
+    if (ocupadas.has(seg) || pausas.has(seg) || (ultima && seg < ultima)) continue;
+    semanas.push(seg);
   }
-  return out;
+  return semanas.map((seg, i) => ({
+    numero: ++numero,
+    inicio: seg,
+    fim: addDaysISO(seg, 4),
+    usa_alocacao: true,
+    cadencia_em: mesma.has(seg) ? seg : (semanas[i + 1] ?? addDaysISO(seg, 7)),
+  }));
 }
 
 /* ------------------------------ Parâmetros ------------------------------ */
@@ -319,7 +372,7 @@ export type Calendario<T extends Pick<Safra, "inicio">> = {
  * colunas, da primeira safra até a semana em que a última amadurece (no máximo `maxSemanas`
  * colunas, cortando as mais antigas). Cada célula é a fase da safra naquela semana.
  */
-export function calendarioSafras<T extends Pick<Safra, "inicio" | "numero">>(
+export function calendarioSafras<T extends Pick<Safra, "inicio" | "numero" | "cadencia_em">>(
   safras: readonly T[],
   hoje: string,
   maturacaoSemanas: number,
@@ -330,7 +383,10 @@ export function calendarioSafras<T extends Pick<Safra, "inicio" | "numero">>(
   if (ordem.length === 0) return { semanas: [], semanaAtual, linhas: [] };
   const primeira = ordem.reduce((m, s) => (s.inicio < m ? s.inicio : m), ordem[0]!.inicio);
   const ultima = ordem.reduce((m, s) => (s.inicio > m ? s.inicio : m), ordem[0]!.inicio);
-  const fimCalendario = inicioDaMaturidade({ inicio: ultima }, maturacaoSemanas);
+  const fimCalendario = ordem.reduce((m, s) => {
+    const d = inicioDaMaturidade(s, maturacaoSemanas);
+    return d > m ? d : m;
+  }, ultima);
   let semanas: string[] = [];
   for (let seg = primeira; seg <= fimCalendario; seg = addDaysISO(seg, 7)) semanas.push(seg);
   if (semanas.length > maxSemanas) semanas = semanas.slice(-maxSemanas);
