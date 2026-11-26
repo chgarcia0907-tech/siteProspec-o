@@ -423,6 +423,10 @@ export type Database = {
           resposta_etapa: number | null;
           resposta_modelo: string | null;
           resposta_tipo: string | null;
+          retomada_marcada_em: string | null;
+          retomado_em: string | null;
+          retomar_em: string | null;
+          retomar_motivo: string | null;
           sector: string;
           sem_whatsapp: boolean;
           sent1_at: string | null;
@@ -462,6 +466,10 @@ export type Database = {
           resposta_etapa?: number | null;
           resposta_modelo?: string | null;
           resposta_tipo?: string | null;
+          retomada_marcada_em?: string | null;
+          retomado_em?: string | null;
+          retomar_em?: string | null;
+          retomar_motivo?: string | null;
           sector?: string;
           sem_whatsapp?: boolean;
           sent1_at?: string | null;
@@ -501,6 +509,10 @@ export type Database = {
           resposta_etapa?: number | null;
           resposta_modelo?: string | null;
           resposta_tipo?: string | null;
+          retomada_marcada_em?: string | null;
+          retomado_em?: string | null;
+          retomar_em?: string | null;
+          retomar_motivo?: string | null;
           sector?: string;
           sem_whatsapp?: boolean;
           sent1_at?: string | null;
