@@ -350,5 +350,27 @@ export function computeSegmentos(input: SegmentosInput): Segmentos {
   };
 }
 
+/**
+ * Taxas da base inteira (todos os segmentos somados, "Não informado" incluído) em %, para as
+ * linhas de média da dispersão. Null sem base.
+ */
+export function mediasDaDimensao(segmentos: readonly Segmento[]): {
+  prospectAt: number | null;
+  avanco: number | null;
+} {
+  const soma = (f: (s: Segmento) => number) => segmentos.reduce((t, s) => t + f(s), 0);
+  const pct = (n: number, d: number) => (d ? Math.round((n / d) * 1000) / 10 : null);
+  return {
+    prospectAt: pct(
+      soma((s) => s.comAt),
+      soma((s) => s.contatos),
+    ),
+    avanco: pct(
+      soma((s) => s.avancaram),
+      soma((s) => s.realizadas),
+    ),
+  };
+}
+
 /** Chave da célula de safra × setor (setor nulo = "Sem alocação"). */
 export const chaveSetor = (id: string | null) => id ?? SEM_VALOR;

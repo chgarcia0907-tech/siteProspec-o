@@ -10,6 +10,7 @@ import type { Alocacao } from "./alocacao";
 import {
   computeSegmentos,
   decisaoDoAvanco,
+  mediasDaDimensao,
   valorDaDimensao,
   type SAt,
   type SContato,
@@ -157,6 +158,12 @@ describe("computeSegmentos", () => {
       ["Saúde", { n: 1, d: 1 }, { n: 0, d: 1 }, true, null],
       ["Não informado", { n: 0, d: 1 }, { n: 0, d: 0 }, true, null],
     ]);
+  });
+
+  it("médias da base inteira para a dispersão", () => {
+    // 6 contatos, 4 com AT; 3 realizadas, 1 avançou.
+    expect(mediasDaDimensao(dim("setor"))).toEqual({ prospectAt: 66.7, avanco: 33.3 });
+    expect(mediasDaDimensao([])).toEqual({ prospectAt: null, avanco: null });
   });
 
   it("rotula persona, nível e porte", () => {
