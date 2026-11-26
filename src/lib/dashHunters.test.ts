@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Alocacao } from "./alocacao";
-import { DEFAULT_OFFSETS } from "./cadencia";
+import { DEFAULT_OFFSETS, addDaysISO } from "./cadencia";
 import {
   computeHunters,
   concentracao,
@@ -24,6 +24,7 @@ const safra = (numero: number, inicio: string): Safra => ({
   inicio,
   fim: inicio,
   usa_alocacao: numero >= 3,
+  cadencia_em: addDaysISO(inicio, 7),
 });
 const SAFRAS = [safra(1, "2026-11-09"), safra(2, "2026-11-16"), safra(3, "2026-11-23")];
 
@@ -165,7 +166,7 @@ describe("filas da semana", () => {
   it("na S03 a fila de prospecção é a S03 e a de cadência é a S02", () => {
     // Critério de aceite da spec (na S05, prospecção da S05 e cadência da S04), aqui na S03.
     expect(r.safraN?.numero).toBe(3);
-    expect(r.safraAnterior?.numero).toBe(2);
+    expect(r.safraCadencia?.numero).toBe(2);
     expect(r.dias).toHaveLength(7);
   });
 

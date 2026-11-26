@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { addDaysISO } from "./cadencia";
 import {
   PARAMETROS_PADRAO,
   codigoSafra,
@@ -8,6 +9,7 @@ import {
   erroSafra,
   inicioDaMaturidade,
   safraAnterior,
+  safraEmCadencia,
   safraDaData,
   safraDoContato,
   calendarioSafras,
@@ -27,6 +29,7 @@ const safra = (numero: number, inicio: string, extra: Partial<Safra> = {}): Safr
   inicio,
   fim: inicio.replace(/\d{2}$/, (d) => String(Number(d) + 4).padStart(2, "0")),
   usa_alocacao: true,
+  cadencia_em: addDaysISO(inicio, 7),
   ...extra,
 });
 const S1 = safra(1, "2026-11-09", { usa_alocacao: false });
@@ -87,8 +90,47 @@ describe("status da safra", () => {
     expect(inicioDaMaturidade(S1, 3)).toBe("2026-12-07");
     expect(inicioDaMaturidade(S1, 1)).toBe("2026-11-23");
     expect(statusSafra(S1, "2026-11-23", 1)).toBe("madura");
-    // Janela zero: madura logo depois da semana de prospecção.
-    expect(statusSafra(S1, "2026-11-16", 0)).toBe("madura");
+    // Janela zero: madura logo depois da semana da cadência (nunca antes de ela terminar).
+    expect(statusSafra(S1, "2026-11-16", 0)).toBe("em_cadencia");
+    expect(statusSafra(S1, "2026-11-23", 0)).toBe("madura");
+  });
+});
+
+describe("26.2: prospecção e cadência na mesma semana e semana de provas", () => {
+  const m = 3;
+  // S01 e S02 com a cadência na própria semana; S03 com a cadência em 07/12 (30/11 = provas).
+  const R1 = safra(1, "2026-11-09", { cadencia_em: "2026-11-09" });
+  const R2 = safra(2, "2026-11-16", { cadencia_em: "2026-11-16" });
+  const R3 = safra(3, "2026-11-23", { cadencia_em: "2026-12-07" });
+  const R4 = safra(4, "2026-12-07");
+
+  it("safra de mesma semana: prospecção e cadência juntas e madura contando da cadência", () => {
+    expect(statusSafra(R1, "2026-11-10", m)).toBe("em_prospeccao_cadencia");
+    expect(statusSafra(R1, "2026-11-16", m)).toBe("em_maturacao");
+    expect(inicioDaMaturidade(R1, m)).toBe("2026-11-30");
+    expect(statusSafra(R1, "2026-11-30", m)).toBe("madura");
+    expect(inicioDaMaturidade(R2, m)).toBe("2026-12-07");
+  });
+
+  it("a semana de provas empurra a cadência, mas conta na maturação", () => {
+    expect(statusSafra(R3, "2026-11-25", m)).toBe("em_prospeccao");
+    expect(statusSafra(R3, "2026-12-01", m)).toBe("aguardando_cadencia");
+    expect(statusSafra(R3, "2026-12-08", m)).toBe("em_cadencia");
+    expect(statusSafra(R3, "2026-12-14", m)).toBe("em_maturacao");
+    expect(inicioDaMaturidade(R3, m)).toBe("2026-12-21");
+  });
+
+  it("nunca amadurece antes do fim da semana da cadência", () => {
+    expect(inicioDaMaturidade(R3, 0)).toBe("2026-12-14");
+    expect(inicioDaMaturidade(R1, 0)).toBe("2026-11-16");
+  });
+
+  it("safra em cadência na semana", () => {
+    const todas = [R1, R2, R3, R4];
+    expect(safraEmCadencia("2026-11-18", todas)).toBe(R2);
+    expect(safraEmCadencia("2026-11-30", todas)).toBeNull();
+    expect(safraEmCadencia("2026-12-07", todas)).toBe(R3);
+    expect(safraEmCadencia("2026-12-14", todas)).toBe(R4);
   });
 });
 
@@ -100,7 +142,13 @@ describe("safra anterior", () => {
 });
 
 describe("validação da safra", () => {
-  const nova = { numero: 4, inicio: "2026-11-30", fim: "2026-12-04", usa_alocacao: true };
+  const nova = {
+    numero: 4,
+    inicio: "2026-11-30",
+    fim: "2026-12-04",
+    usa_alocacao: true,
+    cadencia_em: "2026-12-07",
+  };
 
   it("aceita a próxima semana do ciclo", () => {
     expect(erroSafra(nova, CICLO, SAFRAS)).toBeNull();
@@ -125,6 +173,13 @@ describe("validação da safra", () => {
     );
   });
 
+  it("a cadência é uma segunda, da semana da safra até 4 semanas depois", () => {
+    expect(erroSafra({ ...nova, cadencia_em: "2026-11-30" }, CICLO, SAFRAS)).toBeNull();
+    expect(erroSafra({ ...nova, cadencia_em: "2026-12-28" }, CICLO, SAFRAS)).toBeNull();
+    for (const cadencia_em of ["2026-11-23", "2026-12-08", "2027-01-04"])
+      expect(erroSafra({ ...nova, cadencia_em }, CICLO, SAFRAS)).toMatch(/cadência/);
+  });
+
   it("rejeita número inválido e datas vazias", () => {
     expect(erroSafra({ ...nova, numero: 0 }, CICLO, SAFRAS)).toMatch(/número/);
     expect(erroSafra({ ...nova, inicio: "" }, CICLO, SAFRAS)).toMatch(/início/);
@@ -135,9 +190,27 @@ describe("semanas sugeridas", () => {
   it("gera de segunda a sexta desde o início do ciclo", () => {
     // Ciclo começando numa quarta: a S01 é a semana dessa quarta.
     expect(semanasSugeridas("2026-11-11", "2026-11-23", [], CICLO)).toEqual([
-      { numero: 1, inicio: "2026-11-09", fim: "2026-11-13", usa_alocacao: true },
-      { numero: 2, inicio: "2026-11-16", fim: "2026-11-20", usa_alocacao: true },
-      { numero: 3, inicio: "2026-11-23", fim: "2026-11-27", usa_alocacao: true },
+      {
+        numero: 1,
+        inicio: "2026-11-09",
+        fim: "2026-11-13",
+        usa_alocacao: true,
+        cadencia_em: "2026-11-16",
+      },
+      {
+        numero: 2,
+        inicio: "2026-11-16",
+        fim: "2026-11-20",
+        usa_alocacao: true,
+        cadencia_em: "2026-11-23",
+      },
+      {
+        numero: 3,
+        inicio: "2026-11-23",
+        fim: "2026-11-27",
+        usa_alocacao: true,
+        cadencia_em: "2026-11-30",
+      },
     ]);
   });
 
@@ -145,6 +218,20 @@ describe("semanas sugeridas", () => {
     expect(
       semanasSugeridas("2026-11-09", "2026-12-07", SAFRAS, CICLO).map((s) => s.numero),
     ).toEqual([4, 5]);
+  });
+
+  it("26.2: mesma semana em S01 e S02, provas em 30/11 e a cadência da S03 na semana seguinte", () => {
+    const geradas = semanasSugeridas("2026-11-09", "2026-12-14", [], CICLO, {
+      pausas: ["2026-11-30"],
+      mesmaSemana: ["2026-11-09", "2026-11-16"],
+    });
+    expect(geradas.map((s) => [s.numero, s.inicio, s.cadencia_em])).toEqual([
+      [1, "2026-11-09", "2026-11-09"],
+      [2, "2026-11-16", "2026-11-16"],
+      [3, "2026-11-23", "2026-12-07"],
+      [4, "2026-12-07", "2026-12-14"],
+      [5, "2026-12-14", "2026-12-21"],
+    ]);
   });
 
   it("pula semanas ocupadas por outro ciclo", () => {

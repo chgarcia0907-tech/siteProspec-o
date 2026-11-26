@@ -55,8 +55,13 @@ export function useSemanasAcoes() {
       await criar({ data: { periodId, safra } });
       await recarregar();
     },
-    gerar: async (periodId: string, inicio: string, ate: string) => {
-      const r = await gerar({ data: { periodId, inicio, ate } });
+    gerar: async (
+      periodId: string,
+      inicio: string,
+      ate: string,
+      opcoes: { pausas: string[]; mesmaSemana: string[] } = { pausas: [], mesmaSemana: [] },
+    ) => {
+      const r = await gerar({ data: { periodId, inicio, ate, ...opcoes } });
       await recarregar();
       return r.criadas;
     },

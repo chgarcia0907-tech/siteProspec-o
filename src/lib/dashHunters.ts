@@ -35,7 +35,7 @@ import { situacaoTask } from "./tasksHunter";
 import {
   diaSP,
   fimDaSemana,
-  safraAnterior,
+  safraEmCadencia,
   safraDaData,
   statusSafra,
   type Safra,
@@ -240,7 +240,8 @@ export type HuntersSemana = {
   semana: string;
   dias: string[];
   safraN: Pick<Safra, "id" | "numero" | "inicio" | "fim"> | null;
-  safraAnterior: Pick<Safra, "id" | "numero" | "inicio" | "fim"> | null;
+  /** Safra cuja cadência cai na semana (`cadencia_em`): a própria N no começo do 26.2, a N−1 depois. */
+  safraCadencia: Pick<Safra, "id" | "numero" | "inicio" | "fim"> | null;
   hunters: HunterSemana[];
   participacao: ParticipacaoSemana[];
   /** Média por hunter dos totais do ciclo (comparação da ficha). */
@@ -300,7 +301,7 @@ export function computeHunters(input: HuntersInput): HuntersSemana {
   const ontem = addDaysISO(hoje, -1);
   const fimDevido = fimSemana < ontem ? fimSemana : ontem;
   const safraN = safraDaData(semana, input.safras);
-  const safraN1 = safraN ? safraAnterior(safraN, input.safras) : null;
+  const safraN1 = safraEmCadencia(semana, input.safras);
   const ids = new Set(input.hunters.map((h) => h.id));
   const contatos = input.contatos.filter((c) => ids.has(c.user_id));
   const offsetsDe = (uid: string) => input.offsets[uid] ?? DEFAULT_OFFSETS;
@@ -368,7 +369,7 @@ export function computeHunters(input: HuntersInput): HuntersSemana {
       ).length,
     };
 
-    // Fila de cadência (safra N−1).
+    // Fila de cadência (safra com a cadência nesta semana).
     const daN1 = safraN1 ? meus.filter((c) => safraDoContato.get(c.id)?.id === safraN1.id) : [];
     const cadencia: FilaCadencia = {
       emCadencia: 0,
@@ -567,7 +568,7 @@ export function computeHunters(input: HuntersInput): HuntersSemana {
       inicio: safraN.inicio,
       fim: safraN.fim,
     },
-    safraAnterior: safraN1 && {
+    safraCadencia: safraN1 && {
       id: safraN1.id,
       numero: safraN1.numero,
       inicio: safraN1.inicio,

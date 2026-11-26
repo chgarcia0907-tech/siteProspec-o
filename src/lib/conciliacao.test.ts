@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { addDaysISO } from "./cadencia";
 import {
   cardDaAt,
   atsSemCard,
@@ -36,6 +37,7 @@ const safra = (numero: number, inicio: string, usa = true): Safra => ({
   inicio,
   fim: inicio,
   usa_alocacao: usa,
+  cadencia_em: addDaysISO(inicio, 7),
 });
 
 const INPUT: ConciliacaoInput = {
