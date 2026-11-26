@@ -13,3 +13,7 @@ motion-audits
 
 # Texto de skill do claude.ai: precisa ficar idêntico ao que é enviado
 docs/skills/
+
+# Skills de terceiros instaladas pelo `npx skills` (hash conferido no skills-lock.json)
+.claude/skills/frontend-design/
+.claude/skills/ui-ux-pro-max/
