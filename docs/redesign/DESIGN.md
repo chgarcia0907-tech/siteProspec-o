@@ -244,8 +244,8 @@ a prévia de "Gerar semanas" tem, por semana, "Gerar" (desmarcado = pausa, sem s
 mesma semana".
 
 **Alocação da semana** (mesma aba, entre o calendário e as metas): seletor de safra no cabeçalho,
-faixa `bg-surface-inset` dizendo o que pode ser feito (livre antes da safra, só troca de setor
-durante, encerrada depois) e tabela compacta hunter × setor › subsetor, dupla e metas. Hunter sem
+faixa `bg-surface-inset` dizendo o que pode ser feito (livre antes da safra; durante, só troca
+de setor e alocação de quem está sem setor, a partir de hoje; encerrada depois) e tabela compacta hunter × setor › subsetor, dupla e metas. Hunter sem
 alocação leva o selo `bg-warning-soft` "Não alocado"; vigências anteriores aparecem em
 `text-caption` embaixo do setor ("antes: Varejo (09/11 a 11/11)").
 
