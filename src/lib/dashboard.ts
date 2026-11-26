@@ -320,7 +320,13 @@ export function responseDate(
 }
 
 type GoalValues = Omit<DashGoal, "user_id" | "group_id">;
-const GOAL_FIELDS = ["envios_dia", "l1_semana", "ats_semana", "no_prazo_pct"] as const;
+const GOAL_FIELDS = [
+  "envios_dia",
+  "l1_semana",
+  "ats_semana",
+  "no_prazo_pct",
+  "passos_semana",
+] as const;
 
 /** Meta efetiva do hunter, campo a campo: a dele, senão a do grupo, senão o padrão da equipe. */
 export function resolveGoal(

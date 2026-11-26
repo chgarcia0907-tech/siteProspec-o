@@ -500,12 +500,14 @@ describe("metas", () => {
       l1_semana: 8,
       ats_semana: 1,
       no_prazo_pct: 80,
+      passos_semana: null,
     });
     expect(resolveGoal(goals, H2, null)).toEqual({
       envios_dia: 10,
       l1_semana: 5,
       ats_semana: 1,
       no_prazo_pct: 80,
+      passos_semana: null,
     });
     expect(resolveGoal([], H1, null).envios_dia).toBeNull();
   });
