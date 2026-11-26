@@ -220,3 +220,31 @@ export function personaFilled(
 ): number {
   return STEPS.filter((s) => hasBody(cadences?.[sectorId]?.[persona]?.[s.n])).length;
 }
+
+/* --------------------------------- Porte --------------------------------- */
+
+/** Faixas de funcionários, as mesmas do campo "Número de Funcionários" do Pipedrive. */
+export const PORTES = [
+  { key: "1-10", label: "1 a 10", pipedrive: "1-10" },
+  { key: "11-50", label: "11 a 50", pipedrive: "11-50" },
+  { key: "51-200", label: "51 a 200", pipedrive: "51-200" },
+  { key: "201-500", label: "201 a 500", pipedrive: "201-500" },
+  { key: "501-1000", label: "501 a 1.000", pipedrive: "501-1,000" },
+  { key: "1001-5000", label: "1.001 a 5.000", pipedrive: "1,001-5,000" },
+  { key: "5001-10000", label: "5.001 a 10.000", pipedrive: "5,001-10,000" },
+  { key: "10001+", label: "Mais de 10.000", pipedrive: "10,001+" },
+] as const;
+
+export type Porte = (typeof PORTES)[number]["key"];
+
+export const PORTE_LABEL: Record<Porte, string> = Object.fromEntries(
+  PORTES.map((p) => [p.key, `${p.label} funcionários`]),
+) as Record<Porte, string>;
+
+export const isPorte = (v: unknown): v is Porte =>
+  typeof v === "string" && PORTES.some((p) => p.key === v);
+
+/** Porte a partir do rótulo do Pipedrive (ex.: "1,001-5,000"), ou null. */
+export function porteDoPipedrive(label: string | null | undefined): Porte | null {
+  return PORTES.find((p) => p.pipedrive === (label ?? "").trim())?.key ?? null;
+}

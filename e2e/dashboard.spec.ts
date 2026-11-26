@@ -321,6 +321,10 @@ test.describe("Dashboard", () => {
     await page.goto("/dashboard");
     const exec = page.getByRole("region", { name: "Execução da cadência por hunter" });
     await expect(exec).toBeVisible();
+    // As fontes do Google chegam com display=swap: se a troca acontecer depois de medir, o texto
+    // acima da tabela muda de altura e a ancoragem de rolagem do navegador move o scrollY (~44 px)
+    // sem que o clique tenha culpa. Mede só com as fontes carregadas.
+    await page.evaluate(() => document.fonts.ready);
     await exec.scrollIntoViewIfNeeded();
     const y = await page.evaluate(() => window.scrollY);
     await exec.getByRole("button", { name: "Hunter Dois" }).click();
