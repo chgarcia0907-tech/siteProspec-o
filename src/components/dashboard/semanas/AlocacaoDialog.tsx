@@ -15,6 +15,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import {
   alocacaoLimpa,
   erroAlocacao,
+  erroDuranteSafra,
   semMeta,
   trocaDeSetor,
   type Alocacao,
@@ -72,7 +73,8 @@ function Erro({ erro }: { erro: string | null }) {
 
 /**
  * Alocar um hunter (ou editar a alocação) antes do início da safra: hunter, setor e subsetor,
- * dupla e metas. Com as duas metas em zero, o motivo é obrigatório.
+ * dupla e metas. Com as duas metas em zero, o motivo é obrigatório. Com a safra em andamento
+ * (`emAndamento`), só aloca quem está sem setor, a partir de um dia entre hoje e o domingo.
  */
 export function AlocacaoDialog({
   safra,
@@ -82,6 +84,7 @@ export function AlocacaoDialog({
   duplas,
   inicial,
   editando,
+  emAndamento,
   onSalvar,
   onClose,
 }: Comum & {
@@ -89,14 +92,21 @@ export function AlocacaoDialog({
   duplas: readonly string[];
   inicial: AlocacaoForm;
   editando: Alocacao | null;
+  /** Safra já começou: dias possíveis para a alocação valer (de hoje ao domingo). */
+  emAndamento: { hoje: string; dias: readonly string[] } | null;
 }) {
   const [f, setF] = useState<AlocacaoForm>(inicial);
   const outras = alocacoes.filter((a) => a.id !== editando?.id);
   const { erro, salvando, enviar } = useEnvio(
     () => onSalvar(editando?.id ?? null, alocacaoLimpa(f)),
-    () => erroAlocacao(f, safra, outras, paiDe(setores)),
+    () =>
+      erroAlocacao(f, safra, outras, paiDe(setores)) ??
+      (emAndamento ? erroDuranteSafra(f, safra.id, outras, emAndamento.hoje) : null),
     onClose,
   );
+  // Com a safra em andamento, quem já tem setor só troca de setor (outro diálogo).
+  const alocados = new Set(alocacoes.map((a) => a.user_id));
+  const escolhiveis = emAndamento ? hunters.filter((h) => !alocados.has(h.id)) : hunters;
   const nome = hunters.find((h) => h.id === f.user_id)?.name;
   const zerada = semMeta({
     meta_empresas: f.meta_empresas || 0,
@@ -114,6 +124,8 @@ export function AlocacaoDialog({
           <DialogDescription>
             {rotuloSafra(safra.numero)}, semana de {formatBR(safra.inicio)}. As metas valem para a
             safra inteira.
+            {emAndamento &&
+              " Safra em andamento: só os contatos criados a partir do dia escolhido entram no setor."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={enviar} className="space-y-4" noValidate>
@@ -129,9 +141,26 @@ export function AlocacaoDialog({
                 <option value="" disabled>
                   Escolha o hunter…
                 </option>
-                {hunters.map((h) => (
+                {escolhiveis.map((h) => (
                   <option key={h.id} value={h.id}>
                     {h.name}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+          )}
+          {emAndamento && (
+            <div className="space-y-1.5">
+              <Label htmlFor="aloc-desde">A partir de</Label>
+              <NativeSelect
+                id="aloc-desde"
+                className="w-full"
+                value={f.vigente_desde}
+                onChange={(e) => setF({ ...f, vigente_desde: e.target.value })}
+              >
+                {emAndamento.dias.map((d) => (
+                  <option key={d} value={d}>
+                    {formatBR(d)}
                   </option>
                 ))}
               </NativeSelect>

@@ -5,8 +5,8 @@
 //   `vigente_desde`; o contato fica no setor da linha vigente no dia em que foi criado.
 // - As metas da safra do hunter são as da linha vigente mais recente.
 // - Metas zeradas = semana sem prospecção (exige motivo) e não disparam alertas de esforço.
-// - Edição livre até o início da safra; durante a semana, só troca de setor (nova vigência a
-//   partir de hoje); depois da semana, nada.
+// - Edição livre até o início da safra; durante a semana, só troca de setor ou alocação de quem
+//   ainda não tem setor na safra (nova vigência a partir de hoje); depois da semana, nada.
 // - Dupla: dois hunters com o mesmo rótulo na safra. As métricas continuam individuais.
 import type { Tables } from "@/integrations/supabase/types";
 import { addDaysISO, formatBR } from "./cadencia";
@@ -129,7 +129,8 @@ export function modoEdicao(safra: Pick<Safra, "inicio">, hoje: string): ModoEdic
 
 export const MODO_EDICAO_TEXTO: Record<ModoEdicao, string> = {
   livre: "Editável até o início da safra.",
-  troca_setor: "Safra em andamento: só a troca de setor, valendo a partir de hoje.",
+  troca_setor:
+    "Safra em andamento: só a troca de setor e a alocação de quem está sem setor, valendo a partir de hoje.",
   encerrada: "Safra encerrada: a alocação não muda mais.",
 };
 
@@ -235,8 +236,15 @@ export function copiarAlocacoes(
     }));
 }
 
-/** Nova alocação vazia para um hunter, valendo desde a segunda-feira da safra. */
-export const alocacaoVazia = (userId: string, safra: Pick<Safra, "inicio">): AlocacaoForm => ({
+/**
+ * Nova alocação vazia para um hunter, valendo desde a segunda-feira da safra ou, com a safra em
+ * andamento, desde `hoje`.
+ */
+export const alocacaoVazia = (
+  userId: string,
+  safra: Pick<Safra, "inicio">,
+  hoje?: string,
+): AlocacaoForm => ({
   user_id: userId,
   sector_id: "",
   subsector_id: null,
@@ -244,8 +252,32 @@ export const alocacaoVazia = (userId: string, safra: Pick<Safra, "inicio">): Alo
   meta_empresas: 0,
   meta_contatos: 0,
   motivo_meta_zero: null,
-  vigente_desde: safra.inicio,
+  vigente_desde: hoje && hoje > safra.inicio ? hoje : safra.inicio,
 });
+
+/**
+ * Erro de uma alocação gravada com a safra em andamento, ou null. Vale a partir de hoje; quem já
+ * tem alocação na safra só troca de setor (metas e dupla ficam), e quem não tem é alocado por
+ * inteiro. `alocacoes` pode trazer outras safras: só as da `safraId` contam.
+ */
+export function erroDuranteSafra(
+  f: AlocacaoForm,
+  safraId: string,
+  alocacoes: readonly Alocacao[],
+  hoje: string,
+): string | null {
+  if (f.vigente_desde < hoje) return "Com a safra em andamento, a alocação vale a partir de hoje.";
+  const atual = alocacoes
+    .filter((a) => a.safra_id === safraId && a.user_id === f.user_id)
+    .sort((a, b) => a.vigente_desde.localeCompare(b.vigente_desde))
+    .at(-1);
+  if (!atual) return null;
+  const esperado = trocaDeSetor(atual, f, f.vigente_desde);
+  if (!esperado) return "O setor é o mesmo da alocação atual.";
+  if (!mesmaAlocacao(esperado, f))
+    return "Safra em andamento: só o setor muda; metas e dupla ficam como estão.";
+  return null;
+}
 
 /** Dias da semana da safra em que uma troca de setor pode começar (de hoje ao fim da semana). */
 export function diasParaTroca(safra: Pick<Safra, "inicio">, hoje: string): string[] {

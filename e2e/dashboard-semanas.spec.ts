@@ -189,13 +189,15 @@ test.describe("Dashboard › Semanas", () => {
     expect(JSON.parse(m!.body)).toMatchObject({ id: true, maturacao_semanas: 2 });
   });
 
-  test("na semana em andamento só dá para trocar o setor, valendo a partir de hoje", async ({
+  test("na semana em andamento só troca o setor de quem já tem, valendo a partir de hoje", async ({
     page,
   }) => {
     await page.goto("/dashboard?aba=semanas");
     const sec = page.getByRole("region", { name: "Alocação da semana" });
     await expect(sec.getByLabel("Safra", { exact: true })).toHaveValue(SAFRA_S02);
-    await expect(sec).toContainText("Safra em andamento: só a troca de setor");
+    await expect(sec).toContainText(
+      "Safra em andamento: só a troca de setor e a alocação de quem está sem setor",
+    );
     const tabela = sec.getByRole("table", { name: /Alocação da S02/ });
     const um = tabela.getByRole("row", { name: /Hunter Um/ });
     await expect(um).toContainText("Varejo");
@@ -203,8 +205,9 @@ test.describe("Dashboard › Semanas", () => {
     await expect(um).toContainText("10");
     await expect(um).toContainText("40");
     await expect(tabela.getByRole("row", { name: /Hunter Dois/ })).toContainText("Não alocado");
-    await expect(sec.getByRole("button", { name: "Alocar hunter" })).toHaveCount(0);
+    await expect(sec.getByRole("button", { name: "Alocar Hunter Um" })).toHaveCount(0);
     await expect(sec.getByRole("button", { name: /Editar alocação/ })).toHaveCount(0);
+    await expect(sec.getByRole("button", { name: /Copiar da/ })).toHaveCount(0);
 
     await um.getByRole("button", { name: "Trocar setor de Hunter Um" }).click();
     const dialog = page.getByRole("dialog", { name: "Trocar setor de Hunter Um" });
@@ -225,6 +228,50 @@ test.describe("Dashboard › Semanas", () => {
       dupla: "D1",
       meta_empresas: 10,
       meta_contatos: 40,
+      motivo_meta_zero: null,
+      vigente_desde: "2026-11-12",
+      safra_id: SAFRA_S02,
+      created_by: U1,
+    });
+  });
+
+  test("na semana em andamento aloca quem está sem setor, a partir de hoje", async ({ page }) => {
+    await page.goto("/dashboard?aba=semanas");
+    const sec = page.getByRole("region", { name: "Alocação da semana" });
+    await expect(sec.getByLabel("Safra", { exact: true })).toHaveValue(SAFRA_S02);
+
+    // Pelo botão do topo, só quem está sem setor aparece na lista.
+    await sec.getByRole("button", { name: "Alocar hunter", exact: true }).click();
+    let dialog = page.getByRole("dialog", { name: "Alocar hunter" });
+    await expect(
+      dialog.getByLabel("Hunter").locator("option", { hasText: "Hunter Um" }),
+    ).toHaveCount(0);
+    await dialog.getByRole("button", { name: "Cancelar" }).click();
+
+    await sec.getByRole("button", { name: "Alocar Hunter Dois" }).click();
+    dialog = page.getByRole("dialog", { name: "Alocar hunter" });
+    await expect(dialog.getByLabel("Hunter")).toHaveValue(U2);
+    await expect(dialog.getByLabel("A partir de")).toHaveValue("2026-11-12");
+    await expect(dialog.getByLabel("A partir de").locator("option")).toHaveText([
+      "12/11/2026",
+      "13/11/2026",
+      "14/11/2026",
+      "15/11/2026",
+    ]);
+    await dialog.getByRole("combobox", { name: "Setor alocado" }).selectOption(SETOR_VAREJO);
+    await dialog.getByLabel("Meta de empresas").fill("5");
+    await dialog.getByLabel("Meta de contatos").fill("20");
+    await dialog.getByRole("button", { name: "Alocar" }).click();
+    await expect(page.getByText("Hunter Dois alocado")).toBeVisible();
+    const [m] = await mutations();
+    expect(m).toMatchObject({ method: "POST", table: "alocacoes" });
+    expect(JSON.parse(m!.body)).toEqual({
+      user_id: U2,
+      sector_id: SETOR_VAREJO,
+      subsector_id: null,
+      dupla: null,
+      meta_empresas: 5,
+      meta_contatos: 20,
       motivo_meta_zero: null,
       vigente_desde: "2026-11-12",
       safra_id: SAFRA_S02,

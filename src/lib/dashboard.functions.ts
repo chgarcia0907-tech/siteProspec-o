@@ -9,9 +9,8 @@ import {
   alocacaoLimpa,
   copiarAlocacoes,
   erroAlocacao,
-  mesmaAlocacao,
+  erroDuranteSafra,
   modoEdicao,
-  trocaDeSetor,
   type Alocacao,
   type AlocacaoForm,
 } from "./alocacao";
@@ -451,16 +450,8 @@ export const dashboardSalvarAlocacao = createServerFn({ method: "POST" })
 
     if (modo === "troca_setor") {
       if (data.id) throw new Error("Safra em andamento: só é possível trocar o setor.");
-      const atual = alocacoes
-        .filter((a) => a.user_id === f.user_id)
-        .sort((a, b) => a.vigente_desde.localeCompare(b.vigente_desde))
-        .at(-1);
-      if (!atual) throw new Error("Safra em andamento: não dá para alocar um hunter novo.");
-      if (f.vigente_desde < hoje) throw new Error("A troca de setor vale a partir de hoje.");
-      const esperado = trocaDeSetor(atual, f, f.vigente_desde);
-      if (!esperado) throw new Error("O setor é o mesmo da alocação atual.");
-      if (!mesmaAlocacao(esperado, f))
-        throw new Error("Safra em andamento: só o setor muda; metas e dupla ficam como estão.");
+      const erro = erroDuranteSafra(f, data.safraId, alocacoes, hoje);
+      if (erro) throw new Error(erro);
     }
 
     const outras = alocacoes.filter((a) => a.id !== data.id);

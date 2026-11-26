@@ -12,6 +12,7 @@ import {
   linhasDaAlocacao,
   safraPadraoDaAlocacao,
   erroAlocacao,
+  erroDuranteSafra,
   mesmaAlocacao,
   metasDaSafra,
   modoEdicao,
@@ -143,6 +144,49 @@ describe("modo de edição", () => {
       },
     );
     expect(trocaDeSetor(BRUNO, { sector_id: VAREJO, subsector_id: null }, "2026-11-26")).toBeNull();
+  });
+});
+
+describe("safra em andamento", () => {
+  const HOJE = "2026-11-26";
+
+  it("alocação nova vale a partir de hoje; antes da safra, desde a segunda", () => {
+    expect(alocacaoVazia("dani", S3, HOJE).vigente_desde).toBe(HOJE);
+    expect(alocacaoVazia("dani", S3, "2026-11-20").vigente_desde).toBe(S3.inicio);
+    expect(alocacaoVazia("dani", S3).vigente_desde).toBe(S3.inicio);
+  });
+
+  it("aloca por inteiro quem ainda está sem setor, a partir de hoje", () => {
+    const dani: AlocacaoForm = {
+      ...alocacaoVazia("dani", S3, HOJE),
+      sector_id: VAREJO,
+      dupla: "D2",
+      meta_empresas: 5,
+      meta_contatos: 20,
+    };
+    expect(erroDuranteSafra(dani, S3.id, TODAS, HOJE)).toBeNull();
+    expect(
+      erroDuranteSafra({ ...dani, vigente_desde: "2026-11-28" }, S3.id, TODAS, HOJE),
+    ).toBeNull();
+    expect(erroDuranteSafra({ ...dani, vigente_desde: S3.inicio }, S3.id, TODAS, HOJE)).toBe(
+      "Com a safra em andamento, a alocação vale a partir de hoje.",
+    );
+  });
+
+  it("quem já tem setor só troca o setor, com as metas e a dupla de antes", () => {
+    const troca = trocaDeSetor(BRUNO, { sector_id: INDUSTRIA, subsector_id: null }, HOJE)!;
+    expect(erroDuranteSafra(troca, S3.id, TODAS, HOJE)).toBeNull();
+    expect(erroDuranteSafra({ ...troca, meta_contatos: 99 }, S3.id, TODAS, HOJE)).toMatch(
+      /só o setor muda/,
+    );
+    expect(erroDuranteSafra({ ...troca, sector_id: VAREJO }, S3.id, TODAS, HOJE)).toMatch(/mesmo/);
+    expect(erroDuranteSafra({ ...troca, dupla: "D9" }, S3.id, TODAS, HOJE)).toMatch(
+      /só o setor muda/,
+    );
+    // Linha de outra safra não conta como alocação nesta.
+    const naS4 = aloc({ safra_id: S4.id, user_id: "dani" });
+    const dani = { ...alocacaoVazia("dani", S3, HOJE), sector_id: INDUSTRIA, meta_contatos: 9 };
+    expect(erroDuranteSafra(dani, S3.id, [...TODAS, naS4], HOJE)).toBeNull();
   });
 });
 

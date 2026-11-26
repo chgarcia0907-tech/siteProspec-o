@@ -139,6 +139,10 @@ export function AlocacaoSemana({ periodId, ask }: { periodId: string; ask: Ask }
   );
 
   const livre = modo === "livre" && safra.usa_alocacao;
+  // Alocar vale antes da safra e, com ela em andamento, para quem ainda está sem setor.
+  const podeAlocar = (modo === "livre" || modo === "troca_setor") && safra.usa_alocacao;
+  const algumSemSetor = linhas.some((l) => !l.atual);
+  const vazia = (userId: string) => alocacaoVazia(userId, safra, data.hoje);
   return (
     <Section
       title={titulo}
@@ -151,10 +155,8 @@ export function AlocacaoSemana({ periodId, ask }: { periodId: string; ask: Ask }
               Copiar da {rotuloSafra(anterior.numero)}
             </Button>
           )}
-          {livre && (
-            <Button
-              onClick={() => setAberto({ tipo: "alocar", inicial: alocacaoVazia("", safra) })}
-            >
+          {podeAlocar && (modo === "livre" || algumSemSetor) && (
+            <Button onClick={() => setAberto({ tipo: "alocar", inicial: vazia("") })}>
               Alocar hunter
             </Button>
           )}
@@ -269,14 +271,12 @@ export function AlocacaoSemana({ periodId, ask }: { periodId: string; ask: Ask }
                               </Button>
                             </>
                           )}
-                          {modo === "livre" && !atual && (
+                          {podeAlocar && !atual && (
                             <Button
                               variant="secondary"
                               size="sm"
                               aria-label={`Alocar ${nome}`}
-                              onClick={() =>
-                                setAberto({ tipo: "alocar", inicial: alocacaoVazia(userId, safra) })
-                              }
+                              onClick={() => setAberto({ tipo: "alocar", inicial: vazia(userId) })}
                             >
                               Alocar
                             </Button>
@@ -324,6 +324,11 @@ export function AlocacaoSemana({ periodId, ask }: { periodId: string; ask: Ask }
                 }
           }
           editando={aberto.tipo === "editar" ? aberto.alocacao : null}
+          emAndamento={
+            modo === "troca_setor"
+              ? { hoje: data.hoje, dias: diasParaTroca(safra, data.hoje) }
+              : null
+          }
           onSalvar={salvar}
           onClose={() => setAberto(null)}
         />
