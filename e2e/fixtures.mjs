@@ -15,6 +15,8 @@ export const SUBSETOR_METALURGIA = "12121212-0000-4000-8000-000000000004";
 export const SUBSETOR_QUIMICA = "12121212-0000-4000-8000-000000000005";
 const EMPRESA_DELTA = "13131313-0000-4000-8000-000000000001";
 const EMPRESA_OMICRON = "13131313-0000-4000-8000-000000000002";
+export const SAFRA_S01 = "16161616-0000-4000-8000-000000000001";
+export const SAFRA_S02 = "16161616-0000-4000-8000-000000000002";
 export const GOAL_EQUIPE = "14141414-0000-4000-8000-000000000001";
 
 export const USER = {
@@ -341,6 +343,43 @@ export function initialDb() {
         created_at: "2026-10-01T03:00:00Z",
       },
     ],
+    // Dashboard › Semanas: o Ciclo Nov tem a S01 (antes do esquema de alocação) e a S02, a semana
+    // de hoje (12/11/2026). Parâmetros com os valores padrão; sem metas do ciclo.
+    safras: [
+      {
+        id: SAFRA_S01,
+        period_id: P1,
+        numero: 1,
+        inicio: "2026-11-02",
+        fim: "2026-11-06",
+        usa_alocacao: false,
+      },
+      {
+        id: SAFRA_S02,
+        period_id: P1,
+        numero: 2,
+        inicio: "2026-11-09",
+        fim: "2026-11-13",
+        usa_alocacao: true,
+      },
+    ],
+    dashboard_parametros: [
+      {
+        id: true,
+        maturacao_semanas: 3,
+        amostra_minima_ab: 500,
+        min_ats_segmento: 10,
+        avanco_fica_pct: 50,
+        avanco_troca_pct: 35,
+        esforco_alerta_pct: 70,
+        dias_contato_parado: 3,
+        concentracao_ats_pct: 30,
+        nao_realizadas_pct: 15,
+        semanas_seguidas: 2,
+        updated_at: "2026-11-01T12:00:00Z",
+      },
+    ],
+    ciclo_metas: [],
     groups: [{ id: G1, period_id: P1, name: "Squad Azul", created_at: "2026-10-27T03:00:00Z" }],
     subgroups: [{ id: S1, group_id: G1, name: "Dupla 1", created_at: "2026-10-27T03:00:00Z" }],
     period_members: [

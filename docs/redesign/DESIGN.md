@@ -230,6 +230,15 @@ rótulo direto, e o hunter em foco usa `chart-1` com os demais em `chart-muted`.
 - Cada gráfico tem alternativa em texto: `aria-label` com a leitura principal e a tabela de dados
   acessível (botão "Ver dados" ou a tabela da própria aba).
 
+**Aba Semanas** (`src/components/dashboard/semanas/`): calendário em escada (safras nas linhas,
+semanas nas colunas, da primeira safra até a última amadurecer), com a palavra da fase em cada
+célula: Prospecção `bg-primary` com texto preto (a única cheia), Cadência `bg-primary-soft`,
+Maturação `bg-surface-inset` com borda tracejada, Madura `bg-success-soft text-success`. A coluna
+de hoje tem o cabeçalho em `text-primary` com "hoje" e fundo `bg-primary/5`; semanas depois de
+hoje ficam com `opacity-80` (fase prevista; mais apagado que isso derruba o contraste do texto
+abaixo de 4,5:1). Abaixo, o cartão de metas do ciclo; parâmetros num diálogo "Configurar
+dashboard".
+
 **Filtros globais** num cartão no topo, como hoje (ciclo, safra, hunter, dupla, setor alocado),
 na URL; com filtro fora do padrão, chips e "Limpar filtros".
 
