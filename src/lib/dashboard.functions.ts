@@ -612,3 +612,159 @@ export const dashboardHunters = createServerFn({ method: "POST" })
       esforcoSemanas: esforcoDasSemanas(entrada),
     };
   });
+
+/* ------------------------------- Conciliação ------------------------------- */
+
+/**
+ * Fila de conciliação do ciclo (cálculo em `computeConciliacao`), a partir do início dele, com os
+ * nomes dos hunters e a última cópia dos cards.
+ */
+export const dashboardConciliacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ periodId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { fetchAll } = await import("./fetch-all");
+    const { computeConciliacao } = await import("./conciliacao");
+    const { diaSP } = await import("./safras");
+
+    const [periodo, safras, membros, ats, cards, ultima] = await Promise.all([
+      admin.from("periods").select("started_at").eq("id", data.periodId).maybeSingle(),
+      admin.from("safras").select(SAFRA_COLS).eq("period_id", data.periodId),
+      admin.from("period_members").select("user_id").eq("period_id", data.periodId),
+      fetchAll((a, b) =>
+        admin
+          .from("ats")
+          .select(
+            "id, user_id, hunter_login, contact_id, pipedrive_deal_id, empresa, prospect, registrada_em, status",
+          )
+          .eq("tipo", "diagnostico")
+          .order("id")
+          .range(a, b),
+      ),
+      fetchAll((a, b) =>
+        admin
+          .from("pd_cards")
+          .select("deal_id, titulo, hunter_login, stage_id, status, add_time, cargo")
+          .eq("outbound", true)
+          .order("deal_id")
+          .range(a, b),
+      ),
+      admin
+        .from("pd_cards")
+        .select("sincronizado_em")
+        .order("sincronizado_em", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    const erro = periodo.error ?? safras.error ?? membros.error ?? ultima.error;
+    if (erro) throw new Error("Falha ao carregar a conciliação");
+    if (!periodo.data) throw new Error("Ciclo não encontrado");
+    const ids = [...new Set((membros.data ?? []).map((m) => m.user_id))];
+    const safraIds = (safras.data ?? []).map((s) => s.id);
+    const [contatos, alocacoes, perfis] = await Promise.all([
+      ids.length
+        ? fetchAll((a, b) =>
+            admin
+              .from("contacts")
+              .select("id, name, company, user_id, created_at")
+              .in("user_id", ids)
+              .order("id")
+              .range(a, b),
+          )
+        : Promise.resolve([]),
+      safraIds.length
+        ? admin.from("alocacoes").select("safra_id, user_id").in("safra_id", safraIds)
+        : Promise.resolve({ data: [], error: null }),
+      admin.from("profiles").select("id, display_name, email"),
+    ]);
+    if (alocacoes.error ?? perfis.error) throw new Error("Falha ao carregar a conciliação");
+
+    const desde = diaSP(periodo.data.started_at);
+    return {
+      desde,
+      ultimaCopia: ultima.data?.sincronizado_em ?? null,
+      nomes: Object.fromEntries(
+        (perfis.data ?? []).map((p) => [p.id, p.display_name?.trim() || p.email || "Hunter"]),
+      ) as Record<string, string>,
+      ...computeConciliacao({
+        desde,
+        ats,
+        cards,
+        contatos,
+        safras: safras.data ?? [],
+        alocacoes: alocacoes.data ?? [],
+      }),
+    };
+  });
+
+/** Liga a AT a um contato do mesmo hunter (ela passa para a safra do contato). */
+export const dashboardLigarAtContato = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ atId: z.string().uuid(), contactId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const [at, contato] = await Promise.all([
+      admin.from("ats").select("user_id").eq("id", data.atId).maybeSingle(),
+      admin.from("contacts").select("user_id").eq("id", data.contactId).maybeSingle(),
+    ]);
+    if (at.error ?? contato.error) throw new Error("Falha ao carregar a AT ou o contato");
+    if (!at.data || !contato.data) throw new Error("AT ou contato não encontrado");
+    if (at.data.user_id && at.data.user_id !== contato.data.user_id)
+      throw new Error("O contato é de outro hunter");
+    const { error } = await admin
+      .from("ats")
+      .update({ contact_id: data.contactId })
+      .eq("id", data.atId);
+    if (error) throw new Error("Falha ao ligar a AT ao contato");
+    return { ok: true as const };
+  });
+
+/**
+ * Liga a AT a um card do Pipedrive: a partir daí o status vem do Pipedrive. Sincroniza a AT e a
+ * cópia do card na hora.
+ */
+export const dashboardLigarAtCard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ atId: z.string().uuid(), dealId: z.number().int().positive() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { data: outra, error: e1 } = await admin
+      .from("ats")
+      .select("id")
+      .eq("pipedrive_deal_id", data.dealId)
+      .maybeSingle();
+    if (e1) throw new Error("Falha ao conferir o card");
+    if (outra && outra.id !== data.atId) throw new Error("Este card já está ligado a outra AT");
+    const { error } = await admin
+      .from("ats")
+      .update({ pipedrive_deal_id: data.dealId })
+      .eq("id", data.atId)
+      .is("pipedrive_deal_id", null);
+    if (error) throw new Error("Falha ao ligar a AT ao card");
+    const pdServer = await import("./pipedrive.server");
+    let aviso: string | null = null;
+    try {
+      await pdServer.sincronizarDeal(data.dealId);
+      await pdServer.sincronizarCards({ dealIds: [data.dealId] });
+    } catch (e) {
+      aviso = `Ligada, mas o Pipedrive não respondeu: ${(e as Error).message}`;
+    }
+    return { ok: true as const, aviso };
+  });
+
+/** "Sincronizar agora": copia os cards que mudaram, um lote por chamada. */
+export const dashboardSincronizarCards = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { sincronizarCards } = await import("./pipedrive.server");
+    return sincronizarCards({ limite: 40 });
+  });

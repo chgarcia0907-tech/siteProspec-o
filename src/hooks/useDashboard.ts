@@ -3,6 +3,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   dashboardAlocacao,
+  dashboardConciliacao,
+  dashboardLigarAtCard,
+  dashboardLigarAtContato,
+  dashboardSincronizarCards,
   dashboardCopiarAlocacoes,
   dashboardCriarSafra,
   dashboardExcluirAlocacao,
@@ -118,3 +122,50 @@ export function useDashHunters(periodId: string | null, semana: string) {
   });
 }
 export type DashHuntersDados = NonNullable<ReturnType<typeof useDashHunters>["data"]>;
+
+const CONCILIACAO = "dashboard_conciliacao";
+
+/** Fila de conciliação do ciclo. */
+export function useConciliacao(periodId: string | null) {
+  const fn = useServerFn(dashboardConciliacao);
+  return useQuery({
+    queryKey: [CONCILIACAO, periodId],
+    queryFn: () => fn({ data: { periodId: periodId! } }),
+    enabled: !!periodId,
+  });
+}
+export type ConciliacaoDados = NonNullable<ReturnType<typeof useConciliacao>["data"]>;
+
+/** Ações da conciliação; recarregam a fila ao terminar. */
+export function useConciliacaoAcoes() {
+  const qc = useQueryClient();
+  const contato = useServerFn(dashboardLigarAtContato);
+  const card = useServerFn(dashboardLigarAtCard);
+  const sincronizar = useServerFn(dashboardSincronizarCards);
+  const recarregar = () => qc.invalidateQueries({ queryKey: [CONCILIACAO] });
+  return {
+    ligarContato: async (atId: string, contactId: string) => {
+      await contato({ data: { atId, contactId } });
+      await recarregar();
+    },
+    ligarCard: async (atId: string, dealId: number) => {
+      const r = await card({ data: { atId, dealId } });
+      await recarregar();
+      return r.aviso;
+    },
+    /** Sincroniza em lotes até não sobrar card, avisando o progresso. */
+    sincronizar: async (progresso?: (feitos: number, restantes: number) => void) => {
+      let feitos = 0;
+      const erros: { deal: number; erro: string }[] = [];
+      for (let i = 0; i < 50; i++) {
+        const r = await sincronizar();
+        feitos += r.sincronizados;
+        erros.push(...r.erros);
+        progresso?.(feitos, r.restantes);
+        if (r.restantes === 0 || r.sincronizados === 0) break;
+      }
+      await recarregar();
+      return { feitos, erros };
+    },
+  };
+}
