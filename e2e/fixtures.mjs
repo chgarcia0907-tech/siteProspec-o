@@ -64,6 +64,10 @@ const blank = {
   period_id: P1,
   company_id: null,
   updated_at: "2026-11-01T00:00:00Z",
+  retomar_em: null,
+  retomar_motivo: null,
+  retomada_marcada_em: null,
+  retomado_em: null,
 };
 let n = 0;
 const ct = (user_id, o) => ({
@@ -132,6 +136,10 @@ export function makeContacts() {
       resposta_tipo: "positiva",
       at_marcada_em: "2026-11-14",
       at_registrado_em: "2026-11-06T13:00:00Z",
+      // Retomada atrasada: combinada para 10/11 (hoje é 12/11) e ainda não retomada.
+      retomar_em: "2026-11-10",
+      retomar_motivo: "Pediu para falar depois da auditoria",
+      retomada_marcada_em: "2026-11-03T12:00:00Z",
     }),
     ct(U1, {
       name: "Fábio Neves",
@@ -156,6 +164,9 @@ export function makeContacts() {
       status: "descartado",
       step1_date: "2026-10-10",
       sent1_at: "2026-10-10",
+      // Retomada futura (20/11): ainda não aparece em Envios de hoje.
+      retomar_em: "2026-11-20",
+      retomada_marcada_em: "2026-11-05T12:00:00Z",
     }),
     ct(U1, {
       name: "Hugo Melo",

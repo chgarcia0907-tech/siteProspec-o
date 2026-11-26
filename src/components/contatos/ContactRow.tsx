@@ -1,4 +1,4 @@
-import { Pencil } from "lucide-react";
+import { CalendarClock, Pencil } from "lucide-react";
 import { FunnelBadge } from "@/components/Funnel";
 import { PersonaSelect } from "@/components/PersonaSelect";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -34,6 +34,9 @@ export function ContactRow({
   onToggle,
   onEdit,
   onPersona,
+  retomada,
+  retomadaAtrasada,
+  onRetomada,
 }: {
   contact: Contact;
   /** Setor (ramo) da empresa cadastrada, quando o contato está vinculado a uma. */
@@ -45,6 +48,10 @@ export function ContactRow({
   onEdit: () => void;
   /** Grava a persona escolhida (confirma a sugerida). */
   onPersona: (persona: Persona) => void;
+  /** Texto do selo de retomada ("Retomar em 10/12"); vazio quando não está para retomar. */
+  retomada: string;
+  retomadaAtrasada: boolean;
+  onRetomada: () => void;
 }) {
   const { persona, suggested } = contactPersona(c);
   return (
@@ -133,8 +140,30 @@ export function ContactRow({
         ) : (
           <StatusBadge status={computedStatus(c)} />
         )}
+        {retomada && (
+          <span
+            className={cn(
+              "mt-1 block w-fit rounded-sm px-1.5 py-0.5 text-caption font-semibold",
+              retomadaAtrasada
+                ? "bg-warning-soft text-warning-text"
+                : "bg-primary-soft text-primary-text-strong",
+            )}
+            title={c.retomar_motivo ?? undefined}
+          >
+            {retomada}
+          </span>
+        )}
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="text-right whitespace-nowrap">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onRetomada}
+          aria-label={`Retomar ${c.name} depois`}
+          title="Retomar depois"
+        >
+          <CalendarClock strokeWidth={1.75} />
+        </Button>
         <Button size="icon" variant="ghost" onClick={onEdit} aria-label={`Editar ${c.name}`}>
           <Pencil strokeWidth={1.75} />
         </Button>

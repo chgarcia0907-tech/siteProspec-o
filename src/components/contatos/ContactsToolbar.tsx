@@ -16,6 +16,8 @@ import {
   RESPOSTA_FILTER_LABEL,
   type MissingFilter,
   type RespostaFilter,
+  RETOMADA_FILTER_LABEL,
+  type RetomadaFilter,
   type StatusFilter,
 } from "@/lib/contatos";
 
@@ -33,6 +35,8 @@ export function ContactsToolbar({
   onMissing,
   resposta,
   onResposta,
+  retomada,
+  onRetomada,
   actions,
   onExport,
 }: {
@@ -45,6 +49,8 @@ export function ContactsToolbar({
   onMissing: (v: MissingFilter) => void;
   resposta: RespostaFilter;
   onResposta: (v: RespostaFilter) => void;
+  retomada: RetomadaFilter;
+  onRetomada: (v: RetomadaFilter) => void;
   /** Botões extras (ex.: preenchimento automático). */
   actions?: ReactNode;
   onExport: () => void;
@@ -117,6 +123,18 @@ export function ContactsToolbar({
           {(Object.keys(RESPOSTA_FILTER_LABEL) as RespostaFilter[]).map((r) => (
             <option key={r} value={r}>
               {RESPOSTA_FILTER_LABEL[r]}
+            </option>
+          ))}
+        </NativeSelect>
+        <NativeSelect
+          aria-label="Retomada"
+          className="w-52"
+          value={retomada}
+          onChange={(e) => onRetomada(e.target.value as RetomadaFilter)}
+        >
+          {(Object.keys(RETOMADA_FILTER_LABEL) as RetomadaFilter[]).map((r) => (
+            <option key={r} value={r}>
+              {RETOMADA_FILTER_LABEL[r]}
             </option>
           ))}
         </NativeSelect>
