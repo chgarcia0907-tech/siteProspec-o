@@ -1,6 +1,6 @@
 # Plano: Dashboard de Outbound (Indicadores → Dashboard)
 
-Data: 26/11/2026 · Branch: `dev` · Status: aprovado em 26/11/2026; fases 0 e 1 concluídas (migração da fase 1 aguarda db:push), próxima: fase 2
+Data: 26/11/2026 · Branch: `dev` · Status: aprovado em 26/11/2026; fases 0 a 2 concluídas (migrações das fases 1 e 2 aguardam db:push), próxima: fase 3
 
 Base: `dashboard-outbound-ntec-implementacao.md` (spec) + respostas do usuário às 23 dúvidas
 (26/11/2026). Onde este plano diverge da spec, vale este plano.
