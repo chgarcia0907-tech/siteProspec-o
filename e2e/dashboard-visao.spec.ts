@@ -1,4 +1,4 @@
-import { expect, test } from "./helpers";
+import { expect, falharTabela, test } from "./helpers";
 
 // Hoje é 12/11/2026 (quinta), semana da S02. A Visão geral é a aba padrão da Dashboard.
 test.describe("Dashboard: Visão geral", () => {
@@ -34,5 +34,25 @@ test.describe("Dashboard: Visão geral", () => {
     await page.getByRole("tab", { name: "Indicadores" }).click();
     await expect(page).toHaveURL(/\/dashboard\?aba=indicadores$/);
     await expect(page.getByRole("group", { name: "ATs marcadas", exact: true })).toBeVisible();
+  });
+
+  test('falha ao carregar os ciclos mostra o motivo, nunca "Nenhum ciclo cadastrado"', async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await falharTabela("safras");
+    await page.goto("/dashboard");
+    const erro = page
+      .getByRole("alert")
+      .filter({ hasText: "Não foi possível carregar os ciclos." });
+    // O React Query tenta mais 3 vezes (com espera crescente) antes de mostrar o erro.
+    await expect(erro).toContainText('relation "public.safras" does not exist', {
+      timeout: 20_000,
+    });
+    await expect(page.getByText(/Nenhum ciclo cadastrado/)).toHaveCount(0);
+    await page.getByRole("tab", { name: "Hunters" }).click();
+    await expect(
+      page.getByRole("alert").filter({ hasText: "Não foi possível carregar os ciclos." }),
+    ).toBeVisible({ timeout: 20_000 });
   });
 });

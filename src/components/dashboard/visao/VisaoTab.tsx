@@ -9,7 +9,7 @@ import type { Fator, Taxa } from "@/lib/dashRitmo";
 import { cicloPadrao, rotuloSafra } from "@/lib/safras";
 import { cn } from "@/lib/utils";
 import { num } from "../format";
-import { Section } from "../shared";
+import { ErroCarga, Section } from "../shared";
 import { taxa } from "../hunters/format";
 import { SeloEsforco } from "../hunters/shared";
 import { AtsPorOrigem, RitmoSemanal } from "./Graficos";
@@ -28,6 +28,10 @@ export function VisaoTab({ onIr }: { onIr: Ir }) {
   const { data: d, isLoading, error, refetch } = useVisao(ciclo?.id ?? null);
 
   if (semanas.isLoading) return <p className="text-dense text-muted-foreground">Carregando…</p>;
+  if (semanas.error)
+    return (
+      <ErroCarga oQue="os ciclos" erro={semanas.error} onRetry={() => void semanas.refetch()} />
+    );
   if (!ciclo)
     return (
       <p className="rounded-xl border border-dashed border-input p-6 text-center text-dense text-muted-foreground">
@@ -62,14 +66,7 @@ export function VisaoTab({ onIr }: { onIr: Ir }) {
 
       {isLoading || !d ? (
         error ? (
-          <div className="rounded-xl border border-destructive-border bg-destructive-soft/40 p-5">
-            <p className="text-dense text-destructive-text">
-              Não foi possível carregar a visão geral.
-            </p>
-            <Button variant="secondary" className="mt-3" onClick={() => void refetch()}>
-              Tentar de novo
-            </Button>
-          </div>
+          <ErroCarga oQue="a visão geral" erro={error} onRetry={() => void refetch()} />
         ) : (
           <p className="text-dense text-muted-foreground">Carregando a visão geral…</p>
         )

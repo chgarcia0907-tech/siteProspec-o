@@ -17,7 +17,7 @@ import {
   type Safra,
   type SafraForm,
 } from "@/lib/safras";
-import { Section } from "../shared";
+import { ErroCarga, Section } from "../shared";
 import { AlocacaoSemana } from "./AlocacaoSemana";
 import { CalendarioSafras } from "./CalendarioSafras";
 import { GerarSemanasDialog } from "./GerarSemanasDialog";
@@ -58,14 +58,7 @@ export function SemanasTab({ ask }: { ask: Ask }) {
 
   if (isLoading) return <p className="text-dense text-muted-foreground">Carregando semanas…</p>;
   if (error || !data)
-    return (
-      <div className="rounded-xl border border-destructive-border bg-destructive-soft/40 p-5">
-        <p className="text-dense text-destructive-text">Não foi possível carregar as semanas.</p>
-        <Button variant="secondary" className="mt-3" onClick={() => void refetch()}>
-          Tentar de novo
-        </Button>
-      </div>
-    );
+    return <ErroCarga oQue="as semanas" erro={error} onRetry={() => void refetch()} />;
 
   if (!ciclo)
     return (
