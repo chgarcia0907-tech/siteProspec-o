@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAtsRouteImport } from './routes/_authenticated/ats'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedContatosRouteImport } from './routes/_authenticated/contatos'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEmpresasRouteImport } from './routes/_authenticated/empresas'
 import { Route as AuthenticatedHojeRouteImport } from './routes/_authenticated/hoje'
 import { Route as AuthenticatedImportarRouteImport } from './routes/_authenticated/importar'
@@ -59,6 +60,11 @@ const AuthenticatedConfiguracoesRoute =
 const AuthenticatedContatosRoute = AuthenticatedContatosRouteImport.update({
   id: '/contatos',
   path: '/contatos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEmpresasRoute = AuthenticatedEmpresasRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/ats': typeof AuthenticatedAtsRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contatos': typeof AuthenticatedContatosRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/empresas': typeof AuthenticatedEmpresasRoute
   '/hoje': typeof AuthenticatedHojeRoute
   '/importar': typeof AuthenticatedImportarRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/ats': typeof AuthenticatedAtsRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contatos': typeof AuthenticatedContatosRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/empresas': typeof AuthenticatedEmpresasRoute
   '/hoje': typeof AuthenticatedHojeRoute
   '/importar': typeof AuthenticatedImportarRoute
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/_authenticated/ats': typeof AuthenticatedAtsRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/contatos': typeof AuthenticatedContatosRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/empresas': typeof AuthenticatedEmpresasRoute
   '/_authenticated/hoje': typeof AuthenticatedHojeRoute
   '/_authenticated/importar': typeof AuthenticatedImportarRoute
@@ -218,6 +227,7 @@ export interface FileRouteTypes {
     | '/ats'
     | '/configuracoes'
     | '/contatos'
+    | '/dashboard'
     | '/empresas'
     | '/hoje'
     | '/importar'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/ats'
     | '/configuracoes'
     | '/contatos'
+    | '/dashboard'
     | '/empresas'
     | '/hoje'
     | '/importar'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ats'
     | '/_authenticated/configuracoes'
     | '/_authenticated/contatos'
+    | '/_authenticated/dashboard'
     | '/_authenticated/empresas'
     | '/_authenticated/hoje'
     | '/_authenticated/importar'
@@ -334,6 +346,13 @@ declare module '@tanstack/react-router' {
       path: '/contatos'
       fullPath: '/contatos'
       preLoaderRoute: typeof AuthenticatedContatosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/empresas': {
@@ -448,6 +467,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAtsRoute: typeof AuthenticatedAtsRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedContatosRoute: typeof AuthenticatedContatosRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEmpresasRoute: typeof AuthenticatedEmpresasRoute
   AuthenticatedHojeRoute: typeof AuthenticatedHojeRoute
   AuthenticatedImportarRoute: typeof AuthenticatedImportarRoute
@@ -463,6 +483,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAtsRoute: AuthenticatedAtsRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedContatosRoute: AuthenticatedContatosRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEmpresasRoute: AuthenticatedEmpresasRoute,
   AuthenticatedHojeRoute: AuthenticatedHojeRoute,
   AuthenticatedImportarRoute: AuthenticatedImportarRoute,

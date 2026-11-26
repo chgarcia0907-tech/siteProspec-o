@@ -23,11 +23,11 @@ const ABA_LABEL: Record<Aba, string> = {
 
 export const Route = createFileRoute("/_authenticated/painel")({
   // A aba aberta fica na URL (?aba=competicao), para links diretos e o redirecionamento do /ranking.
-  // "indicadores" saiu do painel (virou /indicadores): o valor passa só para o redirecionamento.
+  // "indicadores" saiu do painel (virou /dashboard): o valor passa só para o redirecionamento.
   validateSearch: (s: Record<string, unknown>): { aba?: Aba | "indicadores" } =>
     isAba(s["aba"]) || s["aba"] === "indicadores" ? { aba: s["aba"] } : {},
   beforeLoad: ({ search }) => {
-    if (search.aba === "indicadores") throw redirect({ to: "/indicadores" });
+    if (search.aba === "indicadores") throw redirect({ to: "/dashboard" });
   },
   head: () => ({
     meta: [

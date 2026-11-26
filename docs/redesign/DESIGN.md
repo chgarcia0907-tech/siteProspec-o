@@ -11,7 +11,7 @@ O redesign troca **só a apresentação**. Regras de produto, dados e cálculos 
 - **Só tema escuro, só desktop.** Não existe `.dark` nem `dark:`; não há layout de celular.
   Largura de trabalho: conteúdo com `max-w-[1120px]` ao lado da navegação lateral.
 - **Hierarquia antes de densidade.** Cada tela responde primeiro à pergunta principal
-  (ex.: Indicadores → "a equipe está no ritmo?") e deixa o detalhe um nível abaixo.
+  (ex.: Dashboard → "a equipe está no ritmo?") e deixa o detalhe um nível abaixo.
 - **Ação principal sempre visível e única.** Um botão primário por região.
 - **Estado tem palavra.** Cor nunca é o único sinal (atrasado, na meta, sem empresa…).
 - **Nada de gradiente, sombra pesada, borda lateral colorida ou emoji na UI.**
@@ -131,7 +131,7 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
 - **Sidebar fixa à esquerda** (`bg-sidebar`, ~232 px), três grupos:
   - **Prospecção:** Início, Envios de hoje (com contador), Empresas, Contatos, ATs, Tasks, Importar conexões.
   - **Referência:** Modelos, Configurações.
-  - **Administração:** Indicadores e Painel Admin, só para `has_role` admin.
+  - **Administração:** Dashboard e Painel Admin, só para `has_role` admin.
 - Usuário e "Sair" no rodapé da sidebar.
 - Item ativo: `bg-primary-soft text-heading`.
 - **Painel**: eyebrow "Painel do administrador" + H1 com o nome da aba + abas sublinhadas (`border-b-2 border-primary` na ativa). Cada aba continua em `/painel?aba=…`.
@@ -146,8 +146,8 @@ Todos sobre shadcn/ui (Radix). Ícones: lucide, traço 1.75, 16–18 px, `curren
     - Os campos do lead (nome, empresa, concordância, persona, área, cargo) ficam **recolhidos** numa faixa `bg-surface-inset` que só aparece quando falta dado que a mensagem usa ("A mensagem usa empresa, área e cargo. Complete antes de copiar." + "Completar dados").
     - Cartão atrasado: `border-destructive-border`.
   - Rodapé: "Mostrando X de Y" + "Mostrar mais 50".
-- **Indicadores**
-  1. Filtros (segmentado de intervalo + datas + selects, juntos num cartão). Com filtro fora do padrão, o cartão mostra o resumo em chips e "Limpar filtros". Ao rolar, uma barra compacta fixa no topo (sem sombra, `bg-card`) repete os chips, "Editar filtros" e "Limpar filtros". Filtros, aba do Detalhamento, ordenação e hunter aberto da Execução ficam na URL (`/indicadores?…`); o padrão nunca é escrito nela.
+- **Dashboard** (antes "Indicadores")
+  1. Filtros (segmentado de intervalo + datas + selects, juntos num cartão). Com filtro fora do padrão, o cartão mostra o resumo em chips e "Limpar filtros". Ao rolar, uma barra compacta fixa no topo (sem sombra, `bg-card`) repete os chips, "Editar filtros" e "Limpar filtros". Filtros, aba do Detalhamento, ordenação e hunter aberto da Execução ficam na URL (`/dashboard?…`); o padrão nunca é escrito nela.
   2. "A equipe está no ritmo desta semana?": 4 KPIs grandes (ATs marcadas, a métrica-guia, em `bg-primary-soft` e `text-big`, mais larga, com a meta da equipe e o semáforo (ícone + rótulo) quando há meta e dia útil; Mensagens enviadas, Conversão LinkedIn 1 → AT, Envios atrasados) + uma faixa única de 6 KPIs secundários (um cartão com divisórias, célula em alerta em `bg-destructive-soft/50`). "Envios atrasados agora" e "Hunters parados" trazem o atalho "Ver por hunter" (leva à Execução ordenada).
   3. "Quem precisa de ajuda" e "Metas da semana" em largura total, um abaixo do outro (a tabela de Metas não rola na horizontal em 1280 px). Alertas: 5 mais urgentes, "Ver todos" abre o resto, selo de severidade de largura fixa, nome do hunter é link para a Execução dele; a regra das metas vai em nota no rodapé de Metas.
   4. "Detalhamento" em abas internas: Execução por hunter, Envios por dia, Ritmo, Funil, Origem, Conversão, Tendência, Abastecimento.

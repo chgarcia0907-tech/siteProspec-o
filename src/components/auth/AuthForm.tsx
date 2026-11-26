@@ -12,7 +12,7 @@ export type AuthMode = "login" | "signup";
 
 /**
  * Formulário de entrada e cadastro, usado em /auth e no fim da página inicial. O admin vai para
- * /indicadores e o hunter para /inicio; no cadastro sem sessão, pede a confirmação do e-mail.
+ * /dashboard e o hunter para /inicio; no cadastro sem sessão, pede a confirmação do e-mail.
  */
 export function AuthForm({ mode, idPrefix = "" }: { mode: AuthMode; idPrefix?: string }) {
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ export function AuthForm({ mode, idPrefix = "" }: { mode: AuthMode; idPrefix?: s
           _user_id: signIn.user.id,
           _role: "admin",
         });
-        navigate({ to: isAdmin ? "/indicadores" : "/inicio", replace: true });
+        navigate({ to: isAdmin ? "/dashboard" : "/inicio", replace: true });
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,

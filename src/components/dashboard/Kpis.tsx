@@ -179,7 +179,7 @@ function Tile({
       )}
       {action && (
         <Link
-          to="/indicadores"
+          to="/dashboard"
           search={action.search}
           hash="execucao"
           className={cn(
