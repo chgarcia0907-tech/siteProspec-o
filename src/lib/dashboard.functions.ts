@@ -511,7 +511,7 @@ export const dashboardHunters = createServerFn({ method: "POST" })
     const { fetchAll } = await import("./fetch-all");
     const { adminIds } = await import("./competition.server");
     const { hackathonPeriods, splitHackathon } = await import("./fila");
-    const { computeHunters, H_CONTATO_COLUNAS } = await import("./dashHunters");
+    const { computeHunters, esforcoDasSemanas, H_CONTATO_COLUNAS } = await import("./dashHunters");
     const { weekStartISO } = await import("./empresas");
     type Linha = import("./dashHunters").HContato & { period_id: string | null };
 
@@ -581,7 +581,7 @@ export const dashboardHunters = createServerFn({ method: "POST" })
     // Cards do Hackathon encerrado ficam fora, como nos Indicadores.
     const atuais = splitHackathon(contatos, hackathonPeriods(periodos.data ?? [])).current;
     const p = parametros.data ?? PARAMETROS_PADRAO;
-    const resultado = computeHunters({
+    const entrada: import("./dashHunters").HuntersInput = {
       hoje: data.hoje,
       semana: weekStartISO(data.semana),
       safras: safras.data ?? [],
@@ -601,11 +601,14 @@ export const dashboardHunters = createServerFn({ method: "POST" })
       goals: goals.data ?? [],
       offsets: Object.fromEntries(settings.map(({ user_id, ...o }) => [user_id, o])),
       holidays: new Set((holidays.data ?? []).map((h) => h.date)),
-    });
+    };
+    const resultado = computeHunters(entrada);
     return {
       ...resultado,
       safras: (safras.data ?? []).sort((a, b) => a.numero - b.numero),
       maturacaoSemanas: p.maturacao_semanas,
       esforcoAlertaPct: p.esforco_alerta_pct,
+      concentracaoAtsPct: p.concentracao_ats_pct,
+      esforcoSemanas: esforcoDasSemanas(entrada),
     };
   });

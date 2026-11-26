@@ -536,3 +536,95 @@ export function computeHunters(input: HuntersInput): HuntersSemana {
     },
   };
 }
+
+/* ------------------------------ Para a tela ------------------------------ */
+
+export type StatusEsforco = "ok" | "perto" | "abaixo";
+
+/** Na meta (100% ou mais), perto (a partir do limite de alerta) ou abaixo. */
+export function statusEsforco(pct: number, alertaPct: number): StatusEsforco {
+  return pct >= 100 ? "ok" : pct >= alertaPct ? "perto" : "abaixo";
+}
+
+export const STATUS_ESFORCO_LABEL: Record<StatusEsforco, string> = {
+  ok: "Na meta",
+  perto: "Perto",
+  abaixo: "Abaixo",
+};
+
+/**
+ * Esforço de cada hunter em cada semana das safras do ciclo, até a semana escolhida (a linha
+ * "esforço por semana × meta" da ficha). Mesma conta de `computeHunters`, semana a semana.
+ */
+export function esforcoDasSemanas(
+  input: HuntersInput,
+): { semana: string; numero: number; porHunter: Record<string, Esforco | null> }[] {
+  return [...input.safras]
+    .sort((a, b) => a.numero - b.numero)
+    .filter((s) => s.inicio <= input.semana && s.inicio <= input.hoje)
+    .map((s) => {
+      const r = computeHunters({ ...input, semana: s.inicio });
+      return {
+        semana: s.inicio,
+        numero: s.numero,
+        porHunter: Object.fromEntries(r.hunters.map((h) => [h.id, h.disciplina.esforco])),
+      };
+    });
+}
+
+export type Ponto = { id: string; nome: string; x: number; y: number; n: number };
+export type Dispersao = { pontos: Ponto[]; mediaX: number | null; mediaY: number | null };
+
+const media = (v: readonly number[]) =>
+  v.length ? Math.round((v.reduce((t, x) => t + x, 0) / v.length) * 10) / 10 : null;
+const pct1 = (n: number, d: number) => Math.round((n / d) * 1000) / 10;
+
+/**
+ * Dispersões da Visão Equipe. Volume × avanço: X = ATs realizadas e Y = % avanço, só safras
+ * maduras e só quem tem ATs realizadas. Disciplina × resultado: X = % de passos no prazo e
+ * Y = ATs por 100 contatos no ciclo, só quem tem passos devidos e contatos. As médias (dos
+ * pontos) dividem os quadrantes.
+ */
+export function dispersoes(hunters: readonly HunterSemana[]): {
+  volumeAvanco: Dispersao;
+  disciplinaResultado: Dispersao;
+} {
+  const va = hunters
+    .filter((h) => h.ciclo.realizadasMaduras > 0)
+    .map((h) => ({
+      id: h.id,
+      nome: h.nome,
+      x: h.ciclo.realizadasMaduras,
+      y: pct1(h.ciclo.avancaramMaduras, h.ciclo.realizadasMaduras),
+      n: h.ciclo.realizadasMaduras,
+    }));
+  const dr = hunters
+    .filter((h) => h.ciclo.devidos > 0 && h.ciclo.contatos > 0)
+    .map((h) => ({
+      id: h.id,
+      nome: h.nome,
+      x: pct1(h.ciclo.noPrazo, h.ciclo.devidos),
+      y: Math.round((h.ciclo.ats / h.ciclo.contatos) * 1000) / 10,
+      n: h.ciclo.contatos,
+    }));
+  return {
+    volumeAvanco: {
+      pontos: va,
+      mediaX: media(va.map((p) => p.x)),
+      mediaY: media(va.map((p) => p.y)),
+    },
+    disciplinaResultado: {
+      pontos: dr,
+      mediaX: media(dr.map((p) => p.x)),
+      mediaY: media(dr.map((p) => p.y)),
+    },
+  };
+}
+
+/** Hunters com mais que `limitePct` das ATs da equipe na semana (só com ATs na semana). */
+export function concentracao(p: ParticipacaoSemana, limitePct: number): string[] {
+  if (p.total === 0) return [];
+  return Object.entries(p.porHunter)
+    .filter(([, n]) => (n / p.total) * 100 > limitePct)
+    .map(([id]) => id);
+}

@@ -3,6 +3,10 @@ import type { Alocacao } from "./alocacao";
 import { DEFAULT_OFFSETS } from "./cadencia";
 import {
   computeHunters,
+  concentracao,
+  dispersoes,
+  esforcoDasSemanas,
+  statusEsforco,
   metaDePassos,
   type HAt,
   type HContato,
@@ -289,5 +293,41 @@ describe("meta de passos", () => {
       10,
     );
     expect(metaDePassos([], "ana", null)).toBeNull();
+  });
+});
+
+describe("para a tela", () => {
+  it("palavra do esforço pelo limite de alerta", () => {
+    expect(statusEsforco(100, 70)).toBe("ok");
+    expect(statusEsforco(70, 70)).toBe("perto");
+    expect(statusEsforco(69, 70)).toBe("abaixo");
+  });
+
+  it("esforço semana a semana até a escolhida", () => {
+    const semanas = esforcoDasSemanas(input());
+    expect(semanas.map((s) => s.numero)).toEqual([1, 2, 3]);
+    expect(semanas.at(-1)!.porHunter["ana"]).toEqual(ana.disciplina.esforco);
+    expect(semanas.at(-1)!.porHunter["bruno"]).toBeNull();
+  });
+
+  it("dispersões só com quem tem base e médias dos pontos", () => {
+    const d = dispersoes(r.hunters);
+    // Nenhuma safra madura ainda: volume × avanço vazio.
+    expect(d.volumeAvanco).toEqual({ pontos: [], mediaX: null, mediaY: null });
+    // Ana: 4 contatos e 1 AT no ciclo = 25 ATs por 100 contatos.
+    const pAna = d.disciplinaResultado.pontos.find((p) => p.id === "ana")!;
+    expect(pAna.y).toBe(25);
+    expect(d.disciplinaResultado.pontos.find((p) => p.id === "bruno")).toBeUndefined();
+  });
+
+  it("concentração de ATs acima do limite", () => {
+    expect(concentracao({ semana: "x", total: 2, porHunter: { ana: 1, bruno: 1 } }, 30)).toEqual([
+      "ana",
+      "bruno",
+    ]);
+    expect(concentracao({ semana: "x", total: 4, porHunter: { ana: 1, bruno: 3 } }, 30)).toEqual([
+      "bruno",
+    ]);
+    expect(concentracao({ semana: "x", total: 0, porHunter: {} }, 30)).toEqual([]);
   });
 });
