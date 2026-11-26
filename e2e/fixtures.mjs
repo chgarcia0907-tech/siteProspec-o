@@ -488,6 +488,11 @@ export function initialDb() {
         updated_at: "2026-11-01T12:00:00Z",
       },
     ],
+    dashboard_tempo_etapas: [108, 31, 33, 34, 35, 36].map((stage_id, i) => ({
+      stage_id,
+      meta_dias: [7, 7, 10, 7, 4, 5][i],
+      updated_at: "2026-11-01T12:00:00Z",
+    })),
     ciclo_metas: [],
     groups: [{ id: G1, period_id: P1, name: "Squad Azul", created_at: "2026-10-27T03:00:00Z" }],
     subgroups: [{ id: S1, group_id: G1, name: "Dupla 1", created_at: "2026-10-27T03:00:00Z" }],
