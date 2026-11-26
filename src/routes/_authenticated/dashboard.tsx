@@ -5,10 +5,12 @@ import { ConciliacaoTab } from "@/components/dashboard/conciliacao/ConciliacaoTa
 import { ContadorConciliacao } from "@/components/dashboard/conciliacao/ContadorConciliacao";
 import { HuntersTab } from "@/components/dashboard/hunters/HuntersTab";
 import { RealizacaoTab } from "@/components/dashboard/realizacao/RealizacaoTab";
+import { SegmentosTab } from "@/components/dashboard/segmentos/SegmentosTab";
 import { VisaoTab } from "@/components/dashboard/visao/VisaoTab";
 import { SemanasTab } from "@/components/dashboard/semanas/SemanasTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useConfirm } from "@/components/useConfirm";
+import { DIMENSOES, type Dimensao } from "@/lib/dashSegmentos";
 import { parseIndicadoresBusca, type IndicadoresBusca } from "@/lib/indicadores";
 
 /**
@@ -16,11 +18,20 @@ import { parseIndicadoresBusca, type IndicadoresBusca } from "@/lib/indicadores"
  * conteúdo antigo dos Indicadores, que sai aos poucos conforme cada módulo novo entra
  * (.claude/plans/dashboard-outbound.md); link antigo só com os filtros dele abre essa aba.
  */
-const ABAS = ["visao", "hunters", "realizacao", "semanas", "conciliacao", "indicadores"] as const;
+const ABAS = [
+  "visao",
+  "hunters",
+  "segmentos",
+  "realizacao",
+  "semanas",
+  "conciliacao",
+  "indicadores",
+] as const;
 type Aba = (typeof ABAS)[number];
 const ABA_LABEL: Record<Aba, string> = {
   visao: "Visão geral",
   hunters: "Hunters",
+  segmentos: "Segmentos",
   realizacao: "Realização e avanço",
   semanas: "Semanas",
   conciliacao: "Conciliação",
@@ -50,6 +61,8 @@ type DashboardBusca = IndicadoresBusca & {
   /** Aba Hunters: segunda-feira da semana escolhida e hunter com a ficha aberta. */
   semana?: string | undefined;
   ficha?: string | undefined;
+  /** Aba Segmentos: dimensão escolhida (sem valor: setor). */
+  dimensao?: Exclude<Dimensao, "setor"> | undefined;
 };
 
 const DIA = /^\d{4}-\d{2}-\d{2}$/;
@@ -82,6 +95,9 @@ function validarBusca(raw: Record<string, unknown>): DashboardBusca {
     semana:
       typeof raw["semana"] === "string" && DIA.test(raw["semana"]) ? raw["semana"] : undefined,
     ficha: typeof raw["ficha"] === "string" && UUID.test(raw["ficha"]) ? raw["ficha"] : undefined,
+    dimensao: DIMENSOES.some((d) => d.key === raw["dimensao"] && d.key !== "setor")
+      ? (raw["dimensao"] as Exclude<Dimensao, "setor">)
+      : undefined,
   } satisfies { [K in keyof DashboardBusca]-?: DashboardBusca[K] };
 }
 
@@ -99,13 +115,16 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
-  const { aba: abaBusca, semana, ficha, ...search } = Route.useSearch();
+  const { aba: abaBusca, semana, ficha, dimensao, ...search } = Route.useSearch();
   const navigate = Route.useNavigate();
   const { ask, dialog } = useConfirm();
   // Sem aba na URL: Visão geral, a não ser que o link traga filtros dos Indicadores (links antigos).
   const aba: Aba =
     abaBusca ?? (CHAVES_INDICADORES.some((k) => search[k] !== undefined) ? "indicadores" : "visao");
-  const ir = (destino: "hunters" | "realizacao" | "semanas" | "conciliacao", hunter?: string) =>
+  const ir = (
+    destino: "hunters" | "segmentos" | "realizacao" | "semanas" | "conciliacao",
+    hunter?: string,
+  ) =>
     navigate({
       search: { aba: destino, ficha: destino === "hunters" ? hunter : undefined },
       resetScroll: true,
@@ -166,6 +185,19 @@ function Dashboard() {
                   resetScroll: false,
                 })
               }
+            />
+          </TabsContent>
+          <TabsContent value="segmentos" className="pt-4">
+            <SegmentosTab
+              dimensao={dimensao ?? "setor"}
+              onDimensao={(d) =>
+                navigate({
+                  search: { aba: "segmentos", dimensao: d === "setor" ? undefined : d },
+                  replace: true,
+                  resetScroll: false,
+                })
+              }
+              onIr={ir}
             />
           </TabsContent>
           <TabsContent value="realizacao" className="pt-4">

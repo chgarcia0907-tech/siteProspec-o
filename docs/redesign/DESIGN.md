@@ -287,6 +287,23 @@ barras horizontais, tempo por etapa em tabela (mediana acima da meta em `destruc
 "imatura" em `surface-inset`; "Sem alocação" por último e em `muted-foreground`) e perdas por
 motivo × etapa.
 
+**Aba Segmentos** (`src/components/dashboard/segmentos/`, entre Hunters e Realização e avanço): a
+pergunta "Onde a prospecção converte?" como H2, com as safras maduras e os limites da regra numa
+linha embaixo. A dimensão (setor, subsetor, porte, persona, nível, área) é um controle segmentado,
+como o de intervalo dos Indicadores, e fica na URL (`?dimensao=`). O destaque é a dispersão
+Prospect → AT × % avanço com o nome no ponto e as taxas da base inteira tracejadas em
+`chart-goal`; amostra pequena em `chart-muted`. Abaixo, a tabela com a decisão por ícone e palavra
+(Fica `success`, Ajusta `warning-text`, Troca `destructive-text`); amostra pequena e "Não
+informado" ficam em `muted-foreground`, sem decisão. Depois, os testes A/B (um cartão por teste;
+versão A `chart-1`, B `chart-3`; selo `bg-warning-soft` "Parcial: …" com o que falta,
+`bg-success-soft` "Conclusivo"), contatos por empresa em barras, canal da AT e mensagem que gerou a
+resposta em tabelas, e safra × setor alocado (safra imatura em `muted-foreground` com selo).
+
+**Testes A/B na aba Semanas** (`semanas/TestesAb.tsx`, embaixo das metas do ciclo): tabela com
+nome, dimensão, safras, versões e situação; "Novo teste" abre um diálogo com nome, dimensão, safras
+e uma caixa por versão com os valores da dimensão em caixas de seleção (valor já usado em outra
+versão fica desabilitado). Encerrar pede a decisão em texto; excluir passa pelo `useConfirm`.
+
 **Filtros globais** num cartão no topo, como hoje (ciclo, safra, hunter, dupla, setor alocado),
 na URL; com filtro fora do padrão, chips e "Limpar filtros".
 

@@ -24,6 +24,7 @@ import { GerarSemanasDialog } from "./GerarSemanasDialog";
 import { MetasCicloCard, MetasCicloDialog } from "./MetasCiclo";
 import { ParametrosDialog } from "./ParametrosDialog";
 import { SafraDialog } from "./SafraDialog";
+import { TestesAbCard } from "./TestesAb";
 
 type Aberto =
   | { tipo: "nova" }
@@ -188,6 +189,8 @@ export function SemanasTab({ ask }: { ask: Ask }) {
         metas={data.metas[ciclo.id] ?? METAS_CICLO_VAZIAS}
         onEditar={() => setAberto({ tipo: "metas" })}
       />
+
+      <TestesAbCard periodId={ciclo.id} ask={ask} />
 
       {aberto?.tipo === "nova" && (
         <SafraDialog

@@ -971,3 +971,50 @@ export const PIPEDRIVE = {
     ],
   },
 };
+
+/**
+ * Preparo da aba Segmentos: maturação zero e mínimo de 1 AT realizada (S01 madura no relógio
+ * fixo), ATs ligadas a contatos da S01 e um teste A/B de setor (Varejo × Indústria) nas duas safras.
+ */
+export function segmentosSeed(db) {
+  Object.assign(db.dashboard_parametros[0], { maturacao_semanas: 0, min_ats_segmento: 1 });
+  // Dois contatos da S01 (02 a 08/11), um em cada empresa, com as ATs Ômega (realizada) e Sigma
+  // (no-show) ligadas a eles.
+  const [c1, c2] = db.contacts.filter(
+    (c) => c.user_id === U1 && c.created_at >= "2026-11-02" && c.created_at < "2026-11-09",
+  );
+  Object.assign(c1, { company_id: EMPRESA_DELTA, job_title: "Gerente de Operações" });
+  Object.assign(c2, { company_id: EMPRESA_OMICRON, job_title: "Diretor Industrial" });
+  db.ats.find((a) => a.id === AT_OMEGA).contact_id = c1.id;
+  db.ats.find((a) => a.id === AT_SIGMA).contact_id = c2.id;
+  const TESTE = "17171717-0000-4000-8000-000000000001";
+  db.ab_testes.push({
+    id: TESTE,
+    period_id: P1,
+    nome: "Varejo × Indústria",
+    dimensao: "setor",
+    descricao: "Qual setor marca mais ATs?",
+    safra_inicial_id: SAFRA_S01,
+    safra_final_id: SAFRA_S02,
+    status: "ativo",
+    conclusao: null,
+    created_at: "2026-11-03T12:00:00Z",
+    updated_at: "2026-11-03T12:00:00Z",
+  });
+  db.ab_versoes.push(
+    {
+      id: "17171717-0000-4000-8000-0000000000a1",
+      teste_id: TESTE,
+      rotulo: "A",
+      ordem: 0,
+      valores: [SETOR_VAREJO],
+    },
+    {
+      id: "17171717-0000-4000-8000-0000000000b1",
+      teste_id: TESTE,
+      rotulo: "B",
+      ordem: 1,
+      valores: [SETOR_INDUSTRIA],
+    },
+  );
+}
