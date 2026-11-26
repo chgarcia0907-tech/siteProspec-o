@@ -701,6 +701,154 @@ export type Database = {
         };
         Relationships: [];
       };
+      pd_card_etapas: {
+        Row: {
+          deal_id: number;
+          entrou_em: string;
+          saiu_em: string | null;
+          stage_id: number;
+        };
+        Insert: {
+          deal_id: number;
+          entrou_em: string;
+          saiu_em?: string | null;
+          stage_id: number;
+        };
+        Update: {
+          deal_id?: number;
+          entrou_em?: string;
+          saiu_em?: string | null;
+          stage_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pd_card_etapas_deal_id_fkey";
+            columns: ["deal_id"];
+            isOneToOne: false;
+            referencedRelation: "pd_cards";
+            referencedColumns: ["deal_id"];
+          },
+        ];
+      };
+      pd_cards: {
+        Row: {
+          add_time: string | null;
+          canal_entrada: string | null;
+          cargo: string | null;
+          deal_id: number;
+          etiquetas: number[];
+          hunter_login: string | null;
+          lost_reason: string | null;
+          lost_time: string | null;
+          moeda: string | null;
+          org_id: number | null;
+          outbound: boolean;
+          person_id: number | null;
+          pipeline_id: number | null;
+          porte: string | null;
+          sincronizado_em: string;
+          stage_change_time: string | null;
+          stage_id: number | null;
+          status: string;
+          titulo: string;
+          update_time: string | null;
+          valor: number | null;
+          won_time: string | null;
+        };
+        Insert: {
+          add_time?: string | null;
+          canal_entrada?: string | null;
+          cargo?: string | null;
+          deal_id: number;
+          etiquetas?: number[];
+          hunter_login?: string | null;
+          lost_reason?: string | null;
+          lost_time?: string | null;
+          moeda?: string | null;
+          org_id?: number | null;
+          outbound?: boolean;
+          person_id?: number | null;
+          pipeline_id?: number | null;
+          porte?: string | null;
+          sincronizado_em?: string;
+          stage_change_time?: string | null;
+          stage_id?: number | null;
+          status: string;
+          titulo?: string;
+          update_time?: string | null;
+          valor?: number | null;
+          won_time?: string | null;
+        };
+        Update: {
+          add_time?: string | null;
+          canal_entrada?: string | null;
+          cargo?: string | null;
+          deal_id?: number;
+          etiquetas?: number[];
+          hunter_login?: string | null;
+          lost_reason?: string | null;
+          lost_time?: string | null;
+          moeda?: string | null;
+          org_id?: number | null;
+          outbound?: boolean;
+          person_id?: number | null;
+          pipeline_id?: number | null;
+          porte?: string | null;
+          sincronizado_em?: string;
+          stage_change_time?: string | null;
+          stage_id?: number | null;
+          status?: string;
+          titulo?: string;
+          update_time?: string | null;
+          valor?: number | null;
+          won_time?: string | null;
+        };
+        Relationships: [];
+      };
+      pd_tasks: {
+        Row: {
+          activity_id: number;
+          add_time: string | null;
+          assunto: string;
+          deal_id: number;
+          done: boolean;
+          due_date: string | null;
+          hunter_login: string | null;
+          marked_as_done_time: string | null;
+          tipo: string | null;
+        };
+        Insert: {
+          activity_id: number;
+          add_time?: string | null;
+          assunto?: string;
+          deal_id: number;
+          done?: boolean;
+          due_date?: string | null;
+          hunter_login?: string | null;
+          marked_as_done_time?: string | null;
+          tipo?: string | null;
+        };
+        Update: {
+          activity_id?: number;
+          add_time?: string | null;
+          assunto?: string;
+          deal_id?: number;
+          done?: boolean;
+          due_date?: string | null;
+          hunter_login?: string | null;
+          marked_as_done_time?: string | null;
+          tipo?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pd_tasks_deal_id_fkey";
+            columns: ["deal_id"];
+            isOneToOne: false;
+            referencedRelation: "pd_cards";
+            referencedColumns: ["deal_id"];
+          },
+        ];
+      };
       period_members: {
         Row: {
           group_id: string | null;
