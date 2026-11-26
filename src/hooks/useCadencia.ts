@@ -386,7 +386,7 @@ export function useAddCompanies() {
   return useMutation({
     mutationFn: async (
       rows: (Pick<Company, "name" | "gender" | "sector_id" | "week_start"> &
-        Partial<Pick<Company, "subsector_id">>)[],
+        Partial<Pick<Company, "subsector_id" | "porte">>)[],
     ): Promise<number> => {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
@@ -414,7 +414,7 @@ export function useUpdateCompany() {
     }: {
       id: string;
       patch: Partial<
-        Pick<Company, "name" | "gender" | "sector_id" | "subsector_id" | "week_start">
+        Pick<Company, "name" | "gender" | "sector_id" | "subsector_id" | "week_start" | "porte">
       >;
     }) => {
       // Trocar o setor sem dizer o subsetor limpa o subsetor: o banco recusa um subsetor de outro setor.

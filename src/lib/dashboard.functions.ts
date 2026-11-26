@@ -6,7 +6,19 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import {
+  alocacaoLimpa,
+  copiarAlocacoes,
+  erroAlocacao,
+  mesmaAlocacao,
+  modoEdicao,
+  trocaDeSetor,
+  type Alocacao,
+  type AlocacaoForm,
+} from "./alocacao";
+import {
   METAS_CICLO_VAZIAS,
+  diaSP,
+  safraAnterior,
   PARAMETROS_PADRAO,
   erroMetasCiclo,
   erroParametros,
@@ -197,6 +209,8 @@ export const dashboardExcluirSafra = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const admin = await db();
     const { error } = await admin.from("safras").delete().eq("id", data.id);
+    if (error?.code === "23503")
+      throw new Error("A safra tem alocações: exclua as alocações antes de excluir a safra.");
     if (error) throw new Error("Falha ao excluir a safra");
     return { ok: true as const };
   });
@@ -263,4 +277,214 @@ export const dashboardSalvarMetasCiclo = createServerFn({ method: "POST" })
       : await admin.from("ciclo_metas").upsert({ period_id: data.periodId, ...data.metas });
     if (error) throw new Error("Falha ao salvar as metas do ciclo");
     return { ok: true as const, metas: vazias ? METAS_CICLO_VAZIAS : data.metas };
+  });
+
+/* -------------------------------- Alocação -------------------------------- */
+
+const ALOC_COLS =
+  "id, safra_id, user_id, sector_id, subsector_id, dupla, meta_empresas, meta_contatos, motivo_meta_zero, vigente_desde";
+
+export type HunterDoCiclo = { id: string; name: string };
+export type SetorOpcao = {
+  id: string;
+  name: string;
+  active: boolean;
+  sort: number;
+  parent_id: string | null;
+};
+export type AlocacaoDados = {
+  /** Safras do ciclo, para escolher a semana. */
+  safras: Safra[];
+  /** Alocações de todas as safras do ciclo (a cópia usa a safra anterior). */
+  alocacoes: Alocacao[];
+  /** Membros do ciclo, em ordem alfabética. */
+  hunters: HunterDoCiclo[];
+  setores: SetorOpcao[];
+  /** Hoje em São Paulo, pelo relógio do servidor (o mesmo que decide o que pode ser editado). */
+  hoje: string;
+};
+
+/** Hoje em São Paulo pelo relógio do servidor: as regras de edição não dependem do navegador. */
+const hojeSP = () => diaSP(new Date().toISOString());
+
+/** Dados da tabela de alocação de um ciclo. */
+export const dashboardAlocacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ periodId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }): Promise<AlocacaoDados> => {
+    await assertAdmin(context);
+    const admin = await db();
+    const [safras, membros, setores] = await Promise.all([
+      admin.from("safras").select(SAFRA_COLS).eq("period_id", data.periodId).order("numero"),
+      admin.from("period_members").select("user_id").eq("period_id", data.periodId),
+      admin.from("sectors").select("id, name, active, sort, parent_id"),
+    ]);
+    const erro = safras.error ?? membros.error ?? setores.error;
+    if (erro) throw new Error("Falha ao carregar a alocação");
+    const ids = (safras.data ?? []).map((s) => s.id);
+    const userIds = [...new Set((membros.data ?? []).map((m) => m.user_id))];
+    const [alocacoes, perfis] = await Promise.all([
+      ids.length
+        ? admin.from("alocacoes").select(ALOC_COLS).in("safra_id", ids)
+        : Promise.resolve({ data: [] as Alocacao[], error: null }),
+      userIds.length
+        ? admin.from("profiles").select("id, display_name, email").in("id", userIds)
+        : Promise.resolve({
+            data: [] as { id: string; display_name: string | null; email: string | null }[],
+            error: null,
+          }),
+    ]);
+    if (alocacoes.error ?? perfis.error) throw new Error("Falha ao carregar a alocação");
+    return {
+      safras: safras.data ?? [],
+      alocacoes: alocacoes.data ?? [],
+      hunters: (perfis.data ?? [])
+        .map((p) => ({ id: p.id, name: p.display_name?.trim() || p.email || "Hunter" }))
+        .sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+      setores: setores.data ?? [],
+      hoje: hojeSP(),
+    };
+  });
+
+async function safraEAlocacoes(admin: Awaited<ReturnType<typeof db>>, safraId: string) {
+  const { data: safra, error } = await admin
+    .from("safras")
+    .select(SAFRA_COLS)
+    .eq("id", safraId)
+    .maybeSingle();
+  if (error) throw new Error("Falha ao carregar a safra");
+  if (!safra) throw new Error("Safra não encontrada");
+  const { data: alocacoes, error: e2 } = await admin
+    .from("alocacoes")
+    .select(ALOC_COLS)
+    .eq("safra_id", safraId);
+  if (e2) throw new Error("Falha ao carregar a alocação");
+  return { safra, alocacoes: alocacoes ?? [] };
+}
+
+async function paiDosSubsetores(admin: Awaited<ReturnType<typeof db>>) {
+  const { data, error } = await admin.from("sectors").select("id, parent_id");
+  if (error) throw new Error("Falha ao carregar os setores");
+  return new Map((data ?? []).filter((s) => s.parent_id).map((s) => [s.id, s.parent_id as string]));
+}
+
+/** Mensagem do trigger do banco (P0001) ou a genérica. */
+function erroDoBanco(error: { code?: string; message: string }, generica: string): Error {
+  return new Error(error.code === "P0001" ? error.message : generica);
+}
+
+const alocacaoForm = z.object({
+  user_id: z.string().uuid(),
+  sector_id: z.string().uuid(),
+  subsector_id: z.string().uuid().nullable(),
+  dupla: z.string().max(40).nullable(),
+  meta_empresas: z.number().int(),
+  meta_contatos: z.number().int(),
+  motivo_meta_zero: z.string().max(200).nullable(),
+  vigente_desde: isoDay,
+});
+
+/**
+ * Cria ou edita uma linha de alocação. Até o início da safra, tudo pode mudar. Durante a semana,
+ * só a troca de setor: linha nova, a partir de hoje, com as metas e a dupla da linha atual.
+ */
+export const dashboardSalvarAlocacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        safraId: z.string().uuid(),
+        /** Linha editada; sem id, cria. */
+        id: z.string().uuid().nullable(),
+        alocacao: alocacaoForm,
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { safra, alocacoes } = await safraEAlocacoes(admin, data.safraId);
+    const hoje = hojeSP();
+    const modo = modoEdicao(safra, hoje);
+    if (modo === "encerrada") throw new Error("Safra encerrada: a alocação não muda mais.");
+    const f: AlocacaoForm = alocacaoLimpa(data.alocacao);
+
+    if (modo === "troca_setor") {
+      if (data.id) throw new Error("Safra em andamento: só é possível trocar o setor.");
+      const atual = alocacoes
+        .filter((a) => a.user_id === f.user_id)
+        .sort((a, b) => a.vigente_desde.localeCompare(b.vigente_desde))
+        .at(-1);
+      if (!atual) throw new Error("Safra em andamento: não dá para alocar um hunter novo.");
+      if (f.vigente_desde < hoje) throw new Error("A troca de setor vale a partir de hoje.");
+      const esperado = trocaDeSetor(atual, f, f.vigente_desde);
+      if (!esperado) throw new Error("O setor é o mesmo da alocação atual.");
+      if (!mesmaAlocacao(esperado, f))
+        throw new Error("Safra em andamento: só o setor muda; metas e dupla ficam como estão.");
+    }
+
+    const outras = alocacoes.filter((a) => a.id !== data.id);
+    const erro = erroAlocacao(f, safra, outras, await paiDosSubsetores(admin));
+    if (erro) throw new Error(erro);
+    const { error } = data.id
+      ? await admin.from("alocacoes").update(f).eq("id", data.id).eq("safra_id", data.safraId)
+      : await admin
+          .from("alocacoes")
+          .insert({ ...f, safra_id: data.safraId, created_by: context.userId });
+    if (error) throw erroDoBanco(error, "Falha ao salvar a alocação");
+    return { ok: true as const };
+  });
+
+/** Exclui uma linha de alocação (só antes do início da safra). */
+export const dashboardExcluirAlocacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { data: linha, error: e1 } = await admin
+      .from("alocacoes")
+      .select("safra_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (e1) throw new Error("Falha ao carregar a alocação");
+    if (!linha) throw new Error("Alocação não encontrada");
+    const { safra } = await safraEAlocacoes(admin, linha.safra_id);
+    if (modoEdicao(safra, hojeSP()) !== "livre")
+      throw new Error("A safra já começou: a alocação não pode ser excluída.");
+    const { error } = await admin.from("alocacoes").delete().eq("id", data.id);
+    if (error) throw new Error("Falha ao excluir a alocação");
+    return { ok: true as const };
+  });
+
+/** Copia para a safra a alocação atual de cada hunter da safra anterior do ciclo. */
+export const dashboardCopiarAlocacoes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ safraId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { safra } = await safraEAlocacoes(admin, data.safraId);
+    if (!safra.usa_alocacao) throw new Error("Esta safra não usa alocação.");
+    if (modoEdicao(safra, hojeSP()) !== "livre")
+      throw new Error("A safra já começou: copie antes do início dela.");
+    const { data: doCiclo, error } = await admin
+      .from("safras")
+      .select(SAFRA_COLS)
+      .eq("period_id", safra.period_id);
+    if (error) throw new Error("Falha ao carregar as safras");
+    const anterior = safraAnterior(safra, doCiclo ?? []);
+    if (!anterior) throw new Error("Esta é a primeira safra do ciclo.");
+    const { data: alocacoes, error: e2 } = await admin
+      .from("alocacoes")
+      .select(ALOC_COLS)
+      .in("safra_id", [anterior.id, safra.id]);
+    if (e2) throw new Error("Falha ao carregar a alocação");
+    const novas = copiarAlocacoes(alocacoes ?? [], anterior, safra);
+    if (novas.length === 0) return { copiadas: 0 };
+    const { error: e3 } = await admin
+      .from("alocacoes")
+      .insert(novas.map((f) => ({ ...f, safra_id: safra.id, created_by: context.userId })));
+    if (e3) throw erroDoBanco(e3, "Falha ao copiar a alocação");
+    return { copiadas: novas.length };
   });
