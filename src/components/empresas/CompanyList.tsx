@@ -2,6 +2,7 @@ import { Building2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { CompanyGenderToggle } from "@/components/CompanyGender";
 import { IndustrySelect } from "@/components/IndustrySelect";
+import { PorteSelect } from "./PorteSelect";
 import { InlineInput } from "@/components/InlineInput";
 import type { Ask } from "@/components/useConfirm";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,7 @@ export function CompanyList({
               <TableHeader>
                 <TableRow>
                   <TableHead>Empresa e concordância</TableHead>
-                  <TableHead>Setor</TableHead>
+                  <TableHead>Setor e porte</TableHead>
                   <TableHead>Cadência</TableHead>
                   <TableHead>Contatos</TableHead>
                   <TableHead className="w-12">
@@ -113,6 +114,12 @@ export function CompanyList({
                           subsectorId={c.subsector_id}
                           onChange={(v) => patch(c, v, "Setor atualizado")}
                           className="h-8 w-36"
+                        />
+                        <PorteSelect
+                          label={`Porte de ${c.name}`}
+                          value={c.porte}
+                          onChange={(porte) => patch(c, { porte }, "Porte atualizado")}
+                          className="mt-1.5 block h-8 w-36"
                         />
                       </TableCell>
                       <TableCell>

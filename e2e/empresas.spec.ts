@@ -5,6 +5,7 @@ const U1 = "11111111-1111-4111-8111-111111111111";
 const SETOR_VAREJO = "12121212-0000-4000-8000-000000000001";
 const SETOR_INDUSTRIA = "12121212-0000-4000-8000-000000000003";
 const SUBSETOR_METALURGIA = "12121212-0000-4000-8000-000000000004";
+const EMPRESA_DELTA = "13131313-0000-4000-8000-000000000001";
 
 test.describe("Empresas", () => {
   test("lista as empresas por semana, com setor e contatos vinculados", async ({ page }) => {
@@ -275,5 +276,32 @@ test.describe("Empresas", () => {
     await page.getByRole("button", { name: "[FIRST NAME]", exact: true }).click();
     await expect(msg).toHaveValue("Oi, [FIRST NAME]");
     await expect(page.getByRole("tab", { name: /^LinkedIn 1/ })).toContainText("própria");
+  });
+
+  test("escolhe o porte da empresa na lista e no cadastro (opcional)", async ({ page }) => {
+    await page.goto("/empresas");
+    const delta = page.getByRole("combobox", { name: "Porte de Delta" });
+    await expect(delta).toHaveValue("");
+    await expect(delta.locator("option:checked")).toHaveText("Não informado");
+    await delta.selectOption({ label: "51 a 200" });
+    await expect(page.getByText("Porte atualizado")).toBeVisible();
+    let [m] = await mutations();
+    expect(m).toMatchObject({ method: "PATCH", table: "companies" });
+    expect(m!.query).toContain(EMPRESA_DELTA);
+    expect(JSON.parse(m!.body)).toEqual({ porte: "51-200" });
+
+    await page.getByLabel("Empresas (uma por linha)").fill("Zeta\nÔmega");
+    const form = page.getByRole("form", { name: "Cadastrar empresas" });
+    await form
+      .getByRole("combobox", { name: "Setor da empresa" })
+      .selectOption({ label: "Varejo" });
+    await form.getByLabel("Porte (opcional)").selectOption({ label: "1.001 a 5.000" });
+    await form.getByRole("button", { name: "Cadastrar" }).click();
+    await expect(page.getByText("2 empresas cadastradas")).toBeVisible();
+    m = (await mutations())[1];
+    expect(JSON.parse(m!.body).map((c: { porte: string }) => c.porte)).toEqual([
+      "1001-5000",
+      "1001-5000",
+    ]);
   });
 });
