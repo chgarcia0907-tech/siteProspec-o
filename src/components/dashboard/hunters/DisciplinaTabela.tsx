@@ -25,23 +25,24 @@ export function DisciplinaTabela({
           <caption className="sr-only">Disciplina de cada hunter na semana</caption>
           <thead className="bg-surface-inset">
             <tr>
-              {[
-                "Hunter",
-                "Setor alocado",
-                "Contatos",
-                "Passos",
-                "No prazo",
-                "Dias ativos",
-                "Esforço",
-                "ATs",
-                "Parados",
-              ].map((t, i) => (
+              {(
+                [
+                  ["Hunter", "left"],
+                  ["Setor alocado", "left"],
+                  ["Contatos", "right"],
+                  ["Passos", "right"],
+                  ["Passos no prazo", "left"],
+                  ["Tasks no prazo", "left"],
+                  ["Dias ativos", "right"],
+                  ["Esforço", "left"],
+                  ["ATs", "right"],
+                  ["Parados", "right"],
+                ] as const
+              ).map(([t, lado]) => (
                 <th
                   key={t}
                   scope="col"
-                  className={
-                    i >= 2 && i !== 4 && i !== 6 ? "px-3 py-2 text-right" : "px-3 py-2 text-left"
-                  }
+                  className={lado === "right" ? "px-3 py-2 text-right" : "px-3 py-2 text-left"}
                 >
                   {t}
                 </th>
@@ -87,6 +88,14 @@ export function DisciplinaTabela({
                   <td className="px-3 py-2 tabular-nums whitespace-nowrap">
                     {taxa(dis.noPrazo, dis.devidos)}
                   </td>
+                  <td
+                    className="px-3 py-2 tabular-nums whitespace-nowrap"
+                    title={
+                      dis.tasks ? undefined : "Sem tasks copiadas do Pipedrive para este hunter"
+                    }
+                  >
+                    {dis.tasks ? taxa(dis.tasks.noPrazo, dis.tasks.devidas) : "—"}
+                  </td>
                   <td className="px-3 py-2 text-right tabular-nums whitespace-nowrap">
                     {dis.diasAtivos} de {dis.diasUteis}
                   </td>
@@ -116,8 +125,10 @@ export function DisciplinaTabela({
       <p className="mt-3 text-caption text-muted-foreground">
         Esforço = (contatos adicionados + passos) ÷ (meta de contatos da alocação + meta semanal de
         passos). Na meta: 100% ou mais; perto: {d.esforcoAlertaPct}% ou mais.
-        {parcial && " Semana em andamento: a meta é proporcional aos dias úteis já passados."}{" "}
-        Parados: em cadência, sem resposta e sem envio há mais dias úteis que o limite da dashboard.
+        {parcial && " Semana em andamento: a meta é proporcional aos dias úteis já passados."} Tasks
+        no prazo: tasks do Pipedrive dos cards do hunter com prazo na semana (até ontem), concluídas
+        até o dia do vencimento. Parados: em cadência, sem resposta e sem envio há mais dias úteis
+        que o limite da dashboard.
       </p>
     </Section>
   );

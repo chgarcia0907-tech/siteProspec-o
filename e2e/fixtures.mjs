@@ -409,7 +409,27 @@ export function initialDb() {
       },
     ],
     pd_card_etapas: [],
-    pd_tasks: [],
+    // Tasks do hunter1 nesta semana: uma concluída no dia do prazo, outra aberta e vencida.
+    pd_tasks: [
+      {
+        activity_id: 700001,
+        deal_id: 94800,
+        assunto: "TP1",
+        due_date: "2026-11-10",
+        done: true,
+        marked_as_done_time: "2026-11-10T18:00:00Z",
+        hunter_login: "hunter1",
+      },
+      {
+        activity_id: 700002,
+        deal_id: 94800,
+        assunto: "TP3",
+        due_date: "2026-11-11",
+        done: false,
+        marked_as_done_time: null,
+        hunter_login: "hunter1",
+      },
+    ],
     safras: [
       {
         id: SAFRA_S01,
