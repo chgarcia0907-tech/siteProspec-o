@@ -1191,6 +1191,7 @@ export type Database = {
       };
       safras: {
         Row: {
+          cadencia_em: string;
           created_at: string;
           fim: string;
           id: string;
@@ -1201,6 +1202,7 @@ export type Database = {
           usa_alocacao: boolean;
         };
         Insert: {
+          cadencia_em?: string;
           created_at?: string;
           fim: string;
           id?: string;
@@ -1211,6 +1213,7 @@ export type Database = {
           usa_alocacao?: boolean;
         };
         Update: {
+          cadencia_em?: string;
           created_at?: string;
           fim?: string;
           id?: string;
