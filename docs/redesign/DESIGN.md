@@ -239,6 +239,12 @@ hoje ficam com `opacity-80` (fase prevista; mais apagado que isso derruba o cont
 abaixo de 4,5:1). Abaixo, o cartão de metas do ciclo; parâmetros num diálogo "Configurar
 dashboard".
 
+**Alocação da semana** (mesma aba, entre o calendário e as metas): seletor de safra no cabeçalho,
+faixa `bg-surface-inset` dizendo o que pode ser feito (livre antes da safra, só troca de setor
+durante, encerrada depois) e tabela compacta hunter × setor › subsetor, dupla e metas. Hunter sem
+alocação leva o selo `bg-warning-soft` "Não alocado"; vigências anteriores aparecem em
+`text-caption` embaixo do setor ("antes: Varejo (09/11 a 11/11)").
+
 **Filtros globais** num cartão no topo, como hoje (ciclo, safra, hunter, dupla, setor alocado),
 na URL; com filtro fora do padrão, chips e "Limpar filtros".
 

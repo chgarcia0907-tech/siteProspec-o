@@ -3,9 +3,15 @@ import { expect, mutations, test } from "./helpers";
 const P1 = "aaaaaaaa-0000-4000-8000-000000000001";
 const SAFRA_S01 = "16161616-0000-4000-8000-000000000001";
 const SAFRA_S02 = "16161616-0000-4000-8000-000000000002";
+const SAFRA_S03 = "16161616-0000-4000-8000-000000000003";
+const U1 = "11111111-1111-4111-8111-111111111111";
+const U2 = "22222222-2222-4222-8222-222222222222";
+const SETOR_VAREJO = "12121212-0000-4000-8000-000000000001";
+const SETOR_INDUSTRIA = "12121212-0000-4000-8000-000000000003";
+const SUBSETOR_METALURGIA = "12121212-0000-4000-8000-000000000004";
 
-// Hoje é 12/11/2026 (quinta). O Ciclo Nov (ativo) tem a S01 (02/11, sem alocação) e a S02
-// (09/11, a semana de hoje). Maturação de 3 semanas.
+// Hoje é 12/11/2026 (quinta). O Ciclo Nov (ativo) tem a S01 (02/11, sem alocação), a S02
+// (09/11, a semana de hoje) e a S03 (16/11). Maturação de 3 semanas.
 test.describe("Dashboard › Semanas", () => {
   test("a aba fica na URL e mostra o calendário em escada do ciclo ativo", async ({ page }) => {
     await page.goto("/dashboard");
@@ -34,25 +40,25 @@ test.describe("Dashboard › Semanas", () => {
     await page.goto("/dashboard?aba=semanas");
     await page.getByRole("button", { name: "Nova safra" }).click();
     const dialog = page.getByRole("dialog", { name: "Nova safra" });
-    await expect(dialog.getByLabel("Número")).toHaveValue("3");
-    await expect(dialog.getByLabel("Início (segunda)")).toHaveValue("2026-11-16");
-    await expect(dialog.getByLabel("Fim")).toHaveValue("2026-11-20");
+    await expect(dialog.getByLabel("Número")).toHaveValue("4");
+    await expect(dialog.getByLabel("Início (segunda)")).toHaveValue("2026-11-23");
+    await expect(dialog.getByLabel("Fim")).toHaveValue("2026-11-27");
 
-    await dialog.getByLabel("Início (segunda)").fill("2026-11-17");
-    await dialog.getByLabel("Fim").fill("2026-11-20");
+    await dialog.getByLabel("Início (segunda)").fill("2026-11-24");
+    await dialog.getByLabel("Fim").fill("2026-11-27");
     await dialog.getByRole("button", { name: "Criar safra" }).click();
     await expect(dialog.getByRole("alert")).toHaveText("A safra começa numa segunda-feira.");
     expect(await mutations()).toEqual([]);
 
-    await dialog.getByLabel("Início (segunda)").fill("2026-11-16");
+    await dialog.getByLabel("Início (segunda)").fill("2026-11-23");
     await dialog.getByRole("button", { name: "Criar safra" }).click();
-    await expect(page.getByText("S03 criada")).toBeVisible();
+    await expect(page.getByText("S04 criada")).toBeVisible();
     const [m] = await mutations();
     expect(m).toMatchObject({ method: "POST", table: "safras" });
     expect(JSON.parse(m!.body)).toEqual({
-      numero: 3,
-      inicio: "2026-11-16",
-      fim: "2026-11-20",
+      numero: 4,
+      inicio: "2026-11-23",
+      fim: "2026-11-27",
       usa_alocacao: true,
       period_id: P1,
     });
@@ -62,15 +68,14 @@ test.describe("Dashboard › Semanas", () => {
     await page.goto("/dashboard?aba=semanas");
     await page.getByRole("button", { name: "Gerar semanas" }).click();
     const dialog = page.getByRole("dialog", { name: "Gerar semanas do Ciclo Nov" });
-    await expect(dialog.getByLabel("A partir de")).toHaveValue("2026-11-16");
+    await expect(dialog.getByLabel("A partir de")).toHaveValue("2026-11-23");
     await expect(dialog.getByLabel("Até")).toHaveValue("2026-11-30");
-    await expect(dialog).toContainText("Vai criar 3 safras: S03 (16/11/2026) a S05 (30/11/2026).");
+    await expect(dialog).toContainText("Vai criar 2 safras: S04 (23/11/2026) a S05 (30/11/2026).");
     await dialog.getByRole("button", { name: "Gerar semanas" }).click();
-    await expect(page.getByText("3 safras criadas")).toBeVisible();
+    await expect(page.getByText("2 safras criadas")).toBeVisible();
     const [m] = await mutations();
     expect(m).toMatchObject({ method: "POST", table: "safras" });
     expect(JSON.parse(m!.body).map((s: { numero: number; inicio: string }) => s.inicio)).toEqual([
-      "2026-11-16",
       "2026-11-23",
       "2026-11-30",
     ]);
@@ -97,14 +102,14 @@ test.describe("Dashboard › Semanas", () => {
 
   test("excluir uma safra pede confirmação", async ({ page }) => {
     await page.goto("/dashboard?aba=semanas");
-    await page.getByRole("button", { name: "Excluir S02" }).click();
+    await page.getByRole("button", { name: "Excluir S03" }).click();
     const confirmar = page.getByRole("alertdialog");
-    await expect(confirmar).toContainText("Excluir a S02 do Ciclo Nov?");
+    await expect(confirmar).toContainText("Excluir a S03 do Ciclo Nov?");
     await confirmar.getByRole("button", { name: "Excluir safra" }).click();
-    await expect(page.getByText("S02 excluída")).toBeVisible();
+    await expect(page.getByText("S03 excluída")).toBeVisible();
     const [m] = await mutations();
     expect(m).toMatchObject({ method: "DELETE", table: "safras" });
-    expect(m!.query).toContain(SAFRA_S02);
+    expect(m!.query).toContain(SAFRA_S03);
   });
 
   test("define as metas do ciclo e mantém o que foi digitado quando há erro", async ({ page }) => {
@@ -151,5 +156,103 @@ test.describe("Dashboard › Semanas", () => {
     const [m] = await mutations();
     expect(m).toMatchObject({ method: "POST", table: "dashboard_parametros" });
     expect(JSON.parse(m!.body)).toMatchObject({ id: true, maturacao_semanas: 2 });
+  });
+
+  test("na semana em andamento só dá para trocar o setor, valendo a partir de hoje", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard?aba=semanas");
+    const sec = page.getByRole("region", { name: "Alocação da semana" });
+    await expect(sec.getByLabel("Safra", { exact: true })).toHaveValue(SAFRA_S02);
+    await expect(sec).toContainText("Safra em andamento: só a troca de setor");
+    const tabela = sec.getByRole("table", { name: /Alocação da S02/ });
+    const um = tabela.getByRole("row", { name: /Hunter Um/ });
+    await expect(um).toContainText("Varejo");
+    await expect(um).toContainText("D1");
+    await expect(um).toContainText("10");
+    await expect(um).toContainText("40");
+    await expect(tabela.getByRole("row", { name: /Hunter Dois/ })).toContainText("Não alocado");
+    await expect(sec.getByRole("button", { name: "Alocar hunter" })).toHaveCount(0);
+    await expect(sec.getByRole("button", { name: /Editar alocação/ })).toHaveCount(0);
+
+    await um.getByRole("button", { name: "Trocar setor de Hunter Um" }).click();
+    const dialog = page.getByRole("dialog", { name: "Trocar setor de Hunter Um" });
+    await expect(dialog.getByLabel("A partir de")).toHaveValue("2026-11-12");
+    await dialog.getByRole("button", { name: "Trocar setor" }).click();
+    await expect(dialog.getByRole("alert")).toHaveText("Escolha um setor diferente do atual.");
+    await dialog
+      .getByRole("combobox", { name: "Setor alocado" })
+      .selectOption(`${SETOR_INDUSTRIA}:${SUBSETOR_METALURGIA}`);
+    await dialog.getByRole("button", { name: "Trocar setor" }).click();
+    await expect(page.getByText("Hunter Um alocado")).toBeVisible();
+    const [m] = await mutations();
+    expect(m).toMatchObject({ method: "POST", table: "alocacoes" });
+    expect(JSON.parse(m!.body)).toEqual({
+      user_id: U1,
+      sector_id: SETOR_INDUSTRIA,
+      subsector_id: SUBSETOR_METALURGIA,
+      dupla: "D1",
+      meta_empresas: 10,
+      meta_contatos: 40,
+      motivo_meta_zero: null,
+      vigente_desde: "2026-11-12",
+      safra_id: SAFRA_S02,
+      created_by: U1,
+    });
+  });
+
+  test("antes do início da safra aloca, exige motivo da meta zero e copia a anterior", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard?aba=semanas");
+    const sec = page.getByRole("region", { name: "Alocação da semana" });
+    await sec.getByLabel("Safra", { exact: true }).selectOption(SAFRA_S03);
+    await expect(sec).toContainText("Editável até o início da safra.");
+
+    await sec.getByRole("button", { name: "Alocar Hunter Dois" }).click();
+    const dialog = page.getByRole("dialog", { name: "Alocar hunter" });
+    await expect(dialog.getByLabel("Hunter")).toHaveValue(U2);
+    await dialog.getByRole("combobox", { name: "Setor alocado" }).selectOption(SETOR_VAREJO);
+    await dialog.getByLabel("Dupla (opcional)").fill("D2");
+    await dialog.getByRole("button", { name: "Alocar" }).click();
+    await expect(dialog.getByRole("alert")).toContainText("informe o motivo");
+    await dialog.getByLabel("Motivo da semana sem prospecção").fill("Semana de provas");
+    await dialog.getByRole("button", { name: "Alocar" }).click();
+    await expect(page.getByText("Hunter Dois alocado")).toBeVisible();
+    let [m] = await mutations();
+    expect(m).toMatchObject({ method: "POST", table: "alocacoes" });
+    expect(JSON.parse(m!.body)).toMatchObject({
+      user_id: U2,
+      sector_id: SETOR_VAREJO,
+      dupla: "D2",
+      meta_empresas: 0,
+      meta_contatos: 0,
+      motivo_meta_zero: "Semana de provas",
+      vigente_desde: "2026-11-16",
+      safra_id: SAFRA_S03,
+    });
+
+    await sec.getByRole("button", { name: "Copiar da S02" }).click();
+    await expect(page.getByText("1 alocação copiada")).toBeVisible();
+    m = (await mutations())[1];
+    expect(m).toMatchObject({ method: "POST", table: "alocacoes" });
+    expect(JSON.parse(m!.body)).toEqual([
+      expect.objectContaining({
+        user_id: U1,
+        sector_id: SETOR_VAREJO,
+        dupla: "D1",
+        vigente_desde: "2026-11-16",
+        safra_id: SAFRA_S03,
+      }),
+    ]);
+  });
+
+  test("safra sem alocação explica como ligar", async ({ page }) => {
+    await page.goto("/dashboard?aba=semanas");
+    const sec = page.getByRole("region", { name: "Alocação da semana" });
+    await sec
+      .getByLabel("Safra", { exact: true })
+      .selectOption({ label: "S01 · 02/11 a 06/11 (sem alocação)" });
+    await expect(sec).toContainText("A S01 não usa alocação.");
   });
 });
