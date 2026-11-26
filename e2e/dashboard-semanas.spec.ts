@@ -32,7 +32,7 @@ test.describe("Dashboard › Semanas", () => {
     await expect(cal.getByRole("columnheader", { name: "07/12" })).toBeVisible();
     await expect(s1.getByTitle(/semana de 07\/12\/2026: Madura \(previsto\)/)).toBeVisible();
 
-    await page.getByRole("tab", { name: "Indicadores" }).click();
+    await page.getByRole("tab", { name: "Visão geral" }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
   });
 

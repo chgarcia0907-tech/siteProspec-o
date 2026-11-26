@@ -589,6 +589,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      dashboard_tempo_etapas: {
+        Row: {
+          meta_dias: number;
+          stage_id: number;
+          updated_at: string;
+        };
+        Insert: {
+          meta_dias: number;
+          stage_id: number;
+          updated_at?: string;
+        };
+        Update: {
+          meta_dias?: number;
+          stage_id?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       goals: {
         Row: {
           ats_semana: number | null;

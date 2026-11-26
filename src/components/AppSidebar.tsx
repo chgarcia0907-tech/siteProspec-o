@@ -18,19 +18,29 @@ import { Button } from "@/components/ui/button";
 import { Marca } from "@/components/Marca";
 import { cn } from "@/lib/utils";
 
-type Item = { to: string; label: string; icon: LucideIcon; count?: number | undefined };
+type Item = {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  count?: number | undefined;
+  /** Contador de alerta (vermelho) em vez do contador comum. */
+  alerta?: boolean;
+};
 
 /** Navegação lateral fixa (DESIGN.md, seção 6): Prospecção, Referência e Administração. */
 export function AppSidebar({
   email,
   isAdmin,
   pendingToday,
+  alertasAltos,
   onSignOut,
 }: {
   email: string;
   isAdmin: boolean;
   /** Leads com envio pendente hoje; `undefined` enquanto carrega. */
   pendingToday: number | undefined;
+  /** Alertas de nível alto da Dashboard (só admin); `undefined` enquanto carrega. */
+  alertasAltos?: number | undefined;
   onSignOut: () => void;
 }) {
   const groups: { title: string; items: Item[] }[] = [
@@ -58,7 +68,13 @@ export function AppSidebar({
           {
             title: "Administração",
             items: [
-              { to: "/dashboard", label: "Dashboard", icon: ChartColumn },
+              {
+                to: "/dashboard",
+                label: "Dashboard",
+                icon: ChartColumn,
+                count: alertasAltos,
+                alerta: true,
+              },
               { to: "/painel", label: "Painel Admin", icon: LayoutDashboard },
             ],
           },
@@ -81,7 +97,7 @@ export function AppSidebar({
               {g.title}
             </p>
             <ul className="space-y-0.5">
-              {g.items.map(({ to, label, icon: Icon, count }) => (
+              {g.items.map(({ to, label, icon: Icon, count, alerta }) => (
                 <li key={to}>
                   <Link
                     to={to}
@@ -95,8 +111,16 @@ export function AppSidebar({
                     <Icon className="size-4.5 shrink-0" strokeWidth={1.75} aria-hidden />
                     <span className="flex-1">{label}</span>
                     {count !== undefined && count > 0 && (
-                      <span className="rounded-full bg-primary px-1.5 text-caption font-bold text-primary-foreground tabular-nums">
+                      <span
+                        className={cn(
+                          "rounded-full px-1.5 text-caption font-bold tabular-nums",
+                          alerta
+                            ? "bg-destructive text-destructive-foreground"
+                            : "bg-primary text-primary-foreground",
+                        )}
+                      >
                         {count}
+                        {alerta && <span className="sr-only"> alertas</span>}
                       </span>
                     )}
                   </Link>

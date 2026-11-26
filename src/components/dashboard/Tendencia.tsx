@@ -191,7 +191,7 @@ export function Alertas({
                         <>
                           <Link
                             to="/dashboard"
-                            search={to}
+                            search={{ ...to, aba: "indicadores" }}
                             hash="execucao"
                             className="font-semibold text-heading underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                           >

@@ -408,7 +408,16 @@ export function initialDb() {
         sincronizado_em: "2026-11-12T12:37:00Z",
       },
     ],
-    pd_card_etapas: [],
+    // Ômega Log (AT realizada em 11/11): 6 dias na AT agendada, na AT realizada desde 11/11.
+    pd_card_etapas: [
+      {
+        deal_id: 94307,
+        stage_id: 108,
+        entrou_em: "2026-11-05T14:00:00Z",
+        saiu_em: "2026-11-11T19:00:00Z",
+      },
+      { deal_id: 94307, stage_id: 31, entrou_em: "2026-11-11T19:00:00Z", saiu_em: null },
+    ],
     // Tasks do hunter1 nesta semana: uma concluída no dia do prazo, outra aberta e vencida.
     pd_tasks: [
       {
@@ -488,6 +497,11 @@ export function initialDb() {
         updated_at: "2026-11-01T12:00:00Z",
       },
     ],
+    dashboard_tempo_etapas: [108, 31, 33, 34, 35, 36].map((stage_id, i) => ({
+      stage_id,
+      meta_dias: [7, 7, 10, 7, 4, 5][i],
+      updated_at: "2026-11-01T12:00:00Z",
+    })),
     ciclo_metas: [],
     groups: [{ id: G1, period_id: P1, name: "Squad Azul", created_at: "2026-10-27T03:00:00Z" }],
     subgroups: [{ id: S1, group_id: G1, name: "Dupla 1", created_at: "2026-10-27T03:00:00Z" }],

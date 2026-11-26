@@ -558,7 +558,7 @@ async function carregarBaseHunters(periodId: string, semana: string, hoje: strin
           admin
             .from("ats")
             .select(
-              "id, user_id, contact_id, registrada_em, agendada_atual, status, pipedrive_stage_id, pipedrive_deal_id",
+              "id, user_id, contact_id, registrada_em, agendada_original, agendada_atual, status, pipedrive_stage_id, pipedrive_deal_id",
             )
             .eq("tipo", "diagnostico")
             .in("user_id", ids)
@@ -932,4 +932,131 @@ export const dashboardVisao = createServerFn({ method: "POST" })
         .filter((h) => h.disciplina.esforco?.abaixo)
         .map((h) => ({ id: h.id, nome: h.nome, esforco: h.disciplina.esforco! })),
     };
+  });
+
+/**
+ * Aba Realização e avanço: situação das ATs por semana, horário × dia de no-show e remarcação,
+ * antecedência, funis por setor alocado, perdas e tempo por etapa (cálculo em
+ * `computeRealizacao`, dashRealizacao.ts). Mesmos membros e contatos da aba Hunters.
+ */
+export const dashboardRealizacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ periodId: z.string().uuid(), hoje: isoDay }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { fetchAll } = await import("./fetch-all");
+    const { computeRealizacao } = await import("./dashRealizacao");
+    const { semanaPadrao } = await import("./safras");
+    const { weekStartISO } = await import("./empresas");
+
+    const { data: safrasCiclo, error } = await admin
+      .from("safras")
+      .select("inicio")
+      .eq("period_id", data.periodId);
+    if (error) throw new Error("Falha ao carregar as safras");
+    const semana = semanaPadrao(safrasCiclo ?? [], data.hoje) ?? weekStartISO(data.hoje);
+    const base = await carregarBaseHunters(data.periodId, semana, data.hoje);
+    const { entrada, parametros: p } = base;
+
+    const atIds = new Set(base.ats.map((a) => a.id));
+    const deals = [
+      ...new Set(base.ats.map((a) => a.pipedrive_deal_id).filter((d): d is number => d !== null)),
+    ];
+    const [eventos, cardsPd, etapasPd, setores, tempos] = await Promise.all([
+      // O log é pequeno: busca tudo e filtra aqui (uma lista de ids estouraria a URL).
+      fetchAll((a, b) =>
+        admin
+          .from("at_eventos")
+          .select("at_id, evento, ocorrido_em, horario_anterior, horario_novo")
+          .neq("evento", "etapa_pipedrive")
+          .order("id")
+          .range(a, b),
+      ),
+      deals.length
+        ? fetchAll((a, b) =>
+            admin
+              .from("pd_cards")
+              .select("deal_id, status, stage_id, lost_reason, won_time")
+              .in("deal_id", deals)
+              .order("deal_id")
+              .range(a, b),
+          )
+        : Promise.resolve([]),
+      deals.length
+        ? fetchAll((a, b) =>
+            admin
+              .from("pd_card_etapas")
+              .select("deal_id, stage_id, entrou_em, saiu_em")
+              .in("deal_id", deals)
+              .order("deal_id")
+              .order("entrou_em")
+              .range(a, b),
+          )
+        : Promise.resolve([]),
+      admin.from("sectors").select("id, name"),
+      admin.from("dashboard_tempo_etapas").select("stage_id, meta_dias"),
+    ]);
+    if (setores.error ?? tempos.error) throw new Error("Falha ao carregar a realização");
+
+    const cards: Record<number, import("./dashRealizacao").RCard> = {};
+    const etapasDe = new Map<
+      number,
+      { stage_id: number; entrou_em: string; saiu_em: string | null }[]
+    >();
+    for (const e of etapasPd) {
+      const l = etapasDe.get(e.deal_id) ?? [];
+      l.push({ stage_id: e.stage_id, entrou_em: e.entrou_em, saiu_em: e.saiu_em });
+      etapasDe.set(e.deal_id, l);
+    }
+    for (const c of cardsPd)
+      cards[c.deal_id] = {
+        status: c.status,
+        stage_id: c.stage_id,
+        lost_reason: c.lost_reason,
+        won_time: c.won_time,
+        etapas: etapasDe.get(c.deal_id) ?? [],
+      };
+    const metasTempo = Object.fromEntries(
+      (tempos.data ?? []).map((t) => [t.stage_id, t.meta_dias]),
+    ) as Record<number, number>;
+
+    const realizacao = computeRealizacao({
+      hoje: data.hoje,
+      safras: base.safras,
+      maturacaoSemanas: p.maturacao_semanas,
+      contatos: entrada.contatos,
+      ats: base.ats,
+      eventos: eventos.filter((e) => atIds.has(e.at_id)),
+      cards,
+      alocacoes: entrada.alocacoes,
+      setores: Object.fromEntries((setores.data ?? []).map((s) => [s.id, s.name])),
+      metasTempo,
+    });
+    return { realizacao, metasTempo, safras: base.safras, maturacaoSemanas: p.maturacao_semanas };
+  });
+
+/** Grava a meta de dias corridos de cada etapa do funil (tempo por etapa × meta). */
+export const dashboardSalvarTempoEtapas = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        metas: z.array(z.object({ stage_id: z.number().int(), meta_dias: inteiro })).min(1),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { erroMetasTempo, ETAPAS_FUNIL } = await import("./dashRealizacao");
+    if (data.metas.some((m) => !(ETAPAS_FUNIL as readonly number[]).includes(m.stage_id)))
+      throw new Error("Etapa fora do funil do outbound");
+    const erro = erroMetasTempo(
+      Object.fromEntries(data.metas.map((m) => [m.stage_id, m.meta_dias])),
+    );
+    if (erro) throw new Error(erro);
+    const admin = await db();
+    const { error } = await admin.from("dashboard_tempo_etapas").upsert(data.metas);
+    if (error) throw new Error("Falha ao salvar as metas de tempo");
+    return { ok: true as const };
   });

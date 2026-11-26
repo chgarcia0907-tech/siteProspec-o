@@ -4,29 +4,49 @@ import { IndicadoresTab } from "@/components/dashboard/IndicadoresTab";
 import { ConciliacaoTab } from "@/components/dashboard/conciliacao/ConciliacaoTab";
 import { ContadorConciliacao } from "@/components/dashboard/conciliacao/ContadorConciliacao";
 import { HuntersTab } from "@/components/dashboard/hunters/HuntersTab";
+import { RealizacaoTab } from "@/components/dashboard/realizacao/RealizacaoTab";
+import { VisaoTab } from "@/components/dashboard/visao/VisaoTab";
 import { SemanasTab } from "@/components/dashboard/semanas/SemanasTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useConfirm } from "@/components/useConfirm";
 import { parseIndicadoresBusca, type IndicadoresBusca } from "@/lib/indicadores";
 
 /**
- * Abas da Dashboard. "indicadores" é o conteúdo antigo dos Indicadores, que sai aos poucos
- * conforme cada módulo novo entra (.claude/plans/dashboard-outbound.md); é o padrão e não vai
- * para a URL.
+ * Abas da Dashboard. "visao" (Visão geral) é a padrão e não vai para a URL. "indicadores" é o
+ * conteúdo antigo dos Indicadores, que sai aos poucos conforme cada módulo novo entra
+ * (.claude/plans/dashboard-outbound.md); link antigo só com os filtros dele abre essa aba.
  */
-const ABAS = ["indicadores", "hunters", "semanas", "conciliacao"] as const;
+const ABAS = ["visao", "hunters", "realizacao", "semanas", "conciliacao", "indicadores"] as const;
 type Aba = (typeof ABAS)[number];
 const ABA_LABEL: Record<Aba, string> = {
-  indicadores: "Indicadores",
+  visao: "Visão geral",
   hunters: "Hunters",
+  realizacao: "Realização e avanço",
   semanas: "Semanas",
   conciliacao: "Conciliação",
+  indicadores: "Indicadores",
 };
+/** Chaves de busca que só os Indicadores usam. */
+const CHAVES_INDICADORES = [
+  "intervalo",
+  "de",
+  "ate",
+  "periodo",
+  "grupo",
+  "subgrupo",
+  "hunter",
+  "setor",
+  "canal",
+  "detalhe",
+  "ordem",
+  "sentido",
+  "aberto",
+] as const;
 const isAba = (v: unknown): v is Aba =>
   typeof v === "string" && (ABAS as readonly string[]).includes(v);
 
 type DashboardBusca = IndicadoresBusca & {
-  aba?: Exclude<Aba, "indicadores"> | undefined;
+  aba?: Exclude<Aba, "visao"> | undefined;
   /** Aba Hunters: segunda-feira da semana escolhida e hunter com a ficha aberta. */
   semana?: string | undefined;
   ficha?: string | undefined;
@@ -58,7 +78,7 @@ function validarBusca(raw: Record<string, unknown>): DashboardBusca {
     ordem: b.ordem,
     sentido: b.sentido,
     aberto: b.aberto,
-    aba: isAba(raw["aba"]) && raw["aba"] !== "indicadores" ? raw["aba"] : undefined,
+    aba: isAba(raw["aba"]) && raw["aba"] !== "visao" ? raw["aba"] : undefined,
     semana:
       typeof raw["semana"] === "string" && DIA.test(raw["semana"]) ? raw["semana"] : undefined,
     ficha: typeof raw["ficha"] === "string" && UUID.test(raw["ficha"]) ? raw["ficha"] : undefined,
@@ -82,7 +102,14 @@ function Dashboard() {
   const { aba: abaBusca, semana, ficha, ...search } = Route.useSearch();
   const navigate = Route.useNavigate();
   const { ask, dialog } = useConfirm();
-  const aba: Aba = abaBusca ?? "indicadores";
+  // Sem aba na URL: Visão geral, a não ser que o link traga filtros dos Indicadores (links antigos).
+  const aba: Aba =
+    abaBusca ?? (CHAVES_INDICADORES.some((k) => search[k] !== undefined) ? "indicadores" : "visao");
+  const ir = (destino: "hunters" | "realizacao" | "semanas" | "conciliacao", hunter?: string) =>
+    navigate({
+      search: { aba: destino, ficha: destino === "hunters" ? hunter : undefined },
+      resetScroll: true,
+    });
   return (
     <AdminGate>
       <div className="space-y-6">
@@ -95,12 +122,8 @@ function Dashboard() {
           onValueChange={(v) =>
             isAba(v) &&
             navigate({
-              search: (s) => ({
-                ...s,
-                aba: v === "indicadores" ? undefined : v,
-                semana: undefined,
-                ficha: undefined,
-              }),
+              // Trocar de aba limpa os filtros das outras (os dos Indicadores só valem lá).
+              search: { aba: v === "visao" ? undefined : v },
               replace: true,
             })
           }
@@ -117,12 +140,15 @@ function Dashboard() {
               </TabsTrigger>
             ))}
           </TabsList>
+          <TabsContent value="visao" className="pt-4">
+            <VisaoTab onIr={ir} />
+          </TabsContent>
           <TabsContent value="indicadores" className="pt-4">
             <IndicadoresTab
               search={search}
               onSearch={(next) =>
                 navigate({
-                  search: { ...next, aba: undefined, semana: undefined, ficha: undefined },
+                  search: { ...next, aba: "indicadores", semana: undefined, ficha: undefined },
                   replace: true,
                   resetScroll: false,
                 })
@@ -141,6 +167,9 @@ function Dashboard() {
                 })
               }
             />
+          </TabsContent>
+          <TabsContent value="realizacao" className="pt-4">
+            <RealizacaoTab />
           </TabsContent>
           <TabsContent value="conciliacao" className="pt-4">
             <ConciliacaoTab />

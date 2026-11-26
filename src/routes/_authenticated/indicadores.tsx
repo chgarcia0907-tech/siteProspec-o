@@ -6,6 +6,6 @@ import { parseIndicadoresBusca, type IndicadoresBusca } from "@/lib/indicadores"
 export const Route = createFileRoute("/_authenticated/indicadores")({
   validateSearch: (raw: Record<string, unknown>): IndicadoresBusca => parseIndicadoresBusca(raw),
   beforeLoad: ({ search }) => {
-    throw redirect({ to: "/dashboard", search, replace: true });
+    throw redirect({ to: "/dashboard", search: { ...search, aba: "indicadores" }, replace: true });
   },
 });
