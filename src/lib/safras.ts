@@ -294,3 +294,67 @@ export function erroMetasCiclo(m: MetasCiclo): string | null {
   }
   return null;
 }
+
+/* ------------------------------ Calendário ------------------------------ */
+
+export type CelulaSafra = {
+  /** Segunda-feira da coluna. */
+  semana: string;
+  /** Fase da safra naquela semana (null antes da semana da safra). */
+  fase: Exclude<StatusSafra, "planejada"> | null;
+  /** Semana depois da semana de hoje: fase prevista, não vivida. */
+  futura: boolean;
+};
+
+export type Calendario<T extends Pick<Safra, "inicio">> = {
+  /** Segundas-feiras das colunas, em ordem. */
+  semanas: string[];
+  /** Segunda-feira da semana de hoje (pode estar fora das colunas). */
+  semanaAtual: string;
+  linhas: { safra: T; status: StatusSafra; celulas: CelulaSafra[] }[];
+};
+
+/**
+ * Calendário em escada da aba Semanas: safras nas linhas (em ordem de número), semanas nas
+ * colunas, da primeira safra até a semana em que a última amadurece (no máximo `maxSemanas`
+ * colunas, cortando as mais antigas). Cada célula é a fase da safra naquela semana.
+ */
+export function calendarioSafras<T extends Pick<Safra, "inicio" | "numero">>(
+  safras: readonly T[],
+  hoje: string,
+  maturacaoSemanas: number,
+  maxSemanas = 14,
+): Calendario<T> {
+  const semanaAtual = weekStartISO(hoje);
+  const ordem = [...safras].sort((a, b) => a.numero - b.numero);
+  if (ordem.length === 0) return { semanas: [], semanaAtual, linhas: [] };
+  const primeira = ordem.reduce((m, s) => (s.inicio < m ? s.inicio : m), ordem[0]!.inicio);
+  const ultima = ordem.reduce((m, s) => (s.inicio > m ? s.inicio : m), ordem[0]!.inicio);
+  const fimCalendario = inicioDaMaturidade({ inicio: ultima }, maturacaoSemanas);
+  let semanas: string[] = [];
+  for (let seg = primeira; seg <= fimCalendario; seg = addDaysISO(seg, 7)) semanas.push(seg);
+  if (semanas.length > maxSemanas) semanas = semanas.slice(-maxSemanas);
+  return {
+    semanas,
+    semanaAtual,
+    linhas: ordem.map((safra) => ({
+      safra,
+      status: statusSafra(safra, hoje, maturacaoSemanas),
+      celulas: semanas.map((semana) => {
+        const st = statusSafra(safra, semana, maturacaoSemanas);
+        return { semana, fase: st === "planejada" ? null : st, futura: semana > semanaAtual };
+      }),
+    })),
+  };
+}
+
+/** Ciclo aberto por padrão: o ativo; sem ativo, o de início mais recente. */
+export function cicloPadrao<T extends { id: string; status: string; started_at: string }>(
+  ciclos: readonly T[],
+): T | null {
+  return (
+    ciclos.find((c) => c.status === "active") ??
+    [...ciclos].sort((a, b) => b.started_at.localeCompare(a.started_at)).at(0) ??
+    null
+  );
+}

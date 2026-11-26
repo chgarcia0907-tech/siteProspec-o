@@ -10,6 +10,8 @@ import {
   safraAnterior,
   safraDaData,
   safraDoContato,
+  calendarioSafras,
+  cicloPadrao,
   semanasSugeridas,
   statusSafra,
   type Safra,
@@ -176,5 +178,56 @@ describe("parâmetros e metas do ciclo", () => {
     expect(erroMetasCiclo(vazias)).toBeNull();
     expect(erroMetasCiclo({ ...vazias, ats_avancaram: 40 })).toBeNull();
     expect(erroMetasCiclo({ ...vazias, vendas: -1 })).toMatch(/Vendas/);
+  });
+});
+
+describe("calendário de safras", () => {
+  it("vai da primeira safra até a semana em que a última amadurece", () => {
+    const cal = calendarioSafras(SAFRAS, "2026-11-26", 3);
+    expect(cal.semanas.at(0)).toBe("2026-11-09");
+    expect(cal.semanas.at(-1)).toBe("2026-12-21"); // S03 madura a partir de 21/12
+    expect(cal.semanaAtual).toBe("2026-11-23");
+  });
+
+  it("cada linha é a escada de fases da safra, com o status de hoje", () => {
+    const cal = calendarioSafras(SAFRAS, "2026-11-26", 3);
+    const fases = (n: number) =>
+      cal.linhas.find((l) => l.safra.numero === n)!.celulas.map((c) => c.fase);
+    expect(fases(1)).toEqual([
+      "em_prospeccao",
+      "em_cadencia",
+      "em_maturacao",
+      "em_maturacao",
+      "madura",
+      "madura",
+      "madura",
+    ]);
+    expect(fases(3).slice(0, 3)).toEqual([null, null, "em_prospeccao"]);
+    expect(cal.linhas.map((l) => l.status)).toEqual([
+      "em_maturacao",
+      "em_cadencia",
+      "em_prospeccao",
+    ]);
+  });
+
+  it("marca as semanas futuras e corta as colunas mais antigas", () => {
+    const cal = calendarioSafras(SAFRAS, "2026-11-26", 3, 4);
+    expect(cal.semanas).toEqual(["2026-11-30", "2026-12-07", "2026-12-14", "2026-12-21"]);
+    expect(cal.linhas[0]!.celulas.every((c) => c.futura)).toBe(true);
+  });
+
+  it("sem safras, sem colunas", () => {
+    expect(calendarioSafras([], "2026-11-26", 3).semanas).toEqual([]);
+  });
+});
+
+describe("ciclo padrão", () => {
+  it("prefere o ativo, senão o mais recente", () => {
+    const a = { id: "a", status: "closed", started_at: "2026-07-01" };
+    const b = { id: "b", status: "closed", started_at: "2026-11-09" };
+    const c = { id: "c", status: "active", started_at: "2026-03-01" };
+    expect(cicloPadrao([a, b, c])).toBe(c);
+    expect(cicloPadrao([a, b])).toBe(b);
+    expect(cicloPadrao([])).toBeNull();
   });
 });
