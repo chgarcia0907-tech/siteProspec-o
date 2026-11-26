@@ -408,7 +408,16 @@ export function initialDb() {
         sincronizado_em: "2026-11-12T12:37:00Z",
       },
     ],
-    pd_card_etapas: [],
+    // Ômega Log (AT realizada em 11/11): 6 dias na AT agendada, na AT realizada desde 11/11.
+    pd_card_etapas: [
+      {
+        deal_id: 94307,
+        stage_id: 108,
+        entrou_em: "2026-11-05T14:00:00Z",
+        saiu_em: "2026-11-11T19:00:00Z",
+      },
+      { deal_id: 94307, stage_id: 31, entrou_em: "2026-11-11T19:00:00Z", saiu_em: null },
+    ],
     // Tasks do hunter1 nesta semana: uma concluída no dia do prazo, outra aberta e vencida.
     pd_tasks: [
       {

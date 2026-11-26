@@ -14,7 +14,7 @@ import { taxa } from "../hunters/format";
 import { SeloEsforco } from "../hunters/shared";
 import { AtsPorOrigem, RitmoSemanal } from "./Graficos";
 
-type Aba = "hunters" | "semanas" | "conciliacao";
+type Aba = "hunters" | "realizacao" | "semanas" | "conciliacao";
 type Ir = (aba: Aba, ficha?: string) => void;
 type Dados = VisaoDados;
 

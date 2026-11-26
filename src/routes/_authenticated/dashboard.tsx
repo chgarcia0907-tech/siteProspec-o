@@ -4,6 +4,7 @@ import { IndicadoresTab } from "@/components/dashboard/IndicadoresTab";
 import { ConciliacaoTab } from "@/components/dashboard/conciliacao/ConciliacaoTab";
 import { ContadorConciliacao } from "@/components/dashboard/conciliacao/ContadorConciliacao";
 import { HuntersTab } from "@/components/dashboard/hunters/HuntersTab";
+import { RealizacaoTab } from "@/components/dashboard/realizacao/RealizacaoTab";
 import { VisaoTab } from "@/components/dashboard/visao/VisaoTab";
 import { SemanasTab } from "@/components/dashboard/semanas/SemanasTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,11 +16,12 @@ import { parseIndicadoresBusca, type IndicadoresBusca } from "@/lib/indicadores"
  * conteúdo antigo dos Indicadores, que sai aos poucos conforme cada módulo novo entra
  * (.claude/plans/dashboard-outbound.md); link antigo só com os filtros dele abre essa aba.
  */
-const ABAS = ["visao", "hunters", "semanas", "conciliacao", "indicadores"] as const;
+const ABAS = ["visao", "hunters", "realizacao", "semanas", "conciliacao", "indicadores"] as const;
 type Aba = (typeof ABAS)[number];
 const ABA_LABEL: Record<Aba, string> = {
   visao: "Visão geral",
   hunters: "Hunters",
+  realizacao: "Realização e avanço",
   semanas: "Semanas",
   conciliacao: "Conciliação",
   indicadores: "Indicadores",
@@ -103,7 +105,7 @@ function Dashboard() {
   // Sem aba na URL: Visão geral, a não ser que o link traga filtros dos Indicadores (links antigos).
   const aba: Aba =
     abaBusca ?? (CHAVES_INDICADORES.some((k) => search[k] !== undefined) ? "indicadores" : "visao");
-  const ir = (destino: "hunters" | "semanas" | "conciliacao", hunter?: string) =>
+  const ir = (destino: "hunters" | "realizacao" | "semanas" | "conciliacao", hunter?: string) =>
     navigate({
       search: { aba: destino, ficha: destino === "hunters" ? hunter : undefined },
       resetScroll: true,
@@ -165,6 +167,9 @@ function Dashboard() {
                 })
               }
             />
+          </TabsContent>
+          <TabsContent value="realizacao" className="pt-4">
+            <RealizacaoTab />
           </TabsContent>
           <TabsContent value="conciliacao" className="pt-4">
             <ConciliacaoTab />

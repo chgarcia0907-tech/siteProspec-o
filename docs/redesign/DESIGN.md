@@ -274,6 +274,19 @@ fim, o funil do ciclo e os hunters abaixo da meta de esforço. Os gráficos da V
 número aparece na hora). No menu, o item Dashboard leva um contador vermelho (`bg-destructive`)
 com os alertas de nível alto, só para o admin.
 
+**Aba Realização e avanço** (`src/components/dashboard/realizacao/`, depois de Hunters): a pergunta
+"As ATs marcadas acontecem e avançam?" como H2, com o seletor de ciclo. Faixa de totais quieta
+(ATs, realizadas, não realizadas, avançaram, cada taxa com o volume), sem `bg-primary-soft`. O
+destaque é a situação das ATs por semana: barras empilhadas com as cores de situação da tabela
+acima (agendada em tom claro de `warning` com contorno tracejado, para não confundir com "sem
+desfecho") e "↻ N remarcadas" embaixo de cada semana. Ao lado, o mapa horário × dia útil com a
+porcentagem e "n de N" escritos na célula, fundo de `surface-inset` a `chart-1` pela taxa de
+no-show + remarcação; com menos de 3 horários a célula fica sem cor. Depois, antecedência em
+barras horizontais, tempo por etapa em tabela (mediana acima da meta em `destructive-text` com
+ícone; "Editar metas" abre um diálogo no próprio cartão), funil por setor alocado em tabela (selo
+"imatura" em `surface-inset`; "Sem alocação" por último e em `muted-foreground`) e perdas por
+motivo × etapa.
+
 **Filtros globais** num cartão no topo, como hoje (ciclo, safra, hunter, dupla, setor alocado),
 na URL; com filtro fora do padrão, chips e "Limpar filtros".
 

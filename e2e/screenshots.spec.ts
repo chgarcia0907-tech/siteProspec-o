@@ -48,6 +48,7 @@ const SHOTS: Shot[] = [
   { name: "09-dashboard-indicadores", path: "/dashboard?aba=indicadores" },
   { name: "09-dashboard-semanas", path: "/dashboard?aba=semanas" },
   { name: "09-dashboard-hunters", path: "/dashboard?aba=hunters" },
+  { name: "09-dashboard-realizacao", path: "/dashboard?aba=realizacao" },
   { name: "09-dashboard-conciliacao", path: "/dashboard?aba=conciliacao" },
   {
     name: "09-dashboard-hunters-ficha",
