@@ -366,6 +366,108 @@ export function areaFromTitle(jobTitle: string, headline = ""): Area | null {
   return areaOf(jobTitle) ?? areaOf(headline);
 }
 
+/* --------------------------------- Nível --------------------------------- */
+
+/** Senioridade do contato, do topo para a base (dimensão da aba Segmentos da Dashboard). */
+export const NIVEIS = [
+  { key: "c_level", label: "C-level e sócios" },
+  { key: "diretoria", label: "Diretoria" },
+  { key: "gerencia", label: "Gerência" },
+  { key: "coordenacao", label: "Coordenação" },
+  { key: "analista", label: "Analista e especialista" },
+  { key: "estagio", label: "Estágio" },
+] as const;
+export type Nivel = (typeof NIVEIS)[number]["key"];
+export const NIVEL_LABEL = Object.fromEntries(NIVEIS.map((n) => [n.key, n.label])) as Record<
+  Nivel,
+  string
+>;
+
+/**
+ * Palavras de cada nível, em ordem de prioridade (o nível mais alto citado vence: "Sócio-diretor"
+ * é C-level). Trechos de regex sobre o texto sem acento e em minúsculas, casados como palavra
+ * inteira, como nas personas.
+ */
+const NIVEL_RULES: { nivel: Nivel; words: string[] }[] = [
+  {
+    nivel: "c_level",
+    words: [
+      "c(e|o|f|t|i|m|h|r|d)o",
+      "chief",
+      "presidente(s)?",
+      "president",
+      "vice-presidente(s)?",
+      "vp",
+      "soci(o|a|os|as)",
+      "partner",
+      "fundador(a|es|as)?",
+      "cofundador(a|es|as)?",
+      "co-fundador(a|es|as)?",
+      "founder",
+      "co-founder",
+      "owner",
+      "dono(a)?",
+      "proprietari(o|a)",
+    ],
+  },
+  { nivel: "diretoria", words: ["diretor(a|es|as)?", "director", "superintendente"] },
+  {
+    nivel: "gerencia",
+    words: ["gerente(s)?", "manager", "head(s)?", "gestor(a|es|as)?"],
+  },
+  {
+    nivel: "coordenacao",
+    words: [
+      "coordenador(a|es|as)?",
+      "coordinator",
+      "supervisor(a|es|as)?",
+      "lider(es)?",
+      "lead",
+      "encarregad(o|a|os|as)",
+    ],
+  },
+  { nivel: "estagio", words: ["estagiari(o|a|os|as)", "estagio", "intern", "trainee", "aprendiz"] },
+  {
+    nivel: "analista",
+    words: [
+      "analista(s)?",
+      "analyst",
+      "especialista(s)?",
+      "specialist",
+      "assistente(s)?",
+      "auxiliar(es)?",
+      "consultor(a|es|as)?",
+      "engenheir(o|a|os|as)",
+      "engineer",
+      "comprador(a|es|as)?",
+      "tecnic(o|a|os|as)",
+      "desenvolvedor(a|es|as)?",
+      "developer",
+      "executiv(o|a) de contas",
+    ],
+  },
+];
+// Cargos com "owner"/"lead" que não dizem o nível do dono ("product owner", "tech lead").
+const NIVEL_STRIP = /(product owner|process owner|tech lead|lead generation)/g;
+const NIVEL_COMPILED = NIVEL_RULES.map((r) => ({
+  nivel: r.nivel,
+  re: new RegExp(`(?<![a-z0-9])(${r.words.join("|")})(?![a-z0-9])`),
+}));
+
+function nivelDe(texto: string): Nivel | null {
+  const t = fold(texto ?? "").replace(NIVEL_STRIP, " ");
+  if (!t.trim()) return null;
+  return NIVEL_COMPILED.find((r) => r.re.test(t))?.nivel ?? null;
+}
+
+/**
+ * Nível de senioridade pelo cargo e, se o cargo não disser, pelo headline. Na dúvida, null
+ * (o contato fica fora da quebra por nível). Calculado na hora, nunca gravado.
+ */
+export function nivelDoCargo(cargo: string, headline = ""): Nivel | null {
+  return nivelDe(cargo) ?? nivelDe(headline);
+}
+
 /* ----------------------------- Preenchimento ----------------------------- */
 
 type FillInput = Pick<
