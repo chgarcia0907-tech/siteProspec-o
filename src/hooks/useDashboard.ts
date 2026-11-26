@@ -70,7 +70,10 @@ export function useSemanasAcoes() {
     },
     salvarParametros: async (p: Parametros) => {
       await parametros({ data: p });
-      await recarregar();
+      // A maturação e os limites mudam o cálculo de todas as abas.
+      await qc.invalidateQueries({
+        predicate: (q) => String(q.queryKey[0]).startsWith("dashboard_"),
+      });
     },
     salvarMetas: async (periodId: string, m: MetasCiclo) => {
       await metas({ data: { periodId, metas: m } });
