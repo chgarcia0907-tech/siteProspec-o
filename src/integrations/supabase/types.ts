@@ -201,6 +201,47 @@ export type Database = {
           },
         ];
       };
+      ciclo_metas: {
+        Row: {
+          ats_avancaram: number | null;
+          ats_marcadas: number | null;
+          ats_realizadas: number | null;
+          contatos: number | null;
+          created_at: string;
+          period_id: string;
+          updated_at: string;
+          vendas: number | null;
+        };
+        Insert: {
+          ats_avancaram?: number | null;
+          ats_marcadas?: number | null;
+          ats_realizadas?: number | null;
+          contatos?: number | null;
+          created_at?: string;
+          period_id: string;
+          updated_at?: string;
+          vendas?: number | null;
+        };
+        Update: {
+          ats_avancaram?: number | null;
+          ats_marcadas?: number | null;
+          ats_realizadas?: number | null;
+          contatos?: number | null;
+          created_at?: string;
+          period_id?: string;
+          updated_at?: string;
+          vendas?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ciclo_metas_period_id_fkey";
+            columns: ["period_id"];
+            isOneToOne: true;
+            referencedRelation: "periods";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       companies: {
         Row: {
           created_at: string;
@@ -418,6 +459,51 @@ export type Database = {
           },
         ];
       };
+      dashboard_parametros: {
+        Row: {
+          amostra_minima_ab: number;
+          avanco_fica_pct: number;
+          avanco_troca_pct: number;
+          concentracao_ats_pct: number;
+          dias_contato_parado: number;
+          esforco_alerta_pct: number;
+          id: boolean;
+          maturacao_semanas: number;
+          min_ats_segmento: number;
+          nao_realizadas_pct: number;
+          semanas_seguidas: number;
+          updated_at: string;
+        };
+        Insert: {
+          amostra_minima_ab?: number;
+          avanco_fica_pct?: number;
+          avanco_troca_pct?: number;
+          concentracao_ats_pct?: number;
+          dias_contato_parado?: number;
+          esforco_alerta_pct?: number;
+          id?: boolean;
+          maturacao_semanas?: number;
+          min_ats_segmento?: number;
+          nao_realizadas_pct?: number;
+          semanas_seguidas?: number;
+          updated_at?: string;
+        };
+        Update: {
+          amostra_minima_ab?: number;
+          avanco_fica_pct?: number;
+          avanco_troca_pct?: number;
+          concentracao_ats_pct?: number;
+          dias_contato_parado?: number;
+          esforco_alerta_pct?: number;
+          id?: boolean;
+          maturacao_semanas?: number;
+          min_ats_segmento?: number;
+          nao_realizadas_pct?: number;
+          semanas_seguidas?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       goals: {
         Row: {
           ats_semana: number | null;
@@ -427,6 +513,7 @@ export type Database = {
           id: string;
           l1_semana: number | null;
           no_prazo_pct: number | null;
+          passos_semana: number | null;
           updated_at: string;
           user_id: string | null;
         };
@@ -438,6 +525,7 @@ export type Database = {
           id?: string;
           l1_semana?: number | null;
           no_prazo_pct?: number | null;
+          passos_semana?: number | null;
           updated_at?: string;
           user_id?: string | null;
         };
@@ -449,6 +537,7 @@ export type Database = {
           id?: string;
           l1_semana?: number | null;
           no_prazo_pct?: number | null;
+          passos_semana?: number | null;
           updated_at?: string;
           user_id?: string | null;
         };
@@ -752,6 +841,47 @@ export type Database = {
           message_name?: string | null;
         };
         Relationships: [];
+      };
+      safras: {
+        Row: {
+          created_at: string;
+          fim: string;
+          id: string;
+          inicio: string;
+          numero: number;
+          period_id: string;
+          updated_at: string;
+          usa_alocacao: boolean;
+        };
+        Insert: {
+          created_at?: string;
+          fim: string;
+          id?: string;
+          inicio: string;
+          numero: number;
+          period_id: string;
+          updated_at?: string;
+          usa_alocacao?: boolean;
+        };
+        Update: {
+          created_at?: string;
+          fim?: string;
+          id?: string;
+          inicio?: string;
+          numero?: number;
+          period_id?: string;
+          updated_at?: string;
+          usa_alocacao?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "safras_period_id_fkey";
+            columns: ["period_id"];
+            isOneToOne: false;
+            referencedRelation: "periods";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       sector_templates: {
         Row: {
