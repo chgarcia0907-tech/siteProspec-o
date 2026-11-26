@@ -12,7 +12,7 @@ export type Alerta = {
   chave: string;
   texto: string;
   /** Aba que explica o alerta. */
-  aba: "hunters" | "conciliacao" | "visao";
+  aba: "hunters" | "realizacao" | "conciliacao" | "visao";
   hunterId?: string;
 };
 
@@ -98,7 +98,7 @@ export function computeAlertas(input: AlertasInput): Alerta[] {
       out.push({
         nivel: "alta",
         chave: "nao-realizadas",
-        aba: "visao",
+        aba: "realizacao",
         texto: `ATs não realizadas acima de ${p.nao_realizadas_pct}% há ${n} semanas (${taxas.map((t) => `${rotuloSafra(t.w.numero)}: ${num(pct(t.nao, t.total))}% (${t.nao} de ${t.total})`).join("; ")})`,
       });
   }

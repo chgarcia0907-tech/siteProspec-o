@@ -297,6 +297,8 @@ describe("alertas", () => {
       ritmo: v.ritmo.slice(0, 2),
     });
     expect(tudo.find((x) => x.chave === "nao-realizadas")?.texto).toContain("S02: 50% (1 de 2)");
+    // O "Ver" leva à aba Realização e avanço.
+    expect(tudo.find((x) => x.chave === "nao-realizadas")?.aba).toBe("realizacao");
   });
 
   it("AT sem card, concentração e parados; os de nível alto primeiro", () => {
