@@ -565,7 +565,9 @@ export const dashboardHunters = createServerFn({ method: "POST" })
         ? fetchAll((a, b) =>
             admin
               .from("ats")
-              .select("id, user_id, contact_id, registrada_em, status, pipedrive_stage_id")
+              .select(
+                "id, user_id, contact_id, registrada_em, status, pipedrive_stage_id, pipedrive_deal_id",
+              )
               .eq("tipo", "diagnostico")
               .in("user_id", ids)
               .order("id")
@@ -577,6 +579,52 @@ export const dashboardHunters = createServerFn({ method: "POST" })
         : Promise.resolve({ data: [] as Alocacao[], error: null }),
     ]);
     if (perfis.error ?? alocacoes.error) throw new Error("Falha ao carregar os hunters");
+
+    // Cópia do Pipedrive: histórico dos cards das ATs e tasks pelo login de cada hunter.
+    const { loginDoUsuario } = await import("./ats");
+    const deals = [...new Set(ats.map((a) => a.pipedrive_deal_id).filter((d) => d !== null))];
+    const [time, cardsPd, etapasPd] = await Promise.all([
+      admin.from("time_comercial").select("login, user_id"),
+      deals.length
+        ? fetchAll((a, b) =>
+            admin
+              .from("pd_cards")
+              .select("deal_id, status")
+              .in("deal_id", deals)
+              .order("deal_id")
+              .range(a, b),
+          )
+        : Promise.resolve([] as { deal_id: number; status: string }[]),
+      deals.length
+        ? fetchAll((a, b) =>
+            admin
+              .from("pd_card_etapas")
+              .select("deal_id, stage_id, entrou_em")
+              .in("deal_id", deals)
+              .order("deal_id")
+              .order("entrou_em")
+              .range(a, b),
+          )
+        : Promise.resolve([] as { deal_id: number; stage_id: number; entrou_em: string }[]),
+    ]);
+    if (time.error) throw new Error("Falha ao carregar o time comercial");
+    const loginDe = new Map(
+      (perfis.data ?? []).map((x) => [x.id, loginDoUsuario(x.id, x.email, time.data ?? [])]),
+    );
+    const logins = [...new Set([...loginDe.values()].filter((l): l is string => !!l))];
+    const tasksPd = logins.length
+      ? await fetchAll((a, b) =>
+          admin
+            .from("pd_tasks")
+            .select("hunter_login, due_date, done, marked_as_done_time")
+            .in("hunter_login", logins)
+            .order("activity_id")
+            .range(a, b),
+        )
+      : [];
+    const cards: Record<number, { status: string; etapas: number[] }> = {};
+    for (const c of cardsPd) cards[c.deal_id] = { status: c.status, etapas: [] };
+    for (const e of etapasPd) cards[e.deal_id]?.etapas.push(e.stage_id);
 
     // Cards do Hackathon encerrado ficam fora, como nos Indicadores.
     const atuais = splitHackathon(contatos, hackathonPeriods(periodos.data ?? [])).current;
@@ -594,6 +642,7 @@ export const dashboardHunters = createServerFn({ method: "POST" })
           id: x.id,
           name: x.display_name?.trim() || x.email || "Hunter",
           groupId: grupoDe.get(x.id) ?? null,
+          login: loginDe.get(x.id) ?? null,
         }))
         .sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
       contatos: atuais,
@@ -601,6 +650,9 @@ export const dashboardHunters = createServerFn({ method: "POST" })
       goals: goals.data ?? [],
       offsets: Object.fromEntries(settings.map(({ user_id, ...o }) => [user_id, o])),
       holidays: new Set((holidays.data ?? []).map((h) => h.date)),
+      cards,
+      // Sem nenhuma task copiada (cópia ainda não rodou), a coluna fica de fora.
+      ...(tasksPd.length ? { tasks: tasksPd } : {}),
     };
     const resultado = computeHunters(entrada);
     return {
