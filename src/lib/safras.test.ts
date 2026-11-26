@@ -12,6 +12,7 @@ import {
   safraDoContato,
   calendarioSafras,
   cicloPadrao,
+  semanaPadrao,
   semanasSugeridas,
   statusSafra,
   type Safra,
@@ -229,5 +230,14 @@ describe("ciclo padrão", () => {
     expect(cicloPadrao([a, b, c])).toBe(c);
     expect(cicloPadrao([a, b])).toBe(b);
     expect(cicloPadrao([])).toBeNull();
+  });
+});
+
+describe("semana padrão", () => {
+  it("a de hoje, senão a última que começou, senão a primeira", () => {
+    expect(semanaPadrao(SAFRAS, "2026-11-25")).toBe("2026-11-23");
+    expect(semanaPadrao(SAFRAS, "2026-12-10")).toBe("2026-11-23");
+    expect(semanaPadrao(SAFRAS, "2026-11-01")).toBe("2026-11-09");
+    expect(semanaPadrao([], "2026-11-25")).toBeNull();
   });
 });
