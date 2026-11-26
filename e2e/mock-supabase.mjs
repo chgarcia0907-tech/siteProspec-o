@@ -3,6 +3,8 @@
 // e podem ser lidas em GET /__mutations. POST /__reset volta ao estado inicial e
 // POST /__seed?n=60 acrescenta n contatos simples ao hunter logado;
 // POST /__seed?hackathon=1 acrescenta um contato de período de Hackathon encerrado.
+// POST /__seed?segmentos=1 amadurece as safras e cria um teste A/B (aba Segmentos).
+// POST /__seed?resultado=1 faz o mesmo e marca o card da Ômega como ganho (aba Resultado).
 // POST /__rpc?has_role=false troca a resposta de uma RPC até o próximo /__reset (ex.: hunter sem
 // papel de admin).
 import http from "node:http";
@@ -15,6 +17,8 @@ import {
   hackathonContact,
   initialDb,
   seedContacts,
+  segmentosSeed,
+  resultadoSeed,
 } from "./fixtures.mjs";
 
 const PORT = Number(process.env.MOCK_SUPABASE_PORT ?? 54399);
@@ -143,6 +147,14 @@ http
       }
       if (url.pathname === "/__rpc") {
         for (const [k, v] of url.searchParams) rpcOverride[k] = JSON.parse(v);
+        return send(res, 200, { ok: true });
+      }
+      if (url.pathname === "/__seed" && url.searchParams.get("resultado")) {
+        resultadoSeed(db);
+        return send(res, 200, { ok: true });
+      }
+      if (url.pathname === "/__seed" && url.searchParams.get("segmentos")) {
+        segmentosSeed(db);
         return send(res, 200, { ok: true });
       }
       if (url.pathname === "/__seed" && url.searchParams.get("hackathon")) {

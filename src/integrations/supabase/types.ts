@@ -8,6 +8,102 @@ export type Database = {
   };
   public: {
     Tables: {
+      ab_testes: {
+        Row: {
+          conclusao: string | null;
+          created_at: string;
+          descricao: string | null;
+          dimensao: string;
+          id: string;
+          nome: string;
+          period_id: string;
+          safra_final_id: string;
+          safra_inicial_id: string;
+          status: string;
+          updated_at: string;
+        };
+        Insert: {
+          conclusao?: string | null;
+          created_at?: string;
+          descricao?: string | null;
+          dimensao: string;
+          id?: string;
+          nome: string;
+          period_id: string;
+          safra_final_id: string;
+          safra_inicial_id: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Update: {
+          conclusao?: string | null;
+          created_at?: string;
+          descricao?: string | null;
+          dimensao?: string;
+          id?: string;
+          nome?: string;
+          period_id?: string;
+          safra_final_id?: string;
+          safra_inicial_id?: string;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ab_testes_period_id_fkey";
+            columns: ["period_id"];
+            isOneToOne: false;
+            referencedRelation: "periods";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ab_testes_safra_final_id_fkey";
+            columns: ["safra_final_id"];
+            isOneToOne: false;
+            referencedRelation: "safras";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ab_testes_safra_inicial_id_fkey";
+            columns: ["safra_inicial_id"];
+            isOneToOne: false;
+            referencedRelation: "safras";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ab_versoes: {
+        Row: {
+          id: string;
+          ordem: number;
+          rotulo: string;
+          teste_id: string;
+          valores: string[];
+        };
+        Insert: {
+          id?: string;
+          ordem?: number;
+          rotulo: string;
+          teste_id: string;
+          valores: string[];
+        };
+        Update: {
+          id?: string;
+          ordem?: number;
+          rotulo?: string;
+          teste_id?: string;
+          valores?: string[];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ab_versoes_teste_id_fkey";
+            columns: ["teste_id"];
+            isOneToOne: false;
+            referencedRelation: "ab_testes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       admin_attempts: {
         Row: {
           failures: number;

@@ -5,6 +5,7 @@ import {
   autoFillSummary,
   companyFromHeadline,
   groupPatches,
+  nivelDoCargo,
   suggestCompany,
 } from "./enriquecimento";
 
@@ -83,6 +84,56 @@ describe("área pelo cargo", () => {
   it.each(["CEO", "Sócio-fundador", "Diretor Financeiro", "Mídia e entretenimento", "", "Gerente"])(
     "sem área: %s",
     (cargo) => expect(areaFromTitle(cargo)).toBeNull(),
+  );
+});
+
+describe("nível pelo cargo", () => {
+  it.each([
+    ["CEO", "c_level"],
+    ["CTO", "c_level"],
+    ["Sócio-fundador", "c_level"],
+    ["Sócio-diretor", "c_level"],
+    ["Co-founder & CEO", "c_level"],
+    ["Vice-presidente de Operações", "c_level"],
+    ["Diretor Comercial e de Marketing", "diretoria"],
+    ["Diretor Financeiro", "diretoria"],
+    ["Superintendente de Operações", "diretoria"],
+    ["Gerente de TI", "gerencia"],
+    ["IT Manager", "gerencia"],
+    ["Head de Gente e Gestão", "gerencia"],
+    ["Customer Success Manager", "gerencia"],
+    ["Gestora de Facilities", "gerencia"],
+    ["Coordenadora de Comunicação", "coordenacao"],
+    ["Coordenador de Logística", "coordenacao"],
+    ["Supervisor de Produção", "coordenacao"],
+    ["Líder de Qualidade", "coordenacao"],
+    ["Analista de Recursos Humanos", "analista"],
+    ["Engenheira de Produção", "analista"],
+    ["Engenheiro de Software", "analista"],
+    ["Executiva de Contas", "analista"],
+    ["Especialista em Supply Chain", "analista"],
+    ["Estagiária de Marketing", "estagio"],
+    ["Trainee de Engenharia", "estagio"],
+  ])("%s → %s", (cargo, nivel) => expect(nivelDoCargo(cargo)).toBe(nivel));
+
+  it("product owner e tech lead não dizem o nível", () => {
+    expect(nivelDoCargo("Product Owner")).toBeNull();
+    expect(nivelDoCargo("Tech Lead")).toBeNull();
+    expect(nivelDoCargo("Senior Product Owner")).toBeNull();
+  });
+
+  it("não confunde assistente de diretoria nem presidência com o cargo do chefe", () => {
+    expect(nivelDoCargo("Assistente de Diretoria")).toBe("analista");
+    expect(nivelDoCargo("Assistente da Presidência")).toBe("analista");
+  });
+
+  it("usa o headline quando o cargo não diz o nível", () => {
+    expect(nivelDoCargo("", "Gerente de Operações | Logística")).toBe("gerencia");
+    expect(nivelDoCargo("Operações", "Diretor na Ambev")).toBe("diretoria");
+  });
+
+  it.each(["", "Mídia e entretenimento", "UX Designer", "SDR"])("sem nível: %s", (cargo) =>
+    expect(nivelDoCargo(cargo)).toBeNull(),
   );
 });
 
