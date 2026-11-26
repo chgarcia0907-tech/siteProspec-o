@@ -156,7 +156,9 @@ http
       // Pipedrive simulado (API v2): card e tasks por id do card.
       const pdDeal = /^\/pipedrive\/deals\/(\d+)$/.exec(url.pathname);
       if (pdDeal) {
-        const deal = PIPEDRIVE.deals[pdDeal[1]];
+        const deal =
+          PIPEDRIVE.deals[pdDeal[1]] ??
+          PIPEDRIVE.lista.find((d) => typeof d !== "string" && String(d.id) === pdDeal[1]);
         return deal ? send(res, 200, { success: true, data: deal }) : send(res, 404, {});
       }
       if (url.pathname === "/pipedrive/deals") {
