@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { CalendarClock } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ContactEditDialog } from "@/components/contatos/ContactEditDialog";
 import { DayProgressBar } from "@/components/hoje/DayProgressBar";
 import { QueueError, QueueList, QueueLoading } from "@/components/hoje/QueueList";
+import { RetomadasList } from "@/components/hoje/RetomadasList";
 import { useQueueActions } from "@/components/hoje/useQueueActions";
 import { useResponseOrigin } from "@/components/RespostaOrigem";
 import { Button } from "@/components/ui/button";
@@ -18,6 +20,7 @@ import {
   splitHackathon,
 } from "@/lib/fila";
 import { withSyncedStatus } from "@/lib/contatos";
+import { retomadasDoDia } from "@/lib/retomada";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/hoje")({
@@ -74,6 +77,7 @@ function Hoje() {
     [contacts, offsets, holidays, ref],
   );
   const progress = contacts ? dayProgress(contacts, queues, ref) : undefined;
+  const retomadas = useMemo(() => retomadasDoDia(contacts ?? [], ref), [contacts, ref]);
   const missing = STEPS.reduce(
     (n, step) =>
       n +
@@ -142,6 +146,13 @@ function Hoje() {
               </span>
             </TabsTrigger>
           ))}
+          <TabsTrigger value="retomadas" className="gap-2">
+            <CalendarClock className="size-3.5" aria-hidden />
+            Retomadas
+            <span className="rounded-full bg-control px-1.5 text-caption font-semibold text-heading tabular-nums">
+              {isPending ? "…" : retomadas.length}
+            </span>
+          </TabsTrigger>
         </TabsList>
 
         {STEPS.map((step) => (
@@ -161,6 +172,19 @@ function Hoje() {
             )}
           </TabsContent>
         ))}
+        <TabsContent value="retomadas">
+          {isPending ? (
+            <QueueLoading />
+          ) : isError ? (
+            <QueueError onRetry={() => refetch()} />
+          ) : (
+            <RetomadasList
+              items={retomadas}
+              hoje={ref}
+              onPatch={(c, p, msg) => actions.patchContact(c, p, msg)}
+            />
+          )}
+        </TabsContent>
       </Tabs>
       {editing && (
         <ContactEditDialog

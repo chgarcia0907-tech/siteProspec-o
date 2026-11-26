@@ -264,4 +264,57 @@ test.describe("Envios de hoje", () => {
     await page.getByRole("tab", { name: /^WhatsApp 1/ }).click();
     await expect(page.getByRole("button", { name: "Completar dados" })).toHaveCount(0);
   });
+
+  test("a aba Retomadas mostra as do dia e registra a retomada", async ({ page }) => {
+    await page.goto("/hoje");
+    // Só a Elisa: combinada para 10/11 (atrasada); a da Gabi é só em 20/11.
+    const aba = page.getByRole("tab", { name: /^Retomadas/ });
+    await expect(aba).toContainText("1");
+    await aba.click();
+    const card = page.getByRole("article", { name: "Retomada de Elisa Prado" });
+    await expect(card).toContainText("Retomar: atrasada 2 dias");
+    await expect(card).toContainText("Combinado para 10/11/2026");
+    await expect(card).toContainText("Pediu para falar depois da auditoria");
+    await expect(page.getByRole("article", { name: /Gabi Torres/ })).toHaveCount(0);
+
+    await card.getByRole("button", { name: "Retomei o contato" }).click();
+    await expect(page.getByText("Retomada registrada")).toBeVisible();
+    const [m] = await mutations();
+    expect(m).toMatchObject({ method: "PATCH", table: "contacts" });
+    expect(Object.keys(JSON.parse(m!.body))).toEqual(["retomado_em"]);
+  });
+
+  test("trocar a data tira a retomada da fila de hoje", async ({ page }) => {
+    await page.goto("/hoje");
+    await page.getByRole("tab", { name: /^Retomadas/ }).click();
+    const card = page.getByRole("article", { name: "Retomada de Elisa Prado" });
+    await card.getByRole("button", { name: "Trocar a data" }).click();
+    const dialog = page.getByRole("dialog", { name: /Trocar a data da retomada: Elisa Prado/ });
+    // Data já passou: o campo começa vazio e o motivo vem preenchido.
+    await expect(dialog.getByLabel("Quando retomar o contato?")).toHaveValue("");
+    await expect(dialog.getByLabel("O que o prospect disse (opcional)")).toHaveValue(
+      "Pediu para falar depois da auditoria",
+    );
+    await dialog.getByRole("button", { name: "Em 2 semanas" }).click();
+    await dialog.getByRole("button", { name: "Trocar a data" }).click();
+    await expect(page.getByText("Data da retomada trocada")).toBeVisible();
+    const [m] = await mutations();
+    expect(JSON.parse(m!.body)).toEqual({
+      retomar_em: "2026-11-26",
+      retomar_motivo: "Pediu para falar depois da auditoria",
+    });
+    await expect(card).toHaveCount(0);
+    await expect(page.getByText("Nenhuma retomada para hoje")).toBeVisible();
+  });
+
+  test("desmarcar tira a retomada da fila", async ({ page }) => {
+    await page.goto("/hoje");
+    await page.getByRole("tab", { name: /^Retomadas/ }).click();
+    const card = page.getByRole("article", { name: "Retomada de Elisa Prado" });
+    await card.getByRole("button", { name: "Desmarcar" }).click();
+    await expect(page.getByText("Retomada desmarcada")).toBeVisible();
+    const [m] = await mutations();
+    expect(JSON.parse(m!.body)).toEqual({ retomar_em: null });
+    await expect(card).toHaveCount(0);
+  });
 });
