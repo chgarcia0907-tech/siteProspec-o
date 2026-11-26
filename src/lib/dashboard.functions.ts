@@ -1253,23 +1253,22 @@ export const dashboardSalvarTesteAb = createServerFn({ method: "POST" })
     };
     let id = data.id;
     if (id) {
-      const { data: alterado, error: e } = await admin
+      const { data: existe, error: eBusca } = await admin
         .from("ab_testes")
-        .update(linha)
+        .select("id")
         .eq("id", id)
         .eq("period_id", data.periodId)
-        .select("id");
-      if (e || !alterado?.length) throw new Error("Falha ao salvar o teste");
+        .maybeSingle();
+      if (eBusca || !existe) throw new Error("Teste não encontrado neste ciclo");
+      const { error: e } = await admin.from("ab_testes").update(linha).eq("id", id);
+      if (e) throw new Error("Falha ao salvar o teste");
       const { error: eDel } = await admin.from("ab_versoes").delete().eq("teste_id", id);
       if (eDel) throw new Error("Falha ao salvar as versões");
     } else {
-      const { data: novo, error: e } = await admin
-        .from("ab_testes")
-        .insert(linha)
-        .select("id")
-        .single();
-      if (e || !novo) throw new Error("Falha ao criar o teste");
-      id = novo.id;
+      // Id gerado aqui: as versões precisam dele e assim não dependemos do retorno da inserção.
+      id = crypto.randomUUID();
+      const { error: e } = await admin.from("ab_testes").insert({ ...linha, id });
+      if (e) throw new Error("Falha ao criar o teste");
     }
     const { error: eVer } = await admin.from("ab_versoes").insert(
       versoes.map((v, ordem) => ({
