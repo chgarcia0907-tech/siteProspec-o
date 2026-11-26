@@ -91,6 +91,7 @@ export function SemanasTab({ ask }: { ask: Ask }) {
       inicio,
       fim: addDaysISO(inicio, 4),
       usa_alocacao: true,
+      cadencia_em: addDaysISO(inicio, 7),
     };
   })();
 
@@ -225,6 +226,7 @@ export function SemanasTab({ ask }: { ask: Ask }) {
             inicio: aberto.safra.inicio,
             fim: aberto.safra.fim,
             usa_alocacao: aberto.safra.usa_alocacao,
+            cadencia_em: aberto.safra.cadencia_em,
           }}
           editando={aberto.safra}
           outras={outras(aberto.safra.id)}
@@ -239,8 +241,8 @@ export function SemanasTab({ ask }: { ask: Ask }) {
           inicioPadrao={proxima.inicio}
           atePadrao={ate < proxima.inicio ? addDaysISO(proxima.inicio, 4) : ate}
           safras={data.safras}
-          onGerar={async (inicio, fim) => {
-            const n = await acoes.gerar(ciclo.id, inicio, fim);
+          onGerar={async (inicio, fim, opcoes) => {
+            const n = await acoes.gerar(ciclo.id, inicio, fim, opcoes);
             toast.success(n === 1 ? "1 safra criada" : `${n} safras criadas`);
             return n;
           }}

@@ -16,17 +16,31 @@ type Fase = NonNullable<CelulaSafra["fase"]>;
 /** Cor de cada fase (DESIGN.md, seção 6c): a prospecção é a única cheia, para saltar à vista. */
 const FASE_CLASSE: Record<Fase, string> = {
   em_prospeccao: "bg-primary text-primary-foreground font-semibold",
+  // Mesma cor da prospecção, com contorno para distinguir na legenda.
+  em_prospeccao_cadencia:
+    "bg-primary text-primary-foreground font-semibold ring-2 ring-inset ring-primary-soft",
+  // Semana sem trabalho entre a prospecção e a cadência (ex.: provas).
+  aguardando_cadencia: "border border-dashed border-input text-subtle-foreground",
   em_cadencia: "bg-primary-soft text-heading",
   em_maturacao: "border border-dashed border-input bg-surface-inset text-muted-foreground",
   madura: "bg-success-soft text-success",
 };
 const FASE_CURTA: Record<Fase, string> = {
   em_prospeccao: "Prospecção",
+  em_prospeccao_cadencia: "Prosp. + cadência",
+  aguardando_cadencia: "Pausa",
   em_cadencia: "Cadência",
   em_maturacao: "Maturação",
   madura: "Madura",
 };
-const LEGENDA: Fase[] = ["em_prospeccao", "em_cadencia", "em_maturacao", "madura"];
+const LEGENDA: Fase[] = [
+  "em_prospeccao",
+  "em_prospeccao_cadencia",
+  "em_cadencia",
+  "aguardando_cadencia",
+  "em_maturacao",
+  "madura",
+];
 
 const ddmm = (iso: string) => formatBR(iso).slice(0, 5);
 
