@@ -127,6 +127,7 @@ test.describe("Dashboard", () => {
       l1_semana: null,
       ats_semana: 1.5,
       no_prazo_pct: 80,
+      passos_semana: null,
     });
 
     await page
@@ -148,6 +149,7 @@ test.describe("Dashboard", () => {
       l1_semana: null,
       ats_semana: 2,
       no_prazo_pct: null,
+      passos_semana: null,
       user_id: U2,
       group_id: null,
     });

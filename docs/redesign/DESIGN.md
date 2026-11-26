@@ -245,6 +245,15 @@ durante, encerrada depois) e tabela compacta hunter × setor › subsetor, dupla
 alocação leva o selo `bg-warning-soft` "Não alocado"; vigências anteriores aparecem em
 `text-caption` embaixo do setor ("antes: Varejo (09/11 a 11/11)").
 
+**Aba Hunters** (`src/components/dashboard/hunters/`): seletores de ciclo e semana no topo;
+"Disciplina da semana" em tabela compacta (esforço com ícone, porcentagem e palavra, como o
+semáforo das metas; parados em `warning-text`); mapa de calor hunter × dia e participação nas ATs
+hunter × semana com o valor escrito em cada célula e o fundo de `surface-inset` a `chart-1` (o
+selo "concentração" fica embaixo da célula, em `warning-text`, fora do fundo colorido); duas
+dispersões com o primeiro nome no ponto e as médias tracejadas. A ficha do hunter abre abaixo da
+tabela (`?ficha=`), com as duas filas lado a lado; no gráfico de esforço, a meta é um contorno
+tracejado `chart-goal` atrás da barra do feito (uma linha some quando só uma semana tem meta).
+
 **Filtros globais** num cartão no topo, como hoje (ciclo, safra, hunter, dupla, setor alocado),
 na URL; com filtro fora do padrão, chips e "Limpar filtros".
 

@@ -18,18 +18,20 @@ import { errorMessage } from "@/lib/utils";
 import type { DashData } from "./format";
 
 type Goal = DashData["goals"][number];
-type Field = "envios_dia" | "l1_semana" | "ats_semana" | "no_prazo_pct";
+type Field = "envios_dia" | "l1_semana" | "ats_semana" | "no_prazo_pct" | "passos_semana";
 const FIELDS: { key: Field; label: string }[] = [
   { key: "envios_dia", label: "Mensagens por dia útil" },
   { key: "l1_semana", label: "LinkedIn 1 por semana" },
   { key: "ats_semana", label: "ATs por semana" },
   { key: "no_prazo_pct", label: "% no prazo (mínimo)" },
+  { key: "passos_semana", label: "Passos por semana" },
 ];
 const EMPTY: Omit<DashGoal, "user_id" | "group_id"> = {
   envios_dia: null,
   l1_semana: null,
   ats_semana: null,
   no_prazo_pct: null,
+  passos_semana: null,
 };
 
 /** Editor das metas: padrão da equipe, metas por grupo e exceções por hunter. */
@@ -142,6 +144,7 @@ function GoalForm({
       l1_semana: v("l1_semana"),
       ats_semana: v("ats_semana"),
       no_prazo_pct: v("no_prazo_pct"),
+      passos_semana: v("passos_semana"),
     };
   });
   const parsed = Object.fromEntries(
@@ -168,7 +171,7 @@ function GoalForm({
   return (
     <fieldset className="rounded-lg border bg-surface-inset p-4" aria-label={`Metas: ${title}`}>
       <legend className="px-1 text-dense font-medium">{title}</legend>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         {FIELDS.map((f) => (
           <label key={f.key} className="space-y-1 text-caption text-muted-foreground">
             <span>{f.label}</span>
@@ -216,6 +219,8 @@ function GoalForm({
                     ats_semana: parsed.ats_semana ?? null,
                     no_prazo_pct:
                       parsed.no_prazo_pct == null ? null : Math.round(parsed.no_prazo_pct),
+                    passos_semana:
+                      parsed.passos_semana == null ? null : Math.round(parsed.passos_semana),
                   },
                 }),
               "Meta salva",

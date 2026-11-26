@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminGate } from "@/components/painel/AdminGate";
 import { IndicadoresTab } from "@/components/dashboard/IndicadoresTab";
+import { HuntersTab } from "@/components/dashboard/hunters/HuntersTab";
 import { SemanasTab } from "@/components/dashboard/semanas/SemanasTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useConfirm } from "@/components/useConfirm";
@@ -11,13 +12,25 @@ import { parseIndicadoresBusca, type IndicadoresBusca } from "@/lib/indicadores"
  * conforme cada módulo novo entra (.claude/plans/dashboard-outbound.md); é o padrão e não vai
  * para a URL.
  */
-const ABAS = ["indicadores", "semanas"] as const;
+const ABAS = ["indicadores", "hunters", "semanas"] as const;
 type Aba = (typeof ABAS)[number];
-const ABA_LABEL: Record<Aba, string> = { indicadores: "Indicadores", semanas: "Semanas" };
+const ABA_LABEL: Record<Aba, string> = {
+  indicadores: "Indicadores",
+  hunters: "Hunters",
+  semanas: "Semanas",
+};
 const isAba = (v: unknown): v is Aba =>
   typeof v === "string" && (ABAS as readonly string[]).includes(v);
 
-type DashboardBusca = IndicadoresBusca & { aba?: Exclude<Aba, "indicadores"> | undefined };
+type DashboardBusca = IndicadoresBusca & {
+  aba?: Exclude<Aba, "indicadores"> | undefined;
+  /** Aba Hunters: segunda-feira da semana escolhida e hunter com a ficha aberta. */
+  semana?: string | undefined;
+  ficha?: string | undefined;
+};
+
+const DIA = /^\d{4}-\d{2}-\d{2}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const DESCRICAO = "A equipe está no ritmo? Envios, atrasados, metas e funil de toda a equipe.";
 
@@ -43,6 +56,9 @@ function validarBusca(raw: Record<string, unknown>): DashboardBusca {
     sentido: b.sentido,
     aberto: b.aberto,
     aba: isAba(raw["aba"]) && raw["aba"] !== "indicadores" ? raw["aba"] : undefined,
+    semana:
+      typeof raw["semana"] === "string" && DIA.test(raw["semana"]) ? raw["semana"] : undefined,
+    ficha: typeof raw["ficha"] === "string" && UUID.test(raw["ficha"]) ? raw["ficha"] : undefined,
   } satisfies { [K in keyof DashboardBusca]-?: DashboardBusca[K] };
 }
 
@@ -60,7 +76,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
-  const { aba: abaBusca, ...search } = Route.useSearch();
+  const { aba: abaBusca, semana, ficha, ...search } = Route.useSearch();
   const navigate = Route.useNavigate();
   const { ask, dialog } = useConfirm();
   const aba: Aba = abaBusca ?? "indicadores";
@@ -76,7 +92,12 @@ function Dashboard() {
           onValueChange={(v) =>
             isAba(v) &&
             navigate({
-              search: (s) => ({ ...s, aba: v === "indicadores" ? undefined : v }),
+              search: (s) => ({
+                ...s,
+                aba: v === "indicadores" ? undefined : v,
+                semana: undefined,
+                ficha: undefined,
+              }),
               replace: true,
             })
           }
@@ -96,7 +117,24 @@ function Dashboard() {
             <IndicadoresTab
               search={search}
               onSearch={(next) =>
-                navigate({ search: { ...next, aba: undefined }, replace: true, resetScroll: false })
+                navigate({
+                  search: { ...next, aba: undefined, semana: undefined, ficha: undefined },
+                  replace: true,
+                  resetScroll: false,
+                })
+              }
+            />
+          </TabsContent>
+          <TabsContent value="hunters" className="pt-4">
+            <HuntersTab
+              semana={semana}
+              ficha={ficha}
+              onBusca={(b) =>
+                navigate({
+                  search: (s) => ({ ...s, ...b }),
+                  replace: true,
+                  resetScroll: false,
+                })
               }
             />
           </TabsContent>
