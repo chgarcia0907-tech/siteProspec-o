@@ -5,6 +5,7 @@ import { painelIsAdmin } from "@/lib/painel.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useMemo } from "react";
 import { AppSidebar } from "@/components/AppSidebar";
+import { useAlertasAltos } from "@/hooks/useDashboard";
 import { useContacts, usePeriods, useHolidays, useSettings } from "@/hooks/useCadencia";
 import { DEFAULT_OFFSETS, todayISO } from "@/lib/cadencia";
 import { buildQueues, dayProgress, hackathonPeriods, splitHackathon } from "@/lib/fila";
@@ -30,6 +31,7 @@ function AppLayout() {
     staleTime: Infinity,
   });
   const pendingToday = usePendingToday();
+  const alertasAltos = useAlertasAltos(!!adm?.admin);
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -44,6 +46,7 @@ function AppLayout() {
         email={user.email ?? ""}
         isAdmin={!!adm?.admin}
         pendingToday={pendingToday}
+        alertasAltos={alertasAltos}
         onSignOut={signOut}
       />
       <main className="ml-58 px-10 py-8">

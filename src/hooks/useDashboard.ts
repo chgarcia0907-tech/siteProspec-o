@@ -22,7 +22,7 @@ import {
 } from "@/lib/dashboard.functions";
 import type { AlocacaoForm } from "@/lib/alocacao";
 import { spParts } from "@/lib/cadencia";
-import type { MetasCiclo, Parametros, SafraForm } from "@/lib/safras";
+import { cicloPadrao, type MetasCiclo, type Parametros, type SafraForm } from "@/lib/safras";
 
 const SEMANAS = ["dashboard_semanas"] as const;
 
@@ -171,7 +171,7 @@ export function useConciliacaoAcoes() {
   };
 }
 
-/** Visão geral (Módulo 1) do ciclo. */
+/** Visão geral (Módulo 1) do ciclo. Pesada: fica em cache por 5 minutos. */
 export function useVisao(periodId: string | null) {
   const fn = useServerFn(dashboardVisao);
   const hoje = spParts().iso;
@@ -179,6 +179,24 @@ export function useVisao(periodId: string | null) {
     queryKey: ["dashboard_visao", periodId, hoje],
     queryFn: () => fn({ data: { periodId: periodId!, hoje } }),
     enabled: !!periodId,
+    staleTime: 5 * 60 * 1000,
   });
+}
+
+/**
+ * Alertas de nível alto do ciclo padrão, para o contador do item "Dashboard" no menu. Só consulta
+ * para administradores (`admin`); para os demais, undefined.
+ */
+export function useAlertasAltos(admin: boolean): number | undefined {
+  const semanasFn = useServerFn(dashboardSemanas);
+  const semanas = useQuery({
+    queryKey: SEMANAS,
+    queryFn: () => semanasFn(),
+    enabled: admin,
+    staleTime: 5 * 60 * 1000,
+  });
+  const ciclo = semanas.data ? cicloPadrao(semanas.data.ciclos) : null;
+  const visao = useVisao(admin && ciclo ? ciclo.id : null);
+  return visao.data?.alertas.filter((a) => a.nivel === "alta").length;
 }
 export type VisaoDados = NonNullable<ReturnType<typeof useVisao>["data"]>;
