@@ -34,4 +34,12 @@ describe("fetchAll", () => {
       );
     await expect(fetchAll(page)).rejects.toThrow("falhou");
   });
+
+  it("o erro do Supabase (objeto simples) vira Error com a mensagem e o código", async () => {
+    const page = () =>
+      Promise.resolve({ data: null, error: { message: "coluna não existe", code: "42703" } });
+    const erro = await fetchAll(page).catch((e: unknown) => e);
+    expect(erro).toBeInstanceOf(Error);
+    expect(erro).toMatchObject({ message: "coluna não existe", code: "42703" });
+  });
 });

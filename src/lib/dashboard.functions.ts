@@ -41,6 +41,19 @@ async function assertAdmin(ctx: Ctx) {
 const db = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
 
 const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/**
+ * Falha de consulta com o motivo do banco: vai para o log da Vercel e para a tela (só admins chegam
+ * a estas funções), para dar para saber o que quebrou em produção.
+ */
+function falha(msg: string, erro?: unknown): never {
+  console.error(`[dashboard] ${msg}`, erro);
+  const motivo =
+    erro && typeof erro === "object" && "message" in erro
+      ? String((erro as { message: unknown }).message)
+      : "";
+  throw new Error(motivo ? `${msg} (${motivo})` : msg);
+}
 const SAFRA_COLS = "id, period_id, numero, inicio, fim, usa_alocacao";
 
 export type CicloResumo = {
@@ -76,7 +89,7 @@ export const dashboardSemanas = createServerFn({ method: "GET" })
       admin.from("ciclo_metas").select("*"),
     ]);
     const erro = ciclos.error ?? safras.error ?? parametros.error ?? metas.error;
-    if (erro) throw new Error("Falha ao carregar as semanas");
+    if (erro) falha("Falha ao carregar as semanas", erro);
     const p = parametros.data;
     return {
       ciclos: ciclos.data ?? [],
@@ -124,7 +137,7 @@ async function cicloExiste(admin: Awaited<ReturnType<typeof db>>, periodId: stri
     .eq("id", periodId)
     .eq("kind", "ciclo")
     .maybeSingle();
-  if (error) throw new Error("Falha ao carregar o ciclo");
+  if (error) falha("Falha ao carregar o ciclo", error);
   if (!data) throw new Error("Ciclo não encontrado");
 }
 
@@ -132,7 +145,7 @@ async function outrasSafras(admin: Awaited<ReturnType<typeof db>>, semId?: strin
   let q = admin.from("safras").select("id, period_id, numero, inicio");
   if (semId) q = q.neq("id", semId);
   const { data, error } = await q;
-  if (error) throw new Error("Falha ao carregar as safras");
+  if (error) falha("Falha ao carregar as safras", error);
   return data;
 }
 
@@ -149,7 +162,7 @@ export const dashboardCriarSafra = createServerFn({ method: "POST" })
     const { error } = await admin
       .from("safras")
       .insert({ ...data.safra, period_id: data.periodId });
-    if (error) throw new Error("Falha ao criar a safra");
+    if (error) falha("Falha ao criar a safra", error);
     return { ok: true as const };
   });
 
@@ -172,7 +185,7 @@ export const dashboardGerarSafras = createServerFn({ method: "POST" })
     const { error } = await admin
       .from("safras")
       .insert(novas.map((s) => ({ ...s, period_id: data.periodId })));
-    if (error) throw new Error("Falha ao criar as safras");
+    if (error) falha("Falha ao criar as safras", error);
     return { criadas: novas.length };
   });
 
@@ -191,12 +204,12 @@ export const dashboardEditarSafra = createServerFn({ method: "POST" })
       .select("period_id")
       .eq("id", data.id)
       .maybeSingle();
-    if (e1) throw new Error("Falha ao carregar a safra");
+    if (e1) falha("Falha ao carregar a safra", e1);
     if (!atual) throw new Error("Safra não encontrada");
     const erro = erroSafra(data.safra, atual.period_id, await outrasSafras(admin, data.id));
     if (erro) throw new Error(erro);
     const { error } = await admin.from("safras").update(data.safra).eq("id", data.id);
-    if (error) throw new Error("Falha ao salvar a safra");
+    if (error) falha("Falha ao salvar a safra", error);
     return { ok: true as const };
   });
 
@@ -214,7 +227,7 @@ export const dashboardExcluirSafra = createServerFn({ method: "POST" })
           ? "A safra é início ou fim de um teste A/B: ajuste ou exclua o teste antes."
           : "A safra tem alocações: exclua as alocações antes de excluir a safra.",
       );
-    if (error) throw new Error("Falha ao excluir a safra");
+    if (error) falha("Falha ao excluir a safra", error);
     return { ok: true as const };
   });
 
@@ -245,7 +258,7 @@ export const dashboardSalvarParametros = createServerFn({ method: "POST" })
     if (erro) throw new Error(erro);
     const admin = await db();
     const { error } = await admin.from("dashboard_parametros").upsert({ id: true, ...data });
-    if (error) throw new Error("Falha ao salvar os parâmetros");
+    if (error) falha("Falha ao salvar os parâmetros", error);
     return { ok: true as const };
   });
 
@@ -278,7 +291,7 @@ export const dashboardSalvarMetasCiclo = createServerFn({ method: "POST" })
     const { error } = vazias
       ? await admin.from("ciclo_metas").delete().eq("period_id", data.periodId)
       : await admin.from("ciclo_metas").upsert({ period_id: data.periodId, ...data.metas });
-    if (error) throw new Error("Falha ao salvar as metas do ciclo");
+    if (error) falha("Falha ao salvar as metas do ciclo", error);
     return { ok: true as const, metas: vazias ? METAS_CICLO_VAZIAS : data.metas };
   });
 
@@ -323,7 +336,7 @@ export const dashboardAlocacao = createServerFn({ method: "POST" })
       admin.from("sectors").select("id, name, active, sort, parent_id"),
     ]);
     const erro = safras.error ?? membros.error ?? setores.error;
-    if (erro) throw new Error("Falha ao carregar a alocação");
+    if (erro) falha("Falha ao carregar a alocação", erro);
     const ids = (safras.data ?? []).map((s) => s.id);
     // Mesma equipe dos Indicadores: membros do ciclo, sem os administradores.
     const { adminIds } = await import("./competition.server");
@@ -342,7 +355,8 @@ export const dashboardAlocacao = createServerFn({ method: "POST" })
             error: null,
           }),
     ]);
-    if (alocacoes.error ?? perfis.error) throw new Error("Falha ao carregar a alocação");
+    if (alocacoes.error ?? perfis.error)
+      falha("Falha ao carregar a alocação", alocacoes.error ?? perfis.error);
     return {
       safras: safras.data ?? [],
       alocacoes: alocacoes.data ?? [],
@@ -360,19 +374,19 @@ async function safraEAlocacoes(admin: Awaited<ReturnType<typeof db>>, safraId: s
     .select(SAFRA_COLS)
     .eq("id", safraId)
     .maybeSingle();
-  if (error) throw new Error("Falha ao carregar a safra");
+  if (error) falha("Falha ao carregar a safra", error);
   if (!safra) throw new Error("Safra não encontrada");
   const { data: alocacoes, error: e2 } = await admin
     .from("alocacoes")
     .select(ALOC_COLS)
     .eq("safra_id", safraId);
-  if (e2) throw new Error("Falha ao carregar a alocação");
+  if (e2) falha("Falha ao carregar a alocação", e2);
   return { safra, alocacoes: alocacoes ?? [] };
 }
 
 async function paiDosSubsetores(admin: Awaited<ReturnType<typeof db>>) {
   const { data, error } = await admin.from("sectors").select("id, parent_id");
-  if (error) throw new Error("Falha ao carregar os setores");
+  if (error) falha("Falha ao carregar os setores", error);
   return new Map((data ?? []).filter((s) => s.parent_id).map((s) => [s.id, s.parent_id as string]));
 }
 
@@ -456,13 +470,13 @@ export const dashboardExcluirAlocacao = createServerFn({ method: "POST" })
       .select("safra_id")
       .eq("id", data.id)
       .maybeSingle();
-    if (e1) throw new Error("Falha ao carregar a alocação");
+    if (e1) falha("Falha ao carregar a alocação", e1);
     if (!linha) throw new Error("Alocação não encontrada");
     const { safra } = await safraEAlocacoes(admin, linha.safra_id);
     if (modoEdicao(safra, data.hoje) !== "livre")
       throw new Error("A safra já começou: a alocação não pode ser excluída.");
     const { error } = await admin.from("alocacoes").delete().eq("id", data.id);
-    if (error) throw new Error("Falha ao excluir a alocação");
+    if (error) falha("Falha ao excluir a alocação", error);
     return { ok: true as const };
   });
 
@@ -481,14 +495,14 @@ export const dashboardCopiarAlocacoes = createServerFn({ method: "POST" })
       .from("safras")
       .select(SAFRA_COLS)
       .eq("period_id", safra.period_id);
-    if (error) throw new Error("Falha ao carregar as safras");
+    if (error) falha("Falha ao carregar as safras", error);
     const anterior = safraAnterior(safra, doCiclo ?? []);
     if (!anterior) throw new Error("Esta é a primeira safra do ciclo.");
     const { data: alocacoes, error: e2 } = await admin
       .from("alocacoes")
       .select(ALOC_COLS)
       .in("safra_id", [anterior.id, safra.id]);
-    if (e2) throw new Error("Falha ao carregar a alocação");
+    if (e2) falha("Falha ao carregar a alocação", e2);
     const novas = copiarAlocacoes(alocacoes ?? [], anterior, safra);
     if (novas.length === 0) return { copiadas: 0 };
     const { error: e3 } = await admin
@@ -535,7 +549,7 @@ async function carregarBaseHunters(periodId: string, semana: string, hoje: strin
       adminIds(admin),
     ]);
   const erro = safras.error ?? parametros.error ?? membros.error ?? periodos.error ?? goals.error;
-  if (erro) throw new Error("Falha ao carregar os hunters");
+  if (erro) falha("Falha ao carregar os hunters", erro);
 
   const grupoDe = new Map(
     (membros.data ?? []).filter((m) => !admins.has(m.user_id)).map((m) => [m.user_id, m.group_id]),
@@ -574,7 +588,8 @@ async function carregarBaseHunters(periodId: string, semana: string, hoje: strin
       ? admin.from("alocacoes").select(ALOC_COLS).in("safra_id", safraIds)
       : Promise.resolve({ data: [] as Alocacao[], error: null }),
   ]);
-  if (perfis.error ?? alocacoes.error) throw new Error("Falha ao carregar os hunters");
+  if (perfis.error ?? alocacoes.error)
+    falha("Falha ao carregar os hunters", perfis.error ?? alocacoes.error);
 
   // Cópia do Pipedrive: histórico dos cards das ATs e tasks pelo login de cada hunter.
   const { loginDoUsuario } = await import("./ats");
@@ -603,7 +618,7 @@ async function carregarBaseHunters(periodId: string, semana: string, hoje: strin
         )
       : Promise.resolve([] as { deal_id: number; stage_id: number; entrou_em: string }[]),
   ]);
-  if (time.error) throw new Error("Falha ao carregar o time comercial");
+  if (time.error) falha("Falha ao carregar o time comercial", time.error);
   const loginDe = new Map(
     (perfis.data ?? []).map((x) => [x.id, loginDoUsuario(x.id, x.email, time.data ?? [])]),
   );
@@ -743,7 +758,7 @@ export const dashboardConciliacao = createServerFn({ method: "POST" })
         .maybeSingle(),
     ]);
     const erro = periodo.error ?? safras.error ?? membros.error ?? ultima.error;
-    if (erro) throw new Error("Falha ao carregar a conciliação");
+    if (erro) falha("Falha ao carregar a conciliação", erro);
     if (!periodo.data) throw new Error("Ciclo não encontrado");
     const ids = [...new Set((membros.data ?? []).map((m) => m.user_id))];
     const safraIds = (safras.data ?? []).map((s) => s.id);
@@ -763,7 +778,8 @@ export const dashboardConciliacao = createServerFn({ method: "POST" })
         : Promise.resolve({ data: [], error: null }),
       admin.from("profiles").select("id, display_name, email"),
     ]);
-    if (alocacoes.error ?? perfis.error) throw new Error("Falha ao carregar a conciliação");
+    if (alocacoes.error ?? perfis.error)
+      falha("Falha ao carregar a conciliação", alocacoes.error ?? perfis.error);
 
     const desde = diaSP(periodo.data.started_at);
     return {
@@ -796,7 +812,8 @@ export const dashboardLigarAtContato = createServerFn({ method: "POST" })
       admin.from("ats").select("user_id").eq("id", data.atId).maybeSingle(),
       admin.from("contacts").select("user_id").eq("id", data.contactId).maybeSingle(),
     ]);
-    if (at.error ?? contato.error) throw new Error("Falha ao carregar a AT ou o contato");
+    if (at.error ?? contato.error)
+      falha("Falha ao carregar a AT ou o contato", at.error ?? contato.error);
     if (!at.data || !contato.data) throw new Error("AT ou contato não encontrado");
     if (at.data.user_id && at.data.user_id !== contato.data.user_id)
       throw new Error("O contato é de outro hunter");
@@ -804,7 +821,7 @@ export const dashboardLigarAtContato = createServerFn({ method: "POST" })
       .from("ats")
       .update({ contact_id: data.contactId })
       .eq("id", data.atId);
-    if (error) throw new Error("Falha ao ligar a AT ao contato");
+    if (error) falha("Falha ao ligar a AT ao contato", error);
     return { ok: true as const };
   });
 
@@ -825,14 +842,14 @@ export const dashboardLigarAtCard = createServerFn({ method: "POST" })
       .select("id")
       .eq("pipedrive_deal_id", data.dealId)
       .maybeSingle();
-    if (e1) throw new Error("Falha ao conferir o card");
+    if (e1) falha("Falha ao conferir o card", e1);
     if (outra && outra.id !== data.atId) throw new Error("Este card já está ligado a outra AT");
     const { error } = await admin
       .from("ats")
       .update({ pipedrive_deal_id: data.dealId })
       .eq("id", data.atId)
       .is("pipedrive_deal_id", null);
-    if (error) throw new Error("Falha ao ligar a AT ao card");
+    if (error) falha("Falha ao ligar a AT ao card", error);
     const pdServer = await import("./pipedrive.server");
     let aviso: string | null = null;
     try {
@@ -877,7 +894,7 @@ export const dashboardVisao = createServerFn({ method: "POST" })
       .from("safras")
       .select("inicio")
       .eq("period_id", data.periodId);
-    if (error) throw new Error("Falha ao carregar as safras");
+    if (error) falha("Falha ao carregar as safras", error);
     const semana = semanaPadrao(safrasCiclo ?? [], data.hoje) ?? weekStartISO(data.hoje);
     const [base, metas] = await Promise.all([
       carregarBaseHunters(data.periodId, semana, data.hoje),
@@ -887,7 +904,7 @@ export const dashboardVisao = createServerFn({ method: "POST" })
         .eq("period_id", data.periodId)
         .maybeSingle(),
     ]);
-    if (metas.error) throw new Error("Falha ao carregar as metas do ciclo");
+    if (metas.error) falha("Falha ao carregar as metas do ciclo", metas.error);
     const { entrada, parametros: p } = base;
 
     const hunters = computeHunters(entrada);
@@ -958,7 +975,7 @@ export const dashboardRealizacao = createServerFn({ method: "POST" })
       .from("safras")
       .select("inicio")
       .eq("period_id", data.periodId);
-    if (error) throw new Error("Falha ao carregar as safras");
+    if (error) falha("Falha ao carregar as safras", error);
     const semana = semanaPadrao(safrasCiclo ?? [], data.hoje) ?? weekStartISO(data.hoje);
     const base = await carregarBaseHunters(data.periodId, semana, data.hoje);
     const { entrada, parametros: p } = base;
@@ -1001,7 +1018,8 @@ export const dashboardRealizacao = createServerFn({ method: "POST" })
       admin.from("sectors").select("id, name"),
       admin.from("dashboard_tempo_etapas").select("stage_id, meta_dias"),
     ]);
-    if (setores.error ?? tempos.error) throw new Error("Falha ao carregar a realização");
+    if (setores.error ?? tempos.error)
+      falha("Falha ao carregar a realização", setores.error ?? tempos.error);
 
     const cards: Record<number, import("./dashRealizacao").RCard> = {};
     const etapasDe = new Map<
@@ -1061,7 +1079,7 @@ export const dashboardSalvarTempoEtapas = createServerFn({ method: "POST" })
     if (erro) throw new Error(erro);
     const admin = await db();
     const { error } = await admin.from("dashboard_tempo_etapas").upsert(data.metas);
-    if (error) throw new Error("Falha ao salvar as metas de tempo");
+    if (error) falha("Falha ao salvar as metas de tempo", error);
     return { ok: true as const };
   });
 
@@ -1081,7 +1099,7 @@ async function carregarBaseSegmentos(periodId: string, hoje: string) {
     .from("safras")
     .select("inicio")
     .eq("period_id", periodId);
-  if (error) throw new Error("Falha ao carregar as safras");
+  if (error) falha("Falha ao carregar as safras", error);
   const semana = semanaPadrao(safrasCiclo ?? [], hoje) ?? weekStartISO(hoje);
   const base = await carregarBaseHunters(periodId, semana, hoje);
   const ids = base.entrada.hunters.map((h) => h.id);
@@ -1108,7 +1126,7 @@ async function carregarBaseSegmentos(periodId: string, hoje: string) {
       : Promise.resolve([]),
     admin.from("sectors").select("id, name, parent_id, active").order("name"),
   ]);
-  if (setores.error) throw new Error("Falha ao carregar os setores");
+  if (setores.error) falha("Falha ao carregar os setores", setores.error);
   const extraDe = new Map(extras.map((x) => [x.id, x]));
   const contatos: import("./dashSegmentos").SContato[] = base.entrada.contatos.map((c) => {
     const x = extraDe.get(c.id);
@@ -1160,7 +1178,7 @@ export const dashboardSegmentos = createServerFn({ method: "POST" })
         .eq("period_id", data.periodId)
         .order("created_at"),
     ]);
-    if (testes.error) throw new Error("Falha ao carregar os testes A/B");
+    if (testes.error) falha("Falha ao carregar os testes A/B", testes.error);
     const { base, contatos, empresas: mapaEmpresas, nomes } = carga;
     const { entrada, parametros: p } = base;
     const testeIds = (testes.data ?? []).map((t) => t.id);
@@ -1170,7 +1188,7 @@ export const dashboardSegmentos = createServerFn({ method: "POST" })
           .select("teste_id, rotulo, valores, ordem")
           .in("teste_id", testeIds)
       : { data: [], error: null };
-    if (versoesAb.error) throw new Error("Falha ao carregar os testes A/B");
+    if (versoesAb.error) falha("Falha ao carregar os testes A/B", versoesAb.error);
 
     const ctx = {
       hoje: data.hoje,
@@ -1253,7 +1271,7 @@ export const dashboardSalvarTesteAb = createServerFn({ method: "POST" })
       .from("safras")
       .select("id, numero")
       .eq("period_id", data.periodId);
-    if (error) throw new Error("Falha ao carregar as safras");
+    if (error) falha("Falha ao carregar as safras", error);
     const erro = erroTesteAb(data.teste, safras ?? []);
     if (erro) throw new Error(erro);
     const { versoes, ...campos } = data.teste;
@@ -1273,14 +1291,14 @@ export const dashboardSalvarTesteAb = createServerFn({ method: "POST" })
         .maybeSingle();
       if (eBusca || !existe) throw new Error("Teste não encontrado neste ciclo");
       const { error: e } = await admin.from("ab_testes").update(linha).eq("id", id);
-      if (e) throw new Error("Falha ao salvar o teste");
+      if (e) falha("Falha ao salvar o teste", e);
       const { error: eDel } = await admin.from("ab_versoes").delete().eq("teste_id", id);
-      if (eDel) throw new Error("Falha ao salvar as versões");
+      if (eDel) falha("Falha ao salvar as versões", eDel);
     } else {
       // Id gerado aqui: as versões precisam dele e assim não dependemos do retorno da inserção.
       id = crypto.randomUUID();
       const { error: e } = await admin.from("ab_testes").insert({ ...linha, id });
-      if (e) throw new Error("Falha ao criar o teste");
+      if (e) falha("Falha ao criar o teste", e);
     }
     const { error: eVer } = await admin.from("ab_versoes").insert(
       versoes.map((v, ordem) => ({
@@ -1290,7 +1308,7 @@ export const dashboardSalvarTesteAb = createServerFn({ method: "POST" })
         ordem,
       })),
     );
-    if (eVer) throw new Error("Falha ao salvar as versões");
+    if (eVer) falha("Falha ao salvar as versões", eVer);
     return { id: id! };
   });
 
@@ -1317,7 +1335,7 @@ export const dashboardEncerrarTesteAb = createServerFn({ method: "POST" })
           : { status: "ativo", conclusao: null },
       )
       .eq("id", data.id);
-    if (error) throw new Error("Falha ao atualizar o teste");
+    if (error) falha("Falha ao atualizar o teste", error);
     return { ok: true as const };
   });
 
@@ -1329,7 +1347,7 @@ export const dashboardExcluirTesteAb = createServerFn({ method: "POST" })
     await assertAdmin(context);
     const admin = await db();
     const { error } = await admin.from("ab_testes").delete().eq("id", data.id);
-    if (error) throw new Error("Falha ao excluir o teste");
+    if (error) falha("Falha ao excluir o teste", error);
     return { ok: true as const };
   });
 
@@ -1358,7 +1376,8 @@ export const dashboardResultado = createServerFn({ method: "POST" })
       admin.from("period_members").select("period_id, user_id"),
       adminIds(admin),
     ]);
-    if (periodos.error ?? membros.error) throw new Error("Falha ao carregar os ciclos");
+    if (periodos.error ?? membros.error)
+      falha("Falha ao carregar os ciclos", periodos.error ?? membros.error);
     const { base, contatos, empresas, nomes } = carga;
     const ciclos = (periodos.data ?? []).map((c) => ({
       id: c.id,
@@ -1488,7 +1507,7 @@ export const dashboardCurvas = createServerFn({ method: "POST" })
       .from("safras")
       .select("inicio")
       .eq("period_id", data.periodId);
-    if (error) throw new Error("Falha ao carregar as safras");
+    if (error) falha("Falha ao carregar as safras", error);
     const semana = semanaPadrao(safrasCiclo ?? [], data.hoje) ?? weekStartISO(data.hoje);
     const base = await carregarBaseHunters(data.periodId, semana, data.hoje);
     return {
