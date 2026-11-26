@@ -42,6 +42,11 @@ export async function seedResultado() {
   await fetch(`${MOCK}/__seed?resultado=1`, { method: "POST" });
 }
 
+/** A leitura da tabela falha como no banco sem ela (até o próximo teste). */
+export async function falharTabela(tabela: string) {
+  await fetch(`${MOCK}/__falha?tabela=${tabela}`, { method: "POST" });
+}
+
 /** O hunter logado deixa de ser admin (até o próximo teste). */
 export async function semAdmin() {
   await fetch(`${MOCK}/__rpc?has_role=false`, { method: "POST" });

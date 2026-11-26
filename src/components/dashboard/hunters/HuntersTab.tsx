@@ -10,6 +10,7 @@ import { cicloPadrao, rotuloSafra, semanaPadrao } from "@/lib/safras";
 import { CalorSemana, Dispersoes, ParticipacaoAts } from "./Equipe";
 import { DisciplinaTabela } from "./DisciplinaTabela";
 import { FichaHunter } from "./FichaHunter";
+import { ErroCarga } from "../shared";
 
 const ddmm = (iso: string) => formatBR(iso).slice(0, 5);
 
@@ -49,7 +50,9 @@ export function HuntersTab({
   if (semanas.isLoading)
     return <p className="text-dense text-muted-foreground">Carregando hunters…</p>;
   if (semanas.error)
-    return <p className="text-dense text-destructive-text">Não foi possível carregar os ciclos.</p>;
+    return (
+      <ErroCarga oQue="os ciclos" erro={semanas.error} onRetry={() => void semanas.refetch()} />
+    );
   if (!ciclo || safras.length === 0)
     return (
       <div className="rounded-xl border border-dashed border-input p-8 text-center">
@@ -117,14 +120,7 @@ export function HuntersTab({
 
       {dados.isLoading || !d ? (
         dados.error ? (
-          <div className="rounded-xl border border-destructive-border bg-destructive-soft/40 p-5">
-            <p className="text-dense text-destructive-text">
-              Não foi possível carregar os hunters.
-            </p>
-            <Button variant="secondary" className="mt-3" onClick={() => void dados.refetch()}>
-              Tentar de novo
-            </Button>
-          </div>
+          <ErroCarga oQue="os hunters" erro={dados.error} onRetry={() => void dados.refetch()} />
         ) : (
           <p className="text-dense text-muted-foreground">Carregando hunters…</p>
         )

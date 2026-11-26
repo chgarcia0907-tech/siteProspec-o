@@ -13,7 +13,7 @@ import { NOME_ETAPA } from "@/lib/pipedrive";
 import { cicloPadrao, diaSP, rotuloSafra } from "@/lib/safras";
 import { errorMessage } from "@/lib/utils";
 import { num } from "../format";
-import { Section } from "../shared";
+import { ErroCarga, Section } from "../shared";
 import { taxa } from "../hunters/format";
 import { EscolherCardDialog } from "./EscolherCardDialog";
 
@@ -142,6 +142,10 @@ export function ConciliacaoTab() {
   }
 
   if (semanas.isLoading) return <p className="text-dense text-muted-foreground">Carregando…</p>;
+  if (semanas.error)
+    return (
+      <ErroCarga oQue="os ciclos" erro={semanas.error} onRetry={() => void semanas.refetch()} />
+    );
   if (!ciclo)
     return (
       <p className="rounded-xl border border-dashed border-input p-6 text-center text-dense text-muted-foreground">
@@ -190,14 +194,7 @@ export function ConciliacaoTab() {
 
       {isLoading || !d ? (
         error ? (
-          <div className="rounded-xl border border-destructive-border bg-destructive-soft/40 p-5">
-            <p className="text-dense text-destructive-text">
-              Não foi possível carregar a conciliação.
-            </p>
-            <Button variant="secondary" className="mt-3" onClick={() => void refetch()}>
-              Tentar de novo
-            </Button>
-          </div>
+          <ErroCarga oQue="a conciliação" erro={error} onRetry={() => void refetch()} />
         ) : (
           <p className="text-dense text-muted-foreground">Carregando a conciliação…</p>
         )

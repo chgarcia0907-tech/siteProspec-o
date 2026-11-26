@@ -1,6 +1,8 @@
 // Peças comuns da aba Indicadores: cartões de seção e barras horizontais.
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { errorMessage } from "@/lib/utils";
 import { num } from "./format";
 
 /** Seção do painel com título e explicação curta do que o bloco responde. */
@@ -65,5 +67,32 @@ export function BarList({
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Falha ao carregar uma parte da Dashboard: o que falhou, o motivo devolvido pelo servidor e
+ * "Tentar de novo". Nunca troque um erro por um estado vazio ("Nenhum ciclo"): esconde a causa. */
+export function ErroCarga({
+  oQue,
+  erro,
+  onRetry,
+}: {
+  /** Complemento de "Não foi possível carregar …" (ex.: "os ciclos"). */
+  oQue: string;
+  erro: unknown;
+  onRetry: () => void;
+}) {
+  const motivo = errorMessage(erro, "");
+  return (
+    <div
+      role="alert"
+      className="rounded-xl border border-destructive-border bg-destructive-soft/40 p-5"
+    >
+      <p className="text-dense text-destructive-text">Não foi possível carregar {oQue}.</p>
+      {motivo && <p className="mt-1 text-caption text-muted-foreground">{motivo}</p>}
+      <Button variant="secondary" className="mt-3" onClick={onRetry}>
+        Tentar de novo
+      </Button>
+    </div>
   );
 }

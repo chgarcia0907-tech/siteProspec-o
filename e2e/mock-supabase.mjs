@@ -5,6 +5,7 @@
 // POST /__seed?hackathon=1 acrescenta um contato de período de Hackathon encerrado.
 // POST /__seed?segmentos=1 amadurece as safras e cria um teste A/B (aba Segmentos).
 // POST /__seed?resultado=1 faz o mesmo e marca o card da Ômega como ganho (aba Resultado).
+// POST /__falha?tabela=safras faz a leitura dessa tabela falhar (até o próximo /__reset).
 // POST /__rpc?has_role=false troca a resposta de uma RPC até o próximo /__reset (ex.: hunter sem
 // papel de admin).
 import http from "node:http";
@@ -25,6 +26,8 @@ const PORT = Number(process.env.MOCK_SUPABASE_PORT ?? 54399);
 let db = initialDb();
 let mutations = [];
 let rpcOverride = {};
+/** Tabelas cuja leitura falha até o próximo /__reset (POST /__falha?tabela=safras). */
+let falhas = new Set();
 
 function matchOne(r, k, v) {
   const m = /^(not\.)?(eq|neq|is|in|gte|lte|gt|lt|ilike)\.(.*)$/.exec(v);
@@ -139,10 +142,15 @@ http
       const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
       if (req.method === "OPTIONS") return send(res, 204);
       if (url.pathname === "/__mutations") return send(res, 200, mutations);
+      if (url.pathname === "/__falha") {
+        falhas.add(url.searchParams.get("tabela"));
+        return send(res, 200, { ok: true });
+      }
       if (url.pathname === "/__reset") {
         db = initialDb();
         mutations = [];
         rpcOverride = {};
+        falhas = new Set();
         return send(res, 200, { ok: true });
       }
       if (url.pathname === "/__rpc") {
@@ -237,6 +245,11 @@ http
         }
         return send(res, 201, []);
       }
+      if (falhas.has(table))
+        return send(res, 404, {
+          code: "42P01",
+          message: `relation "public.${table}" does not exist`,
+        });
       // RLS simplificado: com a chave pública, o hunter logado só vê os próprios contatos.
       const isService = (req.headers.authorization ?? "") === `Bearer ${SERVICE_KEY}`;
       let rows = db[table] ?? [];
