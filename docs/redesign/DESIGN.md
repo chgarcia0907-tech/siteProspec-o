@@ -254,6 +254,13 @@ dispersões com o primeiro nome no ponto e as médias tracejadas. A ficha do hun
 tabela (`?ficha=`), com as duas filas lado a lado; no gráfico de esforço, a meta é um contorno
 tracejado `chart-goal` atrás da barra do feito (uma linha some quando só uma semana tem meta).
 
+**Aba Conciliação** (`src/components/dashboard/conciliacao/`): contador de pendências na própria
+aba (`bg-warning-soft`, some quando zera); no topo, ciclo, hora da última cópia do Pipedrive e
+"Sincronizar agora" (mostra o progresso dos lotes no lugar da hora). Faixa "Higiene dos dados" com
+as taxas e o volume; uma seção por tipo de pendência, com a sugestão de ligação e o botão primário
+"Ligar a este card/contato" na linha; seção sem pendência vira uma linha tracejada ("nenhuma AT sem
+card") para a fila mostrar só o que pede ação.
+
 **Filtros globais** num cartão no topo, como hoje (ciclo, safra, hunter, dupla, setor alocado),
 na URL; com filtro fora do padrão, chips e "Limpar filtros".
 

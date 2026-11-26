@@ -64,6 +64,10 @@ const blank = {
   period_id: P1,
   company_id: null,
   updated_at: "2026-11-01T00:00:00Z",
+  retomar_em: null,
+  retomar_motivo: null,
+  retomada_marcada_em: null,
+  retomado_em: null,
 };
 let n = 0;
 const ct = (user_id, o) => ({
@@ -132,6 +136,10 @@ export function makeContacts() {
       resposta_tipo: "positiva",
       at_marcada_em: "2026-11-14",
       at_registrado_em: "2026-11-06T13:00:00Z",
+      // Retomada atrasada: combinada para 10/11 (hoje é 12/11) e ainda não retomada.
+      retomar_em: "2026-11-10",
+      retomar_motivo: "Pediu para falar depois da auditoria",
+      retomada_marcada_em: "2026-11-03T12:00:00Z",
     }),
     ct(U1, {
       name: "Fábio Neves",
@@ -156,6 +164,9 @@ export function makeContacts() {
       status: "descartado",
       step1_date: "2026-10-10",
       sent1_at: "2026-10-10",
+      // Retomada futura (20/11): ainda não aparece em Envios de hoje.
+      retomar_em: "2026-11-20",
+      retomada_marcada_em: "2026-11-05T12:00:00Z",
     }),
     ct(U1, {
       name: "Hugo Melo",
@@ -347,6 +358,78 @@ export function initialDb() {
     ],
     // Dashboard › Semanas: o Ciclo Nov tem a S01 (antes do esquema de alocação), a S02 (a semana
     // de hoje, 12/11/2026) e a S03. Parâmetros com os valores padrão; sem metas do ciclo.
+    // Cópia dos cards (fase 5): 94500 e 94800 são do outbound NTec sem AT (o 94800 sem cargo);
+    // o 94307 está ligado à AT do Paulo Reis e não é do outbound.
+    pd_cards: [
+      {
+        deal_id: 94500,
+        titulo: "Sigma Fretes - Rita Lopes",
+        pipeline_id: 6,
+        stage_id: 31,
+        status: "open",
+        valor: 30000,
+        hunter_login: "hunter2",
+        canal_entrada: "Outbound",
+        cargo: "Diretora de Logística",
+        add_time: "2026-11-03T12:00:00Z",
+        // Copiado antes da última mudança no Pipedrive (06/11): a próxima sincronização o refaz.
+        update_time: "2026-11-05T10:00:00Z",
+        etiquetas: [34],
+        outbound: true,
+        sincronizado_em: "2026-11-12T12:37:00Z",
+      },
+      {
+        deal_id: 94800,
+        titulo: "Engenharia Nova - contato",
+        pipeline_id: 6,
+        stage_id: 108,
+        status: "open",
+        hunter_login: "hunter1",
+        canal_entrada: "Outbound",
+        cargo: null,
+        add_time: "2026-11-10T12:00:00Z",
+        update_time: "2026-11-10T12:00:00Z",
+        etiquetas: [34],
+        outbound: true,
+        sincronizado_em: "2026-11-12T12:37:00Z",
+      },
+      {
+        deal_id: 94307,
+        titulo: "Ômega Log - Paulo Reis",
+        pipeline_id: 6,
+        stage_id: 108,
+        status: "open",
+        hunter_login: "hunter1",
+        cargo: null,
+        add_time: "2026-11-04T12:00:00Z",
+        update_time: null,
+        etiquetas: [34],
+        outbound: false,
+        sincronizado_em: "2026-11-12T12:37:00Z",
+      },
+    ],
+    pd_card_etapas: [],
+    // Tasks do hunter1 nesta semana: uma concluída no dia do prazo, outra aberta e vencida.
+    pd_tasks: [
+      {
+        activity_id: 700001,
+        deal_id: 94800,
+        assunto: "TP1",
+        due_date: "2026-11-10",
+        done: true,
+        marked_as_done_time: "2026-11-10T18:00:00Z",
+        hunter_login: "hunter1",
+      },
+      {
+        activity_id: 700002,
+        deal_id: 94800,
+        assunto: "TP3",
+        due_date: "2026-11-11",
+        done: false,
+        marked_as_done_time: null,
+        hunter_login: "hunter1",
+      },
+    ],
     safras: [
       {
         id: SAFRA_S01,
@@ -706,12 +789,22 @@ export const PIPEDRIVE = {
   lista: [
     "94307",
     {
+      // Card do outbound NTec (funil 6 + NTec + Canal de Entrada Outbound) sem AT na plataforma.
       id: 94500,
       title: "Sigma Fretes - Rita Lopes",
+      pipeline_id: 6,
       stage_id: 31,
       status: "open",
+      value: 30000,
+      currency: "BRL",
+      person_id: 501,
+      add_time: "2026-11-03T12:00:00Z",
+      update_time: "2026-11-06T13:00:00Z",
       label_ids: [34],
-      custom_fields: { "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 901 },
+      custom_fields: {
+        "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 901,
+        "97d0502cc2b489986844a93b374656e5acf179e1": 28,
+      },
     },
     {
       id: 94600,
@@ -741,9 +834,26 @@ export const PIPEDRIVE = {
     },
   ],
   deals: {
+    // Card do outbound fora da lista do funil (não entra na tela Tasks), achado só pelo id.
+    94800: {
+      id: 94800,
+      title: "Engenharia Nova - contato",
+      pipeline_id: 6,
+      stage_id: 108,
+      status: "open",
+      label_ids: [34],
+      add_time: "2026-11-10T12:00:00Z",
+      update_time: "2026-11-10T12:00:00Z",
+      custom_fields: {
+        "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 900,
+        "97d0502cc2b489986844a93b374656e5acf179e1": 28,
+      },
+    },
     94307: {
       id: 94307,
       title: "Ômega Log - Paulo Reis",
+      pipeline_id: 6,
+      add_time: "2026-11-04T12:00:00Z",
       label_ids: [34],
       custom_fields: { "2e9e1edaa8c01d43869bc9e949a5873ba2163ca4": 900 },
       stage_id: 108,
@@ -753,6 +863,26 @@ export const PIPEDRIVE = {
       stage_change_time: "2026-11-12T13:00:00Z",
       lost_time: null,
     },
+  },
+  persons: [
+    {
+      id: 501,
+      custom_fields: { "54dfa4cb1118103bebc367d6e0ae574df374d478": "Diretora de Logística" },
+    },
+  ],
+  // Histórico (API v1): o 94500 passou de AT Diag. Agendada para Realizada em 06/11.
+  flows: {
+    94500: [
+      {
+        object: "dealChange",
+        data: {
+          field_key: "stage_id",
+          old_value: "108",
+          new_value: "31",
+          log_time: "2026-11-06 13:00:00",
+        },
+      },
+    ],
   },
   activities: {
     94500: [

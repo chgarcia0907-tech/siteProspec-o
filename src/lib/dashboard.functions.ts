@@ -497,6 +497,175 @@ export const dashboardCopiarAlocacoes = createServerFn({ method: "POST" })
 /* --------------------------------- Hunters --------------------------------- */
 
 /**
+ * Base comum das abas Hunters e Visão geral: membros do ciclo (sem administradores), contatos (sem
+ * os cards do Hackathon encerrado), ATs, alocação, metas e a cópia do Pipedrive.
+ */
+async function carregarBaseHunters(periodId: string, semana: string, hoje: string) {
+  const admin = await db();
+  const { fetchAll } = await import("./fetch-all");
+  const { adminIds } = await import("./competition.server");
+  const { hackathonPeriods, splitHackathon } = await import("./fila");
+  const { H_CONTATO_COLUNAS } = await import("./dashHunters");
+  const { weekStartISO } = await import("./empresas");
+  type Linha = import("./dashHunters").HContato & { period_id: string | null };
+
+  const [safras, parametros, membros, periodos, goals, settings, holidays, admins] =
+    await Promise.all([
+      admin.from("safras").select(SAFRA_COLS).eq("period_id", periodId),
+      admin.from("dashboard_parametros").select("*").maybeSingle(),
+      admin.from("period_members").select("user_id, group_id").eq("period_id", periodId),
+      admin.from("periods").select("id, kind, status, closed_at, started_at"),
+      admin
+        .from("goals")
+        .select(
+          "user_id, group_id, envios_dia, l1_semana, ats_semana, no_prazo_pct, passos_semana",
+        ),
+      fetchAll((a, b) =>
+        admin
+          .from("settings")
+          .select("user_id, offset1, offset2, offset3, offset4, offset5")
+          .order("user_id")
+          .range(a, b),
+      ),
+      admin.from("holidays").select("date"),
+      adminIds(admin),
+    ]);
+  const erro = safras.error ?? parametros.error ?? membros.error ?? periodos.error ?? goals.error;
+  if (erro) throw new Error("Falha ao carregar os hunters");
+
+  const grupoDe = new Map(
+    (membros.data ?? []).filter((m) => !admins.has(m.user_id)).map((m) => [m.user_id, m.group_id]),
+  );
+  const ids = [...grupoDe.keys()];
+  const safraIds = (safras.data ?? []).map((s) => s.id);
+  const [perfis, contatos, ats, alocacoes] = await Promise.all([
+    ids.length
+      ? admin.from("profiles").select("id, display_name, email").in("id", ids)
+      : Promise.resolve({ data: [], error: null }),
+    ids.length
+      ? fetchAll(
+          (a, b) =>
+            admin
+              .from("contacts")
+              .select(`${H_CONTATO_COLUNAS}, period_id`)
+              .in("user_id", ids)
+              .order("id")
+              .range(a, b) as unknown as import("./fetch-all").PageResult<Linha>,
+        )
+      : Promise.resolve([] as Linha[]),
+    ids.length
+      ? fetchAll((a, b) =>
+          admin
+            .from("ats")
+            .select(
+              "id, user_id, contact_id, registrada_em, agendada_atual, status, pipedrive_stage_id, pipedrive_deal_id",
+            )
+            .eq("tipo", "diagnostico")
+            .in("user_id", ids)
+            .order("id")
+            .range(a, b),
+        )
+      : Promise.resolve([]),
+    safraIds.length
+      ? admin.from("alocacoes").select(ALOC_COLS).in("safra_id", safraIds)
+      : Promise.resolve({ data: [] as Alocacao[], error: null }),
+  ]);
+  if (perfis.error ?? alocacoes.error) throw new Error("Falha ao carregar os hunters");
+
+  // Cópia do Pipedrive: histórico dos cards das ATs e tasks pelo login de cada hunter.
+  const { loginDoUsuario } = await import("./ats");
+  const deals = [...new Set(ats.map((a) => a.pipedrive_deal_id).filter((d) => d !== null))];
+  const [time, cardsPd, etapasPd] = await Promise.all([
+    admin.from("time_comercial").select("login, user_id"),
+    deals.length
+      ? fetchAll((a, b) =>
+          admin
+            .from("pd_cards")
+            .select("deal_id, status, won_time")
+            .in("deal_id", deals)
+            .order("deal_id")
+            .range(a, b),
+        )
+      : Promise.resolve([] as { deal_id: number; status: string; won_time: string | null }[]),
+    deals.length
+      ? fetchAll((a, b) =>
+          admin
+            .from("pd_card_etapas")
+            .select("deal_id, stage_id, entrou_em")
+            .in("deal_id", deals)
+            .order("deal_id")
+            .order("entrou_em")
+            .range(a, b),
+        )
+      : Promise.resolve([] as { deal_id: number; stage_id: number; entrou_em: string }[]),
+  ]);
+  if (time.error) throw new Error("Falha ao carregar o time comercial");
+  const loginDe = new Map(
+    (perfis.data ?? []).map((x) => [x.id, loginDoUsuario(x.id, x.email, time.data ?? [])]),
+  );
+  const logins = [...new Set([...loginDe.values()].filter((l): l is string => !!l))];
+  const tasksPd = logins.length
+    ? await fetchAll((a, b) =>
+        admin
+          .from("pd_tasks")
+          .select("hunter_login, due_date, done, marked_as_done_time")
+          .in("hunter_login", logins)
+          .order("activity_id")
+          .range(a, b),
+      )
+    : [];
+  const cards: Record<number, { status: string; etapas: number[] }> = {};
+  for (const c of cardsPd) cards[c.deal_id] = { status: c.status, etapas: [] };
+  for (const e of etapasPd) cards[e.deal_id]?.etapas.push(e.stage_id);
+  // Mesma cópia com as datas, para a Visão geral (data do avanço).
+  const cardsComDatas: Record<
+    number,
+    { status: string; won_time: string | null; etapas: { stage_id: number; entrou_em: string }[] }
+  > = {};
+  for (const c of cardsPd)
+    cardsComDatas[c.deal_id] = { status: c.status, won_time: c.won_time, etapas: [] };
+  for (const e of etapasPd)
+    cardsComDatas[e.deal_id]?.etapas.push({ stage_id: e.stage_id, entrou_em: e.entrou_em });
+
+  // Cards do Hackathon encerrado ficam fora, como nos Indicadores.
+  const atuais = splitHackathon(contatos, hackathonPeriods(periodos.data ?? [])).current;
+  const p = parametros.data ?? PARAMETROS_PADRAO;
+  const entrada: import("./dashHunters").HuntersInput = {
+    hoje: hoje,
+    semana: weekStartISO(semana),
+    safras: safras.data ?? [],
+    maturacaoSemanas: p.maturacao_semanas,
+    diasContatoParado: p.dias_contato_parado,
+    esforcoAlertaPct: p.esforco_alerta_pct,
+    alocacoes: alocacoes.data ?? [],
+    hunters: (perfis.data ?? [])
+      .map((x) => ({
+        id: x.id,
+        name: x.display_name?.trim() || x.email || "Hunter",
+        groupId: grupoDe.get(x.id) ?? null,
+        login: loginDe.get(x.id) ?? null,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+    contatos: atuais,
+    ats,
+    goals: goals.data ?? [],
+    offsets: Object.fromEntries(settings.map(({ user_id, ...o }) => [user_id, o])),
+    holidays: new Set((holidays.data ?? []).map((h) => h.date)),
+    cards,
+    // Sem nenhuma task copiada (cópia ainda não rodou), a coluna fica de fora.
+    ...(tasksPd.length ? { tasks: tasksPd } : {}),
+  };
+  return {
+    entrada,
+    parametros: p,
+    safras: (safras.data ?? []).sort((a, b) => a.numero - b.numero),
+    ats,
+    cardsComDatas,
+    inicioCiclo: (periodos.data ?? []).find((x) => x.id === periodId)?.started_at ?? null,
+  };
+}
+
+/**
  * Aba Hunters: filas, disciplina e resultado de cada membro do ciclo na semana escolhida
  * (cálculo em `computeHunters`, dashHunters.ts). O "hoje" vem do navegador (fuso de São Paulo).
  */
@@ -507,108 +676,260 @@ export const dashboardHunters = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { computeHunters, esforcoDasSemanas } = await import("./dashHunters");
+    const {
+      entrada,
+      parametros: p,
+      safras,
+    } = await carregarBaseHunters(data.periodId, data.semana, data.hoje);
+    const resultado = computeHunters(entrada);
+    return {
+      ...resultado,
+      safras,
+      maturacaoSemanas: p.maturacao_semanas,
+      esforcoAlertaPct: p.esforco_alerta_pct,
+      concentracaoAtsPct: p.concentracao_ats_pct,
+      esforcoSemanas: esforcoDasSemanas(entrada),
+    };
+  });
+
+/* ------------------------------- Conciliação ------------------------------- */
+
+/**
+ * Fila de conciliação do ciclo (cálculo em `computeConciliacao`), a partir do início dele, com os
+ * nomes dos hunters e a última cópia dos cards.
+ */
+export const dashboardConciliacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ periodId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
     const admin = await db();
     const { fetchAll } = await import("./fetch-all");
-    const { adminIds } = await import("./competition.server");
-    const { hackathonPeriods, splitHackathon } = await import("./fila");
-    const { computeHunters, esforcoDasSemanas, H_CONTATO_COLUNAS } = await import("./dashHunters");
-    const { weekStartISO } = await import("./empresas");
-    type Linha = import("./dashHunters").HContato & { period_id: string | null };
+    const { computeConciliacao } = await import("./conciliacao");
+    const { diaSP } = await import("./safras");
 
-    const [safras, parametros, membros, periodos, goals, settings, holidays, admins] =
-      await Promise.all([
-        admin.from("safras").select(SAFRA_COLS).eq("period_id", data.periodId),
-        admin.from("dashboard_parametros").select("*").maybeSingle(),
-        admin.from("period_members").select("user_id, group_id").eq("period_id", data.periodId),
-        admin.from("periods").select("id, kind, status, closed_at"),
+    const [periodo, safras, membros, ats, cards, ultima] = await Promise.all([
+      admin.from("periods").select("started_at").eq("id", data.periodId).maybeSingle(),
+      admin.from("safras").select(SAFRA_COLS).eq("period_id", data.periodId),
+      admin.from("period_members").select("user_id").eq("period_id", data.periodId),
+      fetchAll((a, b) =>
         admin
-          .from("goals")
+          .from("ats")
           .select(
-            "user_id, group_id, envios_dia, l1_semana, ats_semana, no_prazo_pct, passos_semana",
-          ),
-        fetchAll((a, b) =>
-          admin
-            .from("settings")
-            .select("user_id, offset1, offset2, offset3, offset4, offset5")
-            .order("user_id")
-            .range(a, b),
-        ),
-        admin.from("holidays").select("date"),
-        adminIds(admin),
-      ]);
-    const erro = safras.error ?? parametros.error ?? membros.error ?? periodos.error ?? goals.error;
-    if (erro) throw new Error("Falha ao carregar os hunters");
-
-    const grupoDe = new Map(
-      (membros.data ?? [])
-        .filter((m) => !admins.has(m.user_id))
-        .map((m) => [m.user_id, m.group_id]),
-    );
-    const ids = [...grupoDe.keys()];
-    const safraIds = (safras.data ?? []).map((s) => s.id);
-    const [perfis, contatos, ats, alocacoes] = await Promise.all([
-      ids.length
-        ? admin.from("profiles").select("id, display_name, email").in("id", ids)
-        : Promise.resolve({ data: [], error: null }),
-      ids.length
-        ? fetchAll(
-            (a, b) =>
-              admin
-                .from("contacts")
-                .select(`${H_CONTATO_COLUNAS}, period_id`)
-                .in("user_id", ids)
-                .order("id")
-                .range(a, b) as unknown as import("./fetch-all").PageResult<Linha>,
+            "id, user_id, hunter_login, contact_id, pipedrive_deal_id, empresa, prospect, registrada_em, status",
           )
-        : Promise.resolve([] as Linha[]),
+          .eq("tipo", "diagnostico")
+          .order("id")
+          .range(a, b),
+      ),
+      fetchAll((a, b) =>
+        admin
+          .from("pd_cards")
+          .select("deal_id, titulo, hunter_login, stage_id, status, add_time, cargo")
+          .eq("outbound", true)
+          .order("deal_id")
+          .range(a, b),
+      ),
+      admin
+        .from("pd_cards")
+        .select("sincronizado_em")
+        .order("sincronizado_em", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    const erro = periodo.error ?? safras.error ?? membros.error ?? ultima.error;
+    if (erro) throw new Error("Falha ao carregar a conciliação");
+    if (!periodo.data) throw new Error("Ciclo não encontrado");
+    const ids = [...new Set((membros.data ?? []).map((m) => m.user_id))];
+    const safraIds = (safras.data ?? []).map((s) => s.id);
+    const [contatos, alocacoes, perfis] = await Promise.all([
       ids.length
         ? fetchAll((a, b) =>
             admin
-              .from("ats")
-              .select("id, user_id, contact_id, registrada_em, status, pipedrive_stage_id")
-              .eq("tipo", "diagnostico")
+              .from("contacts")
+              .select("id, name, company, user_id, created_at")
               .in("user_id", ids)
               .order("id")
               .range(a, b),
           )
         : Promise.resolve([]),
       safraIds.length
-        ? admin.from("alocacoes").select(ALOC_COLS).in("safra_id", safraIds)
-        : Promise.resolve({ data: [] as Alocacao[], error: null }),
+        ? admin.from("alocacoes").select("safra_id, user_id").in("safra_id", safraIds)
+        : Promise.resolve({ data: [], error: null }),
+      admin.from("profiles").select("id, display_name, email"),
     ]);
-    if (perfis.error ?? alocacoes.error) throw new Error("Falha ao carregar os hunters");
+    if (alocacoes.error ?? perfis.error) throw new Error("Falha ao carregar a conciliação");
 
-    // Cards do Hackathon encerrado ficam fora, como nos Indicadores.
-    const atuais = splitHackathon(contatos, hackathonPeriods(periodos.data ?? [])).current;
-    const p = parametros.data ?? PARAMETROS_PADRAO;
-    const entrada: import("./dashHunters").HuntersInput = {
-      hoje: data.hoje,
-      semana: weekStartISO(data.semana),
-      safras: safras.data ?? [],
-      maturacaoSemanas: p.maturacao_semanas,
-      diasContatoParado: p.dias_contato_parado,
-      esforcoAlertaPct: p.esforco_alerta_pct,
-      alocacoes: alocacoes.data ?? [],
-      hunters: (perfis.data ?? [])
-        .map((x) => ({
-          id: x.id,
-          name: x.display_name?.trim() || x.email || "Hunter",
-          groupId: grupoDe.get(x.id) ?? null,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
-      contatos: atuais,
-      ats,
-      goals: goals.data ?? [],
-      offsets: Object.fromEntries(settings.map(({ user_id, ...o }) => [user_id, o])),
-      holidays: new Set((holidays.data ?? []).map((h) => h.date)),
-    };
-    const resultado = computeHunters(entrada);
+    const desde = diaSP(periodo.data.started_at);
     return {
-      ...resultado,
-      safras: (safras.data ?? []).sort((a, b) => a.numero - b.numero),
+      desde,
+      ultimaCopia: ultima.data?.sincronizado_em ?? null,
+      nomes: Object.fromEntries(
+        (perfis.data ?? []).map((p) => [p.id, p.display_name?.trim() || p.email || "Hunter"]),
+      ) as Record<string, string>,
+      ...computeConciliacao({
+        desde,
+        ats,
+        cards,
+        contatos,
+        safras: safras.data ?? [],
+        alocacoes: alocacoes.data ?? [],
+      }),
+    };
+  });
+
+/** Liga a AT a um contato do mesmo hunter (ela passa para a safra do contato). */
+export const dashboardLigarAtContato = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ atId: z.string().uuid(), contactId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const [at, contato] = await Promise.all([
+      admin.from("ats").select("user_id").eq("id", data.atId).maybeSingle(),
+      admin.from("contacts").select("user_id").eq("id", data.contactId).maybeSingle(),
+    ]);
+    if (at.error ?? contato.error) throw new Error("Falha ao carregar a AT ou o contato");
+    if (!at.data || !contato.data) throw new Error("AT ou contato não encontrado");
+    if (at.data.user_id && at.data.user_id !== contato.data.user_id)
+      throw new Error("O contato é de outro hunter");
+    const { error } = await admin
+      .from("ats")
+      .update({ contact_id: data.contactId })
+      .eq("id", data.atId);
+    if (error) throw new Error("Falha ao ligar a AT ao contato");
+    return { ok: true as const };
+  });
+
+/**
+ * Liga a AT a um card do Pipedrive: a partir daí o status vem do Pipedrive. Sincroniza a AT e a
+ * cópia do card na hora.
+ */
+export const dashboardLigarAtCard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ atId: z.string().uuid(), dealId: z.number().int().positive() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { data: outra, error: e1 } = await admin
+      .from("ats")
+      .select("id")
+      .eq("pipedrive_deal_id", data.dealId)
+      .maybeSingle();
+    if (e1) throw new Error("Falha ao conferir o card");
+    if (outra && outra.id !== data.atId) throw new Error("Este card já está ligado a outra AT");
+    const { error } = await admin
+      .from("ats")
+      .update({ pipedrive_deal_id: data.dealId })
+      .eq("id", data.atId)
+      .is("pipedrive_deal_id", null);
+    if (error) throw new Error("Falha ao ligar a AT ao card");
+    const pdServer = await import("./pipedrive.server");
+    let aviso: string | null = null;
+    try {
+      await pdServer.sincronizarDeal(data.dealId);
+      await pdServer.sincronizarCards({ dealIds: [data.dealId] });
+    } catch (e) {
+      aviso = `Ligada, mas o Pipedrive não respondeu: ${(e as Error).message}`;
+    }
+    return { ok: true as const, aviso };
+  });
+
+/** "Sincronizar agora": copia os cards que mudaram, um lote por chamada. */
+export const dashboardSincronizarCards = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { sincronizarCards } = await import("./pipedrive.server");
+    return sincronizarCards({ limite: 40 });
+  });
+
+/* ------------------------------- Visão geral ------------------------------- */
+
+/**
+ * Visão geral (Módulo 1): cartão central, fatores, ritmo semanal, funil do ciclo, semáforo de
+ * esforço e alertas (cálculos em dashRitmo.ts e dashAlertas.ts).
+ */
+export const dashboardVisao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ periodId: z.string().uuid(), hoje: isoDay }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const admin = await db();
+    const { computeHunters, esforcoDasSemanas } = await import("./dashHunters");
+    const { computeVisao } = await import("./dashRitmo");
+    const { computeAlertas } = await import("./dashAlertas");
+    const { atsSemCard } = await import("./conciliacao");
+    const { resolveGoal } = await import("./dashboard");
+    const { semanaPadrao, diaSP } = await import("./safras");
+    const { weekStartISO } = await import("./empresas");
+
+    const { data: safrasCiclo, error } = await admin
+      .from("safras")
+      .select("inicio")
+      .eq("period_id", data.periodId);
+    if (error) throw new Error("Falha ao carregar as safras");
+    const semana = semanaPadrao(safrasCiclo ?? [], data.hoje) ?? weekStartISO(data.hoje);
+    const [base, metas] = await Promise.all([
+      carregarBaseHunters(data.periodId, semana, data.hoje),
+      admin
+        .from("ciclo_metas")
+        .select("ats_avancaram")
+        .eq("period_id", data.periodId)
+        .maybeSingle(),
+    ]);
+    if (metas.error) throw new Error("Falha ao carregar as metas do ciclo");
+    const { entrada, parametros: p } = base;
+
+    const hunters = computeHunters(entrada);
+    const esforcoSemanas = esforcoDasSemanas(entrada);
+    // Meta semanal de ATs da equipe: soma das metas dos hunters (herança equipe → grupo → hunter).
+    const metasHunters = entrada.hunters.map(
+      (h) => resolveGoal(entrada.goals, h.id, h.groupId).ats_semana,
+    );
+    const metaSemanalAts = metasHunters.some((m) => m !== null)
+      ? Math.round(metasHunters.reduce<number>((t, m) => t + (m ?? 0), 0) * 10) / 10
+      : null;
+
+    const visao = computeVisao({
+      hoje: data.hoje,
+      safras: base.safras,
+      maturacaoSemanas: p.maturacao_semanas,
+      contatos: entrada.contatos,
+      ats: base.ats,
+      cards: base.cardsComDatas,
+      metaAvancaram: metas.data?.ats_avancaram ?? null,
+      metaSemanalAts,
+    });
+    const alertas = computeAlertas({
+      hoje: data.hoje,
+      parametros: p,
+      hunters: hunters.hunters.map((h) => ({
+        id: h.id,
+        nome: h.nome,
+        parados: h.cadencia.parados.length,
+      })),
+      esforcoSemanas,
+      participacao: hunters.participacao,
+      ritmo: visao.ritmo,
+      metaSemanalAts,
+      fatores: visao.fatores,
+      ats: base.ats,
+      atsSemCard: base.inicioCiclo ? atsSemCard(base.ats, diaSP(base.inicioCiclo)) : 0,
+    });
+    return {
+      visao,
+      alertas,
+      safras: base.safras,
       maturacaoSemanas: p.maturacao_semanas,
       esforcoAlertaPct: p.esforco_alerta_pct,
-      concentracaoAtsPct: p.concentracao_ats_pct,
-      esforcoSemanas: esforcoDasSemanas(entrada),
+      semaforo: hunters.hunters
+        .filter((h) => h.disciplina.esforco?.abaixo)
+        .map((h) => ({ id: h.id, nome: h.nome, esforco: h.disciplina.esforco! })),
     };
   });

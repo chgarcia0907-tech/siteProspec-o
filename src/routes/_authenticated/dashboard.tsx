@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminGate } from "@/components/painel/AdminGate";
 import { IndicadoresTab } from "@/components/dashboard/IndicadoresTab";
+import { ConciliacaoTab } from "@/components/dashboard/conciliacao/ConciliacaoTab";
+import { ContadorConciliacao } from "@/components/dashboard/conciliacao/ContadorConciliacao";
 import { HuntersTab } from "@/components/dashboard/hunters/HuntersTab";
 import { SemanasTab } from "@/components/dashboard/semanas/SemanasTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,12 +14,13 @@ import { parseIndicadoresBusca, type IndicadoresBusca } from "@/lib/indicadores"
  * conforme cada módulo novo entra (.claude/plans/dashboard-outbound.md); é o padrão e não vai
  * para a URL.
  */
-const ABAS = ["indicadores", "hunters", "semanas"] as const;
+const ABAS = ["indicadores", "hunters", "semanas", "conciliacao"] as const;
 type Aba = (typeof ABAS)[number];
 const ABA_LABEL: Record<Aba, string> = {
   indicadores: "Indicadores",
   hunters: "Hunters",
   semanas: "Semanas",
+  conciliacao: "Conciliação",
 };
 const isAba = (v: unknown): v is Aba =>
   typeof v === "string" && (ABAS as readonly string[]).includes(v);
@@ -110,6 +113,7 @@ function Dashboard() {
                 className="-mb-px rounded-none border-b-2 border-transparent px-0 pb-2.5 data-[state=active]:border-primary data-[state=active]:bg-transparent"
               >
                 {ABA_LABEL[v]}
+                {v === "conciliacao" && <ContadorConciliacao />}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -137,6 +141,9 @@ function Dashboard() {
                 })
               }
             />
+          </TabsContent>
+          <TabsContent value="conciliacao" className="pt-4">
+            <ConciliacaoTab />
           </TabsContent>
           <TabsContent value="semanas" className="pt-4">
             <SemanasTab ask={ask} />

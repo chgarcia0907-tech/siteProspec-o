@@ -283,4 +283,41 @@ test.describe("Contatos", () => {
     await expect.poll(async () => (await mutations()).length).toBe(1);
     expect(JSON.parse((await mutations())[0]!.body)).toEqual({ persona: "owner_operacao" });
   });
+
+  test("marca o contato para retomar depois e filtra os que estão para retomar", async ({
+    page,
+  }) => {
+    await page.goto("/contatos");
+    // Elisa: combinada para 10/11 (hoje é 12/11). Gabi: para 20/11.
+    await expect(page.getByRole("row", { name: /Elisa Prado/ })).toContainText(
+      "Retomar: atrasada 2 dias",
+    );
+    await expect(page.getByRole("row", { name: /Gabi Torres/ })).toContainText("Retomar em 20/11");
+
+    await page.getByLabel("Retomada").selectOption("para_retomar");
+    await expect(page.getByRole("row", { name: /Elisa Prado|Gabi Torres/ })).toHaveCount(2);
+    await expect(page.getByRole("row", { name: /Ana Souza/ })).toHaveCount(0);
+    await page.getByLabel("Retomada").selectOption("todos");
+
+    await page.getByRole("button", { name: "Retomar Ana Souza depois" }).click();
+    const dialog = page.getByRole("dialog", { name: /Retomar depois: Ana Souza/ });
+    await dialog.getByLabel("Quando retomar o contato?").fill("2026-11-10");
+    await dialog.getByRole("button", { name: "Marcar para retomar" }).click();
+    await expect(dialog.getByRole("alert")).toHaveText(
+      "O dia para retomar não pode ser antes de hoje.",
+    );
+    expect(await mutations()).toEqual([]);
+
+    await dialog.getByRole("button", { name: "Em 1 semana" }).click();
+    await expect(dialog.getByLabel("Quando retomar o contato?")).toHaveValue("2026-11-19");
+    await dialog.getByLabel("O que o prospect disse (opcional)").fill("  Ligar depois da feira ");
+    await dialog.getByRole("button", { name: "Marcar para retomar" }).click();
+    await expect(page.getByText("Marcado para retomar")).toBeVisible();
+    const [m] = await mutations();
+    expect(m).toMatchObject({ method: "PATCH", table: "contacts" });
+    expect(JSON.parse(m!.body)).toEqual({
+      retomar_em: "2026-11-19",
+      retomar_motivo: "Ligar depois da feira",
+    });
+  });
 });

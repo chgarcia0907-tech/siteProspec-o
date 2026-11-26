@@ -19,6 +19,8 @@ test.describe("Dashboard › Hunters", () => {
     await expect(um).toContainText("1 de 40");
     await expect(um).toContainText("3%");
     await expect(um).toContainText("Abaixo");
+    // Tasks do Pipedrive com prazo até ontem: 1 de 2 concluída no dia do vencimento.
+    await expect(um).toContainText("50% (1 de 2)");
     // Bruno e Diego estão sem envio há 5 dias úteis.
     await expect(um.getByRole("cell").last()).toHaveText("2");
     const dois = tabela.getByRole("row", { name: /Hunter Dois/ });

@@ -29,7 +29,9 @@ import {
   type StepDef,
 } from "./cadencia";
 import { businessDaysBetween, businessDaysIn, type DashGoal } from "./dashboard";
+import { avancouNoHistorico } from "./espelhoPipedrive";
 import { ETAPAS_AVANCO } from "./pipedrive";
+import { situacaoTask } from "./tasksHunter";
 import {
   diaSP,
   fimDaSemana,
@@ -85,9 +87,27 @@ export type HAt = {
   registrada_em: string;
   status: string;
   pipedrive_stage_id: number | null;
+  pipedrive_deal_id?: number | null;
 };
 
-export type HHunter = { id: string; name: string; groupId: string | null };
+/** Histórico do card na cópia do Pipedrive (`pd_cards` + `pd_card_etapas`). */
+export type HCard = { status: string; etapas: readonly number[] };
+
+/** Task da cópia (`pd_tasks`), com o hunter do card. */
+export type HTask = {
+  hunter_login: string | null;
+  due_date: string | null;
+  done: boolean;
+  marked_as_done_time: string | null;
+};
+
+export type HHunter = {
+  id: string;
+  name: string;
+  groupId: string | null;
+  /** Login do time comercial (o campo Hunter dos cards), para as tasks. */
+  login?: string | null;
+};
 export type HGoal = DashGoal & { passos_semana: number | null };
 
 export type HuntersInput = {
@@ -106,6 +126,10 @@ export type HuntersInput = {
   goals: readonly HGoal[];
   offsets: Readonly<Record<string, Offsets>>;
   holidays: Holidays;
+  /** Histórico dos cards por `pipedrive_deal_id`; sem ele, "avançou" usa a etapa atual. */
+  cards?: Readonly<Record<number, HCard>>;
+  /** Tasks da cópia; sem elas, "tasks no prazo" fica de fora. */
+  tasks?: readonly HTask[];
 };
 
 /* --------------------------------- Saída --------------------------------- */
@@ -160,6 +184,8 @@ export type Disciplina = {
   esforco: Esforco | null;
   ats: number;
   atsEquipe: number;
+  /** Tasks com prazo na semana (até ontem) e as concluídas até o vencimento; null sem dados. */
+  tasks: { devidas: number; noPrazo: number } | null;
 };
 
 export type SafraDoHunter = {
@@ -286,8 +312,16 @@ export function computeHunters(input: HuntersInput): HuntersSemana {
   for (const a of ats)
     if (a.contact_id)
       atsPorContato.set(a.contact_id, [...(atsPorContato.get(a.contact_id) ?? []), a]);
-  const avancou = (a: HAt) =>
-    a.pipedrive_stage_id !== null && ETAPAS_AVANCO.has(a.pipedrive_stage_id);
+  // Avançou: pelo histórico do card quando ele está na cópia; senão, pela etapa atual da AT.
+  const avancou = (a: HAt) => {
+    const card = a.pipedrive_deal_id ? input.cards?.[a.pipedrive_deal_id] : undefined;
+    if (card)
+      return avancouNoHistorico(
+        card.etapas.map((stage_id) => ({ stage_id })),
+        card.status,
+      );
+    return a.pipedrive_stage_id !== null && ETAPAS_AVANCO.has(a.pipedrive_stage_id);
+  };
   const atsSemanaEquipe = ats.filter((a) =>
     noIntervalo(diaSP(a.registrada_em), semana, fimSemana),
   ).length;
@@ -406,6 +440,22 @@ export function computeHunters(input: HuntersInput): HuntersSemana {
     const atsSemana = ats.filter(
       (a) => a.user_id === h.id && noIntervalo(diaSP(a.registrada_em), semana, fimSemana),
     ).length;
+    let tasks: Disciplina["tasks"] = null;
+    if (input.tasks && h.login) {
+      const login = h.login.toLowerCase();
+      const devidas = input.tasks.filter(
+        (t) =>
+          t.hunter_login?.toLowerCase() === login && noIntervalo(t.due_date, semana, fimDevido),
+      );
+      tasks = {
+        devidas: devidas.length,
+        noPrazo: devidas.filter(
+          (t) =>
+            situacaoTask({ id: 0, deal_id: null, subject: null, type: null, ...t }, hoje) ===
+            "concluida_no_prazo",
+        ).length,
+      };
+    }
     const disciplina: Disciplina = {
       passos,
       devidos,
@@ -415,6 +465,7 @@ export function computeHunters(input: HuntersInput): HuntersSemana {
       esforco,
       ats: atsSemana,
       atsEquipe: atsSemanaEquipe,
+      tasks,
     };
 
     // Histórico por safra e totais do ciclo.

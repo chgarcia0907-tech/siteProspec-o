@@ -12,6 +12,9 @@ import type { Selection } from "@/hooks/useSelection";
 import type { Contact, ContactStatus, Holidays, Offsets } from "@/lib/cadencia";
 import { cadenceMarks, nextSend } from "@/lib/contatos";
 import type { Company } from "@/lib/empresas";
+import { toast } from "sonner";
+import { RetomadaDialog } from "@/components/RetomadaDialog";
+import { diasDeAtraso, retomadaPendente, textoRetomada } from "@/lib/retomada";
 import { ContactEditDialog } from "./ContactEditDialog";
 import { ContactRow } from "./ContactRow";
 
@@ -48,6 +51,8 @@ export function ContactsTable({
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const editing = rows.find((r) => r.id === editingId) ?? null;
+  const [retomandoId, setRetomandoId] = useState<string | null>(null);
+  const retomando = rows.find((r) => r.id === retomandoId) ?? null;
 
   return (
     <div className="overflow-x-auto rounded-xl border bg-card">
@@ -101,11 +106,25 @@ export function ContactsTable({
                 onToggle={() => selection.toggle(c.id)}
                 onPersona={(persona) => onPatch(c, { persona })}
                 onEdit={() => setEditingId(c.id)}
+                retomada={textoRetomada(c, today)}
+                retomadaAtrasada={diasDeAtraso(c, today) > 0 && retomadaPendente(c)}
+                onRetomada={() => setRetomandoId(c.id)}
               />
             );
           })}
         </TableBody>
       </Table>
+      {retomando && (
+        <RetomadaDialog
+          contato={retomando}
+          hoje={today}
+          onSalvar={(patch, mensagem) => {
+            onPatch(retomando, patch);
+            toast.success(mensagem);
+          }}
+          onClose={() => setRetomandoId(null)}
+        />
+      )}
       {editing && (
         <ContactEditDialog
           contact={editing}

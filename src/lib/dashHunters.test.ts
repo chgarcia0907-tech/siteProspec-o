@@ -331,3 +331,71 @@ describe("para a tela", () => {
     expect(concentracao({ semana: "x", total: 0, porHunter: {} }, 30)).toEqual([]);
   });
 });
+
+describe("cópia do Pipedrive", () => {
+  const comCard = (o: Partial<HuntersInput> = {}) =>
+    computeHunters(
+      input({
+        ats: [
+          // Voltou para AT Diag. Realizada depois da Aprofundamento: avançou pelo histórico.
+          { ...ATS[0]!, pipedrive_stage_id: 31, pipedrive_deal_id: 900 },
+          // Etapa atual diz 33, mas a cópia do card só passou por 108 e 31: vale a cópia.
+          {
+            ...ATS[0]!,
+            id: "a3",
+            contact_id: "c3",
+            pipedrive_stage_id: 33,
+            pipedrive_deal_id: 901,
+          },
+        ],
+        cards: {
+          900: { status: "lost", etapas: [108, 31, 33, 31] },
+          901: { status: "open", etapas: [108, 31] },
+        },
+        ...o,
+      }),
+    ).hunters.find((h) => h.id === "ana")!;
+
+  it("avançou pelo histórico de etapas do card, não só pela etapa atual", () => {
+    const s2 = comCard().historico.find((x) => x.numero === 2)!;
+    expect(s2.ats).toBe(2);
+    expect(s2.avancaram).toBe(1);
+  });
+
+  it("tasks com prazo na semana até ontem, no prazo pela regra da tela Tasks", () => {
+    const t = (
+      due_date: string,
+      done = false,
+      marked: string | null = null,
+      login = "ana.souza",
+    ) => ({
+      hunter_login: login,
+      due_date,
+      done,
+      marked_as_done_time: marked,
+    });
+    const r2 = computeHunters(
+      input({
+        hunters: [
+          { id: "ana", name: "Ana", groupId: null, login: "Ana.Souza" },
+          { id: "bruno", name: "Bruno", groupId: null },
+        ],
+        tasks: [
+          t("2026-11-24", true, "2026-11-24 20:00:00"), // concluída no dia (SP): no prazo
+          t("2026-11-25", true, "2026-11-26T15:00:00Z"), // concluída um dia depois
+          t("2026-11-23"), // aberta e vencida
+          t("2026-11-26"), // vence hoje: ainda não conta
+          t("2026-11-24", true, "2026-11-24T12:00:00Z", "outro"),
+        ],
+      }),
+    );
+    expect(r2.hunters.find((h) => h.id === "ana")!.disciplina.tasks).toEqual({
+      devidas: 3,
+      noPrazo: 1,
+    });
+    // Sem login no time comercial, sem tasks.
+    expect(r2.hunters.find((h) => h.id === "bruno")!.disciplina.tasks).toBeNull();
+    // Sem a cópia das tasks, também null.
+    expect(ana.disciplina.tasks).toBeNull();
+  });
+});
