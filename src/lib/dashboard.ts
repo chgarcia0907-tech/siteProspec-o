@@ -96,6 +96,8 @@ export type DashGoal = {
   l1_semana: number | null;
   ats_semana: number | null;
   no_prazo_pct: number | null;
+  /** Passos de cadência por semana (esforço da aba Hunters; `metaDePassos` em dashHunters.ts). */
+  passos_semana?: number | null;
 };
 export type ChannelFilter = "todos" | Channel;
 

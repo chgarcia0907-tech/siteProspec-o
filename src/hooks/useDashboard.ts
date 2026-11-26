@@ -10,6 +10,7 @@ import {
   dashboardEditarSafra,
   dashboardExcluirSafra,
   dashboardGerarSafras,
+  dashboardHunters,
   dashboardSalvarMetasCiclo,
   dashboardSalvarParametros,
   dashboardSemanas,
@@ -105,3 +106,15 @@ export function useAlocacaoAcoes() {
   };
 }
 export type AlocacaoAcoes = ReturnType<typeof useAlocacaoAcoes>;
+
+/** Aba Hunters: filas, disciplina e resultado de cada membro do ciclo na semana escolhida. */
+export function useDashHunters(periodId: string | null, semana: string) {
+  const fn = useServerFn(dashboardHunters);
+  const hoje = spParts().iso;
+  return useQuery({
+    queryKey: ["dashboard_hunters", periodId, semana, hoje],
+    queryFn: () => fn({ data: { periodId: periodId!, semana, hoje } }),
+    enabled: !!periodId,
+  });
+}
+export type DashHuntersDados = NonNullable<ReturnType<typeof useDashHunters>["data"]>;
