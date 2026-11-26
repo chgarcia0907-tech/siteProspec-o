@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAddCompanies } from "@/hooks/useCadencia";
+import { PorteSelect } from "./PorteSelect";
 import { formatBR, todayISO, type CompanyGender } from "@/lib/cadencia";
 import {
   normalizeCompany,
@@ -15,6 +16,7 @@ import {
   weekEndISO,
   weekStartISO,
   type Company,
+  type Porte,
   type SectorNode,
 } from "@/lib/empresas";
 import { errorMessage } from "@/lib/utils";
@@ -32,6 +34,7 @@ export function CompanyForm({
   const [text, setText] = useState("");
   const [choice, setChoice] = useState<SectorChoice | null>(null);
   const [gender, setGender] = useState<CompanyGender>("feminino");
+  const [porte, setPorte] = useState<Porte | null>(null);
   const [day, setDay] = useState(todayISO());
   const week = weekStartISO(day || todayISO());
 
@@ -58,6 +61,8 @@ export function CompanyForm({
         sector_id: choice.sector_id,
         // A chave só vai quando há subsetor.
         ...(choice.subsector_id ? { subsector_id: choice.subsector_id } : {}),
+        // O porte (opcional) vale para todas as empresas da lista.
+        ...(porte ? { porte } : {}),
         week_start: week,
       })),
       {
@@ -111,6 +116,19 @@ export function CompanyForm({
                   onChange={setChoice}
                   className="w-full"
                 />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="porte">Porte (opcional)</Label>
+                <PorteSelect
+                  id="porte"
+                  label="Porte (opcional)"
+                  value={porte}
+                  onChange={setPorte}
+                  className="w-full"
+                />
+                <p className="text-caption text-muted-foreground">
+                  Número de funcionários; vale para todas as empresas da lista.
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label>Concordância</Label>

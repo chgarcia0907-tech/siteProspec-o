@@ -2,7 +2,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  dashboardAlocacao,
+  dashboardCopiarAlocacoes,
   dashboardCriarSafra,
+  dashboardExcluirAlocacao,
+  dashboardSalvarAlocacao,
   dashboardEditarSafra,
   dashboardExcluirSafra,
   dashboardGerarSafras,
@@ -10,6 +14,8 @@ import {
   dashboardSalvarParametros,
   dashboardSemanas,
 } from "@/lib/dashboard.functions";
+import type { AlocacaoForm } from "@/lib/alocacao";
+import { spParts } from "@/lib/cadencia";
 import type { MetasCiclo, Parametros, SafraForm } from "@/lib/safras";
 
 const SEMANAS = ["dashboard_semanas"] as const;
@@ -58,3 +64,44 @@ export function useSemanasAcoes() {
   };
 }
 export type SemanasAcoes = ReturnType<typeof useSemanasAcoes>;
+
+const ALOCACAO = "dashboard_alocacao";
+
+/** Alocação de um ciclo: safras, linhas, membros e setores. */
+export function useAlocacao(periodId: string | null) {
+  const fn = useServerFn(dashboardAlocacao);
+  const hoje = spParts().iso;
+  return useQuery({
+    queryKey: [ALOCACAO, periodId, hoje],
+    queryFn: () => fn({ data: { periodId: periodId!, hoje } }),
+    enabled: !!periodId,
+  });
+}
+
+/** Ações da alocação; recarregam a alocação e as semanas (a exclusão de safra depende delas). */
+export function useAlocacaoAcoes() {
+  const qc = useQueryClient();
+  const salvar = useServerFn(dashboardSalvarAlocacao);
+  const excluir = useServerFn(dashboardExcluirAlocacao);
+  const copiar = useServerFn(dashboardCopiarAlocacoes);
+  const recarregar = async () => {
+    await qc.invalidateQueries({ queryKey: [ALOCACAO] });
+    await qc.invalidateQueries({ queryKey: SEMANAS });
+  };
+  return {
+    salvar: async (safraId: string, id: string | null, alocacao: AlocacaoForm) => {
+      await salvar({ data: { safraId, id, alocacao, hoje: spParts().iso } });
+      await recarregar();
+    },
+    excluir: async (id: string) => {
+      await excluir({ data: { id, hoje: spParts().iso } });
+      await recarregar();
+    },
+    copiar: async (safraId: string) => {
+      const r = await copiar({ data: { safraId, hoje: spParts().iso } });
+      await recarregar();
+      return r.copiadas;
+    },
+  };
+}
+export type AlocacaoAcoes = ReturnType<typeof useAlocacaoAcoes>;

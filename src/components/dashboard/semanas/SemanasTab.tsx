@@ -18,6 +18,7 @@ import {
   type SafraForm,
 } from "@/lib/safras";
 import { Section } from "../shared";
+import { AlocacaoSemana } from "./AlocacaoSemana";
 import { CalendarioSafras } from "./CalendarioSafras";
 import { GerarSemanasDialog } from "./GerarSemanasDialog";
 import { MetasCicloCard, MetasCicloDialog } from "./MetasCiclo";
@@ -179,6 +180,8 @@ export function SemanasTab({ ask }: { ask: Ask }) {
           />
         )}
       </Section>
+
+      <AlocacaoSemana periodId={ciclo.id} ask={ask} />
 
       <MetasCicloCard
         nomeCiclo={nome}

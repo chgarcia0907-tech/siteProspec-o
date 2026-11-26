@@ -23,6 +23,8 @@ export function IndustrySelect({
   onChange,
   className,
   placeholder = "Setor da empresa…",
+  label = "Setor da empresa",
+  id,
 }: {
   /** Setores e subsetores (`useSectorTree`). */
   sectors: readonly SectorNode[];
@@ -31,13 +33,17 @@ export function IndustrySelect({
   onChange: (choice: SectorChoice) => void;
   className?: string;
   placeholder?: string;
+  /** Nome acessível do seletor. */
+  label?: string;
+  id?: string;
 }) {
   const options = sectorOptions(sectors, { sectorId: sectorId || null, subsectorId });
   const value = sectorId ? sectorOptionValue(sectorId, subsectorId) : "";
   const groups = [...new Set(options.map((o) => o.group))];
   return (
     <NativeSelect
-      aria-label="Setor da empresa"
+      id={id}
+      aria-label={label}
       title={sectorPath(sectors, sectorId, subsectorId) || undefined}
       className={cn(!value && "border-warning text-muted-foreground", className)}
       value={value}

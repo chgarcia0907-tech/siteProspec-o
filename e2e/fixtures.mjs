@@ -17,6 +17,8 @@ const EMPRESA_DELTA = "13131313-0000-4000-8000-000000000001";
 const EMPRESA_OMICRON = "13131313-0000-4000-8000-000000000002";
 export const SAFRA_S01 = "16161616-0000-4000-8000-000000000001";
 export const SAFRA_S02 = "16161616-0000-4000-8000-000000000002";
+export const SAFRA_S03 = "16161616-0000-4000-8000-000000000003";
+export const ALOC_U1_S02 = "17171717-0000-4000-8000-000000000001";
 export const GOAL_EQUIPE = "14141414-0000-4000-8000-000000000001";
 
 export const USER = {
@@ -343,8 +345,8 @@ export function initialDb() {
         created_at: "2026-10-01T03:00:00Z",
       },
     ],
-    // Dashboard › Semanas: o Ciclo Nov tem a S01 (antes do esquema de alocação) e a S02, a semana
-    // de hoje (12/11/2026). Parâmetros com os valores padrão; sem metas do ciclo.
+    // Dashboard › Semanas: o Ciclo Nov tem a S01 (antes do esquema de alocação), a S02 (a semana
+    // de hoje, 12/11/2026) e a S03. Parâmetros com os valores padrão; sem metas do ciclo.
     safras: [
       {
         id: SAFRA_S01,
@@ -361,6 +363,30 @@ export function initialDb() {
         inicio: "2026-11-09",
         fim: "2026-11-13",
         usa_alocacao: true,
+      },
+      {
+        id: SAFRA_S03,
+        period_id: P1,
+        numero: 3,
+        inicio: "2026-11-16",
+        fim: "2026-11-20",
+        usa_alocacao: true,
+      },
+    ],
+    // Na S02 (semana de hoje) o Hunter Um prospecta Varejo na dupla D1; o Hunter Dois não foi
+    // alocado. A S03 ainda não começou: alocação livre.
+    alocacoes: [
+      {
+        id: ALOC_U1_S02,
+        safra_id: SAFRA_S02,
+        user_id: U1,
+        sector_id: SETOR_VAREJO,
+        subsector_id: null,
+        dupla: "D1",
+        meta_empresas: 10,
+        meta_contatos: 40,
+        motivo_meta_zero: null,
+        vigente_desde: "2026-11-09",
       },
     ],
     dashboard_parametros: [
