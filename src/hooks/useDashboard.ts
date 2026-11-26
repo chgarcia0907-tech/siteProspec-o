@@ -8,6 +8,8 @@ import {
   dashboardLigarAtContato,
   dashboardSincronizarCards,
   dashboardVisao,
+  dashboardRealizacao,
+  dashboardSalvarTempoEtapas,
   dashboardCopiarAlocacoes,
   dashboardCriarSafra,
   dashboardExcluirAlocacao,
@@ -200,3 +202,28 @@ export function useAlertasAltos(admin: boolean): number | undefined {
   return visao.data?.alertas.filter((a) => a.nivel === "alta").length;
 }
 export type VisaoDados = NonNullable<ReturnType<typeof useVisao>["data"]>;
+
+const REALIZACAO = "dashboard_realizacao";
+
+/** Realização e avanço do ciclo (situação, horários, antecedência, setores, perdas e tempos). */
+export function useRealizacao(periodId: string | null) {
+  const fn = useServerFn(dashboardRealizacao);
+  const hoje = spParts().iso;
+  return useQuery({
+    queryKey: [REALIZACAO, periodId, hoje],
+    queryFn: () => fn({ data: { periodId: periodId!, hoje } }),
+    enabled: !!periodId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+export type RealizacaoDados = NonNullable<ReturnType<typeof useRealizacao>["data"]>;
+
+/** Grava as metas de dias por etapa e recarrega a aba. */
+export function useSalvarTempoEtapas() {
+  const qc = useQueryClient();
+  const salvar = useServerFn(dashboardSalvarTempoEtapas);
+  return async (metas: { stage_id: number; meta_dias: number }[]) => {
+    await salvar({ data: { metas } });
+    await qc.invalidateQueries({ queryKey: [REALIZACAO] });
+  };
+}
