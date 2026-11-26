@@ -29,6 +29,76 @@ export type Database = {
         };
         Relationships: [];
       };
+      alocacoes: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          dupla: string | null;
+          id: string;
+          meta_contatos: number;
+          meta_empresas: number;
+          motivo_meta_zero: string | null;
+          safra_id: string;
+          sector_id: string;
+          subsector_id: string | null;
+          updated_at: string;
+          user_id: string;
+          vigente_desde: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          dupla?: string | null;
+          id?: string;
+          meta_contatos?: number;
+          meta_empresas?: number;
+          motivo_meta_zero?: string | null;
+          safra_id: string;
+          sector_id: string;
+          subsector_id?: string | null;
+          updated_at?: string;
+          user_id: string;
+          vigente_desde: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          dupla?: string | null;
+          id?: string;
+          meta_contatos?: number;
+          meta_empresas?: number;
+          motivo_meta_zero?: string | null;
+          safra_id?: string;
+          sector_id?: string;
+          subsector_id?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          vigente_desde?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "alocacoes_safra_id_fkey";
+            columns: ["safra_id"];
+            isOneToOne: false;
+            referencedRelation: "safras";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "alocacoes_sector_id_fkey";
+            columns: ["sector_id"];
+            isOneToOne: false;
+            referencedRelation: "sectors";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "alocacoes_subsector_id_fkey";
+            columns: ["subsector_id"];
+            isOneToOne: false;
+            referencedRelation: "sectors";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       at_eventos: {
         Row: {
           at_id: string;
@@ -249,6 +319,7 @@ export type Database = {
           id: string;
           name: string;
           period_id: string | null;
+          porte: string | null;
           sector_id: string;
           subsector_id: string | null;
           updated_at: string;
@@ -261,6 +332,7 @@ export type Database = {
           id?: string;
           name: string;
           period_id?: string | null;
+          porte?: string | null;
           sector_id: string;
           subsector_id?: string | null;
           updated_at?: string;
@@ -273,6 +345,7 @@ export type Database = {
           id?: string;
           name?: string;
           period_id?: string | null;
+          porte?: string | null;
           sector_id?: string;
           subsector_id?: string | null;
           updated_at?: string;
