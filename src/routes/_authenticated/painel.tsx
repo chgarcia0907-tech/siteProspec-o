@@ -27,7 +27,8 @@ export const Route = createFileRoute("/_authenticated/painel")({
   validateSearch: (s: Record<string, unknown>): { aba?: Aba | "indicadores" } =>
     isAba(s["aba"]) || s["aba"] === "indicadores" ? { aba: s["aba"] } : {},
   beforeLoad: ({ search }) => {
-    if (search.aba === "indicadores") throw redirect({ to: "/dashboard" });
+    if (search.aba === "indicadores")
+      throw redirect({ to: "/dashboard", search: { aba: "indicadores" } });
   },
   head: () => ({
     meta: [

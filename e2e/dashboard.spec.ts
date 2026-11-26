@@ -8,7 +8,7 @@ const GOAL_EQUIPE = "14141414-0000-4000-8000-000000000001";
 test.describe("Dashboard", () => {
   test("o endereço antigo da aba do painel leva à Dashboard", async ({ page }) => {
     await page.goto("/painel?aba=indicadores");
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(/\/dashboard\?aba=indicadores$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Dashboard");
   });
 
@@ -19,7 +19,7 @@ test.describe("Dashboard", () => {
   });
 
   test("abre na semana atual com os números da equipe", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Dashboard");
     const tile = (name: string) => page.getByRole("group", { name, exact: true });
     await expect(tile("ATs marcadas")).toContainText("1");
@@ -34,14 +34,14 @@ test.describe("Dashboard", () => {
   test("card do Hackathon avançado agora não conta nos números do ciclo", async ({ page }) => {
     // Um card do Hackathon (encerrado) ganhou AT hoje: a AT dele não pode entrar no ciclo atual.
     await seedHackathon(true);
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     const ats = page.getByRole("group", { name: "ATs marcadas", exact: true });
     // Sem o Hackathon o valor é 1 (a AT do João); com a AT do card dele seria 2.
     await expect(ats).toContainText(/ATs marcadas\s*1(?!\d)/);
   });
 
   test("lista os atrasados do hunter e a etapa que gerou a AT", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     await page
       .getByRole("region", { name: "Execução da cadência por hunter" })
       .getByRole("button", { name: "Hunter Dois" })
@@ -60,7 +60,7 @@ test.describe("Dashboard", () => {
   });
 
   test("filtros de intervalo e de grupo recalculam os números", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     const tile = (name: string) => page.getByRole("group", { name, exact: true });
     await page.getByRole("button", { name: "Semana passada" }).click();
     await expect(page.getByText("02/11/2026 a 08/11/2026 · comparado com")).toBeVisible();
@@ -75,7 +75,7 @@ test.describe("Dashboard", () => {
   });
 
   test("respostas e metas com semáforo", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     // A AT do João conta como resposta nesta semana; Elisa e Iara responderam na anterior.
     await expect(page.getByRole("group", { name: "Respostas", exact: true })).toContainText(
       "antes: 2",
@@ -97,7 +97,7 @@ test.describe("Dashboard", () => {
   test("a lista de alertas mostra os 5 mais urgentes e abre o resto sob demanda", async ({
     page,
   }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     const alertas = page.getByRole("region", { name: /^Quem precisa de ajuda/ });
     await expect(alertas.getByRole("listitem")).toHaveCount(5);
     await expect(alertas.getByText(/setor Varejo/)).toHaveCount(0);
@@ -111,7 +111,7 @@ test.describe("Dashboard", () => {
   });
 
   test("editor de metas grava a meta da equipe e a exceção de um hunter", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     await page.getByRole("button", { name: "Configurar metas" }).click();
     const equipe = page.getByRole("group", { name: "Metas: Equipe (padrão)" });
     const ats = equipe.getByLabel("ATs por semana (Equipe (padrão))");
@@ -158,7 +158,7 @@ test.describe("Dashboard", () => {
   test("responde primeiro se a equipe está no ritmo e deixa o detalhe em abas", async ({
     page,
   }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     await expect(
       page.getByRole("heading", { name: "A equipe está no ritmo desta semana?" }),
     ).toBeVisible();
@@ -186,7 +186,7 @@ test.describe("Dashboard", () => {
   });
 
   test("a execução por hunter mostra a coluna de conexões", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     await page.getByRole("tab", { name: "Execução por hunter", exact: true }).click();
     const bloco = page.getByRole("region", { name: "Execução da cadência por hunter" });
     await expect(bloco.getByRole("columnheader", { name: /Conexões/ })).toBeVisible();
@@ -215,7 +215,7 @@ test.describe("Dashboard", () => {
   });
 
   test("voltar a todos os grupos tira o grupo da url", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     const grupo = page.getByRole("combobox", { name: "Grupo", exact: true });
     await grupo.selectOption({ label: "Squad Azul" });
     await expect(page).toHaveURL(/grupo=bbbbbbbb/);
@@ -224,7 +224,7 @@ test.describe("Dashboard", () => {
   });
 
   test("a aba do detalhamento fica na url", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     await page.getByRole("tab", { name: "Funil", exact: true }).click();
     await expect(page).toHaveURL(/detalhe=funil/);
     await page.getByRole("tab", { name: "Execução por hunter", exact: true }).click();
@@ -234,7 +234,7 @@ test.describe("Dashboard", () => {
   });
 
   test("trocar a aba com a página rolada não volta ao topo", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     await expect(page.getByRole("tab", { name: "Funil", exact: true })).toBeVisible();
     await page.evaluate(() => window.scrollTo(0, 500));
     await page.getByRole("tab", { name: "Funil", exact: true }).click();
@@ -245,20 +245,20 @@ test.describe("Dashboard", () => {
 
   test("url inválida cai no padrão sem erro", async ({ page }) => {
     await page.goto(
-      "/dashboard?intervalo=xyz&grupo=nao-e-uuid&de=2026-11-20&ate=2026-11-01&canal=email",
+      "/dashboard?aba=indicadores&intervalo=xyz&grupo=nao-e-uuid&de=2026-11-20&ate=2026-11-01&canal=email",
     );
     await expect(page.getByText("09/11/2026 a 15/11/2026 · comparado com")).toBeVisible();
     await expect(page.getByText("Não foi possível carregar os indicadores.")).toHaveCount(0);
   });
 
   test("a tela padrão não escreve nada na url", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     await expect(page.getByRole("group", { name: "ATs marcadas", exact: true })).toBeVisible();
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(/\/dashboard\?aba=indicadores$/);
   });
 
   test("o cartão de filtros resume o recorte e limpa os filtros", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     await expect(page.getByRole("group", { name: "ATs marcadas", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Limpar filtros" })).toHaveCount(0);
     await page.goto("/dashboard?grupo=bbbbbbbb-0000-4000-8000-000000000001");
@@ -266,7 +266,7 @@ test.describe("Dashboard", () => {
     await expect(chips).toContainText("Esta semana");
     await expect(chips).toContainText("Squad Azul");
     await page.getByRole("button", { name: "Limpar filtros" }).click();
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(/\/dashboard\?aba=indicadores$/);
     await expect(page.getByRole("button", { name: "Limpar filtros" })).toHaveCount(0);
   });
 
@@ -292,7 +292,7 @@ test.describe("Dashboard", () => {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     const barra = page.getByRole("region", { name: "Filtros ativos" });
     await barra.getByRole("button", { name: "Limpar filtros" }).click();
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(/\/dashboard\?aba=indicadores$/);
     await expect(page.getByText("09/11/2026 a 15/11/2026 · comparado com")).toBeVisible();
   });
 
@@ -320,7 +320,7 @@ test.describe("Dashboard", () => {
   test("abrir e fechar um hunter pela tabela não rola a página nem põe âncora na url", async ({
     page,
   }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     const exec = page.getByRole("region", { name: "Execução da cadência por hunter" });
     await expect(exec).toBeVisible();
     // As fontes do Google chegam com display=swap: se a troca acontecer depois de medir, o texto
@@ -339,7 +339,7 @@ test.describe("Dashboard", () => {
   });
 
   test("os KPIs de atrasados e parados levam à Execução ordenada", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     const exec = page.getByRole("region", { name: "Execução da cadência por hunter" });
     await page
       .getByRole("group", { name: "Envios atrasados agora", exact: true })
@@ -375,7 +375,7 @@ test.describe("Dashboard", () => {
   });
 
   test("a ordenação da Execução fica na url e sobrevive à troca de aba", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     const exec = page.getByRole("region", { name: "Execução da cadência por hunter" });
     await exec.getByRole("button", { name: "Atrasados" }).click();
     await expect(page).toHaveURL(/ordem=late/);
@@ -388,7 +388,7 @@ test.describe("Dashboard", () => {
   });
 
   test("a ordenação com a página rolada não volta ao topo", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     const exec = page.getByRole("region", { name: "Execução da cadência por hunter" });
     await exec.scrollIntoViewIfNeeded();
     await exec.getByRole("button", { name: "Atrasados" }).click();
@@ -404,7 +404,7 @@ test.describe("Dashboard", () => {
   });
 
   test("o KPI de ATs mostra a meta da equipe com o mesmo semáforo de Metas", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     const ats = page.getByRole("group", { name: "ATs marcadas", exact: true });
     // A equipe tem 1 AT para a meta de 1,6 (2 membros × 0,8): 63% e "Abaixo".
     await expect(ats).toContainText("meta 1,6 · 63%");
@@ -429,7 +429,7 @@ test.describe("Dashboard em 1280 px", () => {
   test("alertas e metas ocupam a largura toda, um abaixo do outro, sem rolagem horizontal", async ({
     page,
   }) => {
-    await page.goto("/dashboard");
+    await page.goto("/dashboard?aba=indicadores");
     const metas = page.getByRole("region", { name: "Metas da semana" });
     await expect(metas).toBeVisible();
     const caixa = metas.locator(".overflow-x-auto").first();

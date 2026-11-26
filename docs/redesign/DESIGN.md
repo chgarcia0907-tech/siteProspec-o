@@ -261,6 +261,19 @@ as taxas e o volume; uma seção por tipo de pendência, com a sugestão de liga
 "Ligar a este card/contato" na linha; seção sem pendência vira uma linha tracejada ("nenhuma AT sem
 card") para a fila mostrar só o que pede ação.
 
+**Aba Visão geral** (`src/components/dashboard/visao/`, a aba padrão; os Indicadores antigos
+ficam em `?aba=indicadores`, no fim): a pergunta "Estamos no ritmo para bater a meta do ciclo?"
+como H2, com o seletor de ciclo à direita. Na primeira linha, o cartão central (ATs que avançaram
+na semana em `text-big`, média e total do ciclo, e "No ritmo"/"Abaixo do ritmo" com ícone; sem
+meta, o link para Semanas › Metas do ciclo) e os alertas (selo Alta `bg-destructive-soft`, Média
+`bg-warning-soft`, 5 primeiros e "Ver todos"; "Ver" leva à aba do alerta). Abaixo, os fatores
+(volume da safra contra a anterior, taxas das safras maduras com o volume); depois, ATs por semana
+(marcadas, realizadas e avançaram, metas tracejadas na cor da série) e ATs marcadas por safra de
+origem (barras empilhadas pela relação com a semana; "fora de cadência" em `chart-muted`); por
+fim, o funil do ciclo e os hunters abaixo da meta de esforço. Os gráficos da Visão não animam (o
+número aparece na hora). No menu, o item Dashboard leva um contador vermelho (`bg-destructive`)
+com os alertas de nível alto, só para o admin.
+
 **Filtros globais** num cartão no topo, como hoje (ciclo, safra, hunter, dupla, setor alocado),
 na URL; com filtro fora do padrão, chips e "Limpar filtros".
 

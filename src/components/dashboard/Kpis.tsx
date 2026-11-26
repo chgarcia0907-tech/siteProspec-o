@@ -180,7 +180,7 @@ function Tile({
       {action && (
         <Link
           to="/dashboard"
-          search={action.search}
+          search={{ ...action.search, aba: "indicadores" }}
           hash="execucao"
           className={cn(
             "mt-2 inline-flex items-center gap-1 rounded-sm font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
